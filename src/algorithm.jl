@@ -1,1 +1,2 @@
 abstract type AbstractAlgorithm end
+

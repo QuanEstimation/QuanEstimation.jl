@@ -12,6 +12,7 @@ abstract type noisy <: AbstractNoise end
 abstract type AbstractCtrl end
 abstract type free <: AbstractCtrl end
 abstract type controlled <: AbstractCtrl end
+abstract type timedepend <: AbstractCtrl end
 
 # check if the dynamics are with noise
 isNoisy(::noiseless) = false
@@ -21,5 +22,7 @@ isNoisy(dynamics::AbstractDynamics) = dynamics.noise_type|>eval|>isNoisy
 # check if the dynamics are in control
 isCtrl(::free) = false
 isCtrl(::controlled) = true
-isCtrl(dynamics::AbstractDynamics) = dynamcs.ctrl_type|>eval|>isCtrl
+isCtrl(dynamics::AbstractDynamics) = dynamics.ctrl_type|>eval|>isCtrl
 
+include("dynamics/Lindblad.jl")
+include("dynamics/Kraus.jl")
