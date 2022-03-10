@@ -19,6 +19,3 @@ struct HCRB <: AbstractObj
     W::AbstractMatrix
     eps::Number
 end
-
-
-
