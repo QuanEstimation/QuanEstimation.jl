@@ -1,18 +1,22 @@
 abstract type AbstractDynamics end
 abstract type AbstractDynamicsData end
 
-abstract type AbstractState end
-abstract type ket <: AbstractState end
-abstract type dm <: AbstractState end
+abstract type AbstracParaType end
+abstract type single_para <: AbstracParaType end
+abstract type multi_para <: AbstracParaType end
 
-abstract type AbstractNoise end
-abstract type noiseless <: AbstractNoise end
-abstract type noisy <: AbstractNoise end
+abstract type AbstractStateType end
+abstract type ket <: AbstractStateType end
+abstract type dm <: AbstractStateType end
 
-abstract type AbstractCtrl end
-abstract type free <: AbstractCtrl end
-abstract type controlled <: AbstractCtrl end
-abstract type timedepend <: AbstractCtrl end
+abstract type AbstractNoiseType end
+abstract type noiseless <: AbstractNoiseType end
+abstract type noisy <: AbstractNoiseType end
+
+abstract type AbstractCtrlType end
+abstract type free <: AbstractCtrlType end
+abstract type controlled <: AbstractCtrlType end
+abstract type timedepend <: AbstractCtrlType end
 
 # check if the dynamics are with noise
 isNoisy(::noiseless) = false
