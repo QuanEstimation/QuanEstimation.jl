@@ -1,6 +1,6 @@
 
 # dynamics in Lindblad form
-struct Lindblad{N, C, R, P} <: AbstractDynamics 
+struct Lindblad{N,C,R,P} <: AbstractDynamics
     data::AbstractDynamicsData
     noise_type::Symbol
     ctrl_type::Symbol
@@ -8,8 +8,9 @@ struct Lindblad{N, C, R, P} <: AbstractDynamics
     para_type::Symbol
 end
 
-Lindblad(data,N,C,R) = para_type(data)|>P->Lindblad{((N,C,R,P).|>eval)...}(data,N,C,R,P)
-Lindblad(data,N,C)=Lindblad(data,N,C,:dm)
+Lindblad(data, N, C, R) =
+    para_type(data) |> P -> Lindblad{((N, C, R, P) .|> eval)...}(data, N, C, R, P)
+Lindblad(data, N, C) = Lindblad(data, N, C, :dm)
 
 struct Lindblad_noiseless_free <: AbstractDynamicsData
     freeHamiltonian::AbstractMatrix
@@ -117,7 +118,7 @@ struct Lindblad_noisy_controlled_pure <: AbstractDynamicsData
 end
 
 
-para_type(data) = length(data.Hamiltonian_derivative)==1 ? :single_para : :multi_para
+para_type(data) = length(data.Hamiltonian_derivative) == 1 ? :single_para : :multi_para
 
 # Constructor of Lindblad dynamics
 Lindblad(
@@ -531,7 +532,7 @@ function evolve(dynamics::Lindblad{noiseless,free,ket})
 end
 
 #### evolution of pure states under time-dependent Hamiltonian without noise and controls ####
-function expL(dynamics::Lindblad{noiseless, timedepend, ket})
+function expL(dynamics::Lindblad{noiseless,timedepend,ket})
     (H0, ∂H_∂x, psi0, tspan) = dynamics
 
     para_num = length(∂H_∂x)
@@ -541,8 +542,8 @@ function expL(dynamics::Lindblad{noiseless, timedepend, ket})
     for t = 2:length(tspan)
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         expL = expL(H0[t-1], Δt)
-        ρt =  expL * ρt
-        ∂ρt_∂x = [-im * Δt * ∂H_L[i] * ρt for i in 1:para_num] + [expL] .* ∂ρt_∂x
+        ρt = expL * ρt
+        ∂ρt_∂x = [-im * Δt * ∂H_L[i] * ρt for i = 1:para_num] + [expL] .* ∂ρt_∂x
     end
     ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
@@ -555,7 +556,7 @@ function evolve(dynamics::Lindblad{noiseless,free,dm})
     para_num = length(∂H_∂x)
     Δt = tspan[2] - tspan[1]
     expL = expL(H0, Δt)
-    ∂H_L = [liouville_commu(∂H_∂x[i]) for i in 1:para_num]
+    ∂H_L = [liouville_commu(∂H_∂x[i]) for i = 1:para_num]
     ρt = ρ0 |> vec
     ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
     for t = 2:length(tspan)
@@ -577,8 +578,8 @@ function evolve(dynamics::Lindblad{noiseless,timedepend,dm})
     for t = 2:length(tspan)
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         expL = expL(H0[t-1], Δt)
-        ρt =  expL * ρt
-        ∂ρt_∂x = [-im * Δt * ∂H_L[i] * ρt for i in 1:para_num] + [expL] .* ∂ρt_∂x
+        ρt = expL * ρt
+        ∂ρt_∂x = [-im * Δt * ∂H_L[i] * ρt for i = 1:para_num] + [expL] .* ∂ρt_∂x
     end
     ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
@@ -594,8 +595,8 @@ function evolve(dynamics::Lindblad{noisy,free,ket})
     ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
     Δt = tspan[2] - tspan[1]
     expL = expL(H0, decay_opt, γ, Δt, 1)
-    ∂H_L = [liouville_commu(∂H_∂x[i]) for i in 1:para_num]
-    for t in 2:length(tspan)
+    ∂H_L = [liouville_commu(∂H_∂x[i]) for i = 1:para_num]
+    for t = 2:length(tspan)
         ρt = expL * ρt
         ∂ρt_∂x = [-im * Δt * ∂H_L[i] * ρt for i = 1:para_num] + [expL] .* ∂ρt_∂x
     end
@@ -612,8 +613,8 @@ function evolve(dynamics::Lindblad{noisy,free,dm})
     ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
     Δt = tspan[2] - tspan[1]
     expL = expL(H0, decay_opt, γ, Δt, 1)
-    ∂H_L = [liouville_commu(∂H_∂x[i]) for i in 1:para_num]
-    for t in 2:length(tspan)
+    ∂H_L = [liouville_commu(∂H_∂x[i]) for i = 1:para_num]
+    for t = 2:length(tspan)
         ρt = expL * ρt
         ∂ρt_∂x = [-im * Δt * ∂H_L[i] * ρt for i = 1:para_num] + [expL] .* ∂ρt_∂x
     end
@@ -632,8 +633,8 @@ function evolve(dynamics::Lindblad{noisy,timedepend,ket})
     for t = 2:length(tspan)
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         expL = expL(H0[t-1], decay_opt, γ, Δt, t)
-        ρt =  expL * ρt
-        ∂ρt_∂x = [-im * Δt * ∂H_L[i] * ρt for i in 1:para_num] + [expL] .* ∂ρt_∂x
+        ρt = expL * ρt
+        ∂ρt_∂x = [-im * Δt * ∂H_L[i] * ρt for i = 1:para_num] + [expL] .* ∂ρt_∂x
     end
     ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
@@ -651,8 +652,8 @@ function evolve(dynamics::Lindblad{noisy,timedepend,dm})
     for t = 2:length(tspan)
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         expL = expL(H0[t-1], decay_opt, γ, Δt, t)
-        ρt =  expL * ρt
-        ∂ρt_∂x = [-im * Δt * ∂H_L[i] * ρt for i in 1:para_num] + [expL] .* ∂ρt_∂x
+        ρt = expL * ρt
+        ∂ρt_∂x = [-im * Δt * ∂H_L[i] * ρt for i = 1:para_num] + [expL] .* ∂ρt_∂x
     end
     ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat

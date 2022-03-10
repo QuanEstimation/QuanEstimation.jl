@@ -77,7 +77,7 @@ end
 
 #========================================================#
 ####################### calculate QFI ####################
-function QFIM_SLD(ρ::Matrix{T}, dρ::Matrix{T};eps = eps_default) where {T<:Complex}
+function QFIM_SLD(ρ::Matrix{T}, dρ::Matrix{T}; eps = eps_default) where {T<:Complex}
     SLD_tp = SLD(ρ, dρ; eps = eps)
     SLD2_tp = SLD_tp * SLD_tp
     F = tr(ρ * SLD2_tp)
@@ -91,7 +91,7 @@ function QFIM_RLD(ρ::Matrix{T}, dρ::Matrix{T}; eps = eps_default) where {T<:Co
 end
 
 function QFI_LLD(ρ::Matrix{T}, dρ::Matrix{T}; eps = eps_default) where {T<:Complex}
-    LLD_tp = LLD(ρ, dρ;eps=eps)
+    LLD_tp = LLD(ρ, dρ; eps = eps)
     F = tr(ρ * LLD_tp * LLD_tp')
     F |> real
 end
@@ -105,130 +105,181 @@ end
 
 #==========================================================#
 ####################### calculate QFIM #####################
-function QFIM_SLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}};eps=eps_default) where {T<:Complex}
+function QFIM_SLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = eps_default) where {T<:Complex}
     p_num = length(dρ)
-    LD_tp = SLD(ρ, dρ;eps=eps)
-    ([0.5*ρ] .* (kron(LD_tp, reshape(LD_tp,1,p_num)) + kron(reshape(LD_tp,1,p_num), LD_tp))).|> tr .|>real 
+    LD_tp = SLD(ρ, dρ; eps = eps)
+    (
+        [0.5 * ρ] .*
+        (kron(LD_tp, reshape(LD_tp, 1, p_num)) + kron(reshape(LD_tp, 1, p_num), LD_tp))
+    ) .|>
+    tr .|>
+    real
 end
 
-function QFIM_RLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}};eps=eps_default) where {T<:Complex}
+function QFIM_RLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = eps_default) where {T<:Complex}
     p_num = length(dρ)
-    LD_tp = RLD(ρ, dρ;eps=eps)
-    LD_dag = [LD_tp[i]' for i in 1:p_num]
-    ([ρ] .* (kron(LD_tp, reshape(LD_dag,1,p_num)))).|> tr .|>real 
+    LD_tp = RLD(ρ, dρ; eps = eps)
+    LD_dag = [LD_tp[i]' for i = 1:p_num]
+    ([ρ] .* (kron(LD_tp, reshape(LD_dag, 1, p_num)))) .|> tr .|> real
 end
 
-function QFIM_LLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}};eps=eps_default) where {T<:Complex}
+function QFIM_LLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = eps_default) where {T<:Complex}
     p_num = length(dρ)
-    LD_tp = LLD(ρ, dρ;eps=eps)
-    LD_dag = [LD_tp[i]' for i in 1:p_num]
-    ([ρ] .* (kron(LD_tp, reshape(LD_dag,1,p_num)))).|> tr .|>real 
+    LD_tp = LLD(ρ, dρ; eps = eps)
+    LD_dag = [LD_tp[i]' for i = 1:p_num]
+    ([ρ] .* (kron(LD_tp, reshape(LD_dag, 1, p_num)))) .|> tr .|> real
 end
 
 function QFIM_liouville(ρ, dρ)
     p_num = length(dρ)
     LD_tp = SLD_liouville(ρ, dρ)
-    ([0.5*ρ] .* (kron(LD_tp, reshape(LD_tp,1,p_num)) + kron(reshape(LD_tp,1,p_num), LD_tp))).|> tr .|>real 
+    (
+        [0.5 * ρ] .*
+        (kron(LD_tp, reshape(LD_tp, 1, p_num)) + kron(reshape(LD_tp, 1, p_num), LD_tp))
+    ) .|>
+    tr .|>
+    real
 end
 
 function QFIM_pure(ρ::Matrix{T}, ∂ρ_∂x::Vector{Matrix{T}}) where {T<:Complex}
     p_num = length(∂ρ_∂x)
-    SLD = [2*∂ρ_∂x[i] for i in 1:p_num]
-    ([0.5*ρ] .* (kron(SLD, reshape(SLD,1,p_num)) + kron(reshape(SLD,1,p_num), SLD))) .|> tr .|>real
+    SLD = [2 * ∂ρ_∂x[i] for i = 1:p_num]
+    (
+        [0.5 * ρ] .*
+        (kron(SLD, reshape(SLD, 1, p_num)) + kron(reshape(SLD, 1, p_num), SLD))
+    ) .|>
+    tr .|>
+    real
 end
 
 #======================================================#
 #################### calculate CFIM ####################
-function CFIM(ρ, dρ;eps=eps_default)
+function CFIM(ρ, dρ; eps = eps_default)
     M = SIC(size(ρ)[1])
     m_num = length(M)
     p_num = length(dρ)
-    [real(tr(ρ*M[i])) < eps ? zeros(ComplexF64, p_num, p_num) : (kron(tr.(dρ.*[M[i]]),reshape(tr.(dρ.*[M[i]]), 1, p_num))/tr(ρ*M[i])) for i in 1:m_num] |> sum .|>real
+    [
+        real(tr(ρ * M[i])) < eps ? zeros(ComplexF64, p_num, p_num) :
+        (kron(tr.(dρ .* [M[i]]), reshape(tr.(dρ .* [M[i]]), 1, p_num)) / tr(ρ * M[i])) for
+        i = 1:m_num
+    ] |>
+    sum .|>
+    real
 end
 
-function CFIM(ρ, dρ, M;eps=eps_default)
+function CFIM(ρ, dρ, M; eps = eps_default)
     m_num = length(M)
     p_num = length(dρ)
-    [real(tr(ρ*M[i])) < eps ? zeros(ComplexF64, p_num, p_num) : (kron(tr.(dρ.*[M[i]]),reshape(tr.(dρ.*[M[i]]), 1, p_num))/tr(ρ*M[i])) for i in 1:m_num] |> sum .|>real
+    [
+        real(tr(ρ * M[i])) < eps ? zeros(ComplexF64, p_num, p_num) :
+        (kron(tr.(dρ .* [M[i]]), reshape(tr.(dρ .* [M[i]]), 1, p_num)) / tr(ρ * M[i])) for
+        i = 1:m_num
+    ] |>
+    sum .|>
+    real
 end
 
 
 ## QFI
-function QFIM(ρ::Matrix{T}, dρ::Matrix{T}; dtype=:SLD, eps=eps_default) where {T<:Complex}
-    Symbol("QFIM_"*string(dtype))(ρ, dρ;eps=eps)
+function QFIM(
+    ρ::Matrix{T},
+    dρ::Matrix{T};
+    dtype = :SLD,
+    eps = eps_default,
+) where {T<:Complex}
+    Symbol("QFIM_" * string(dtype))(ρ, dρ; eps = eps)
 end
 
 ## QFIM 
-function QFIM(ρ::Matrix{T}, dρ::Vector{Matrix}{T}; dtype=:SLD, eps=eps_default) where {T<:Complex}
-    Symbol("QFIM_"*string(dtype))(ρ, dρ;eps=eps)
+function QFIM(
+    ρ::Matrix{T},
+    dρ::Vector{Matrix}{T};
+    dtype = :SLD,
+    eps = eps_default,
+) where {T<:Complex}
+    Symbol("QFIM_" * string(dtype))(ρ, dρ; eps = eps)
 end
 
 
-QFIM(sym::Symbol, args...;kwargs...) = QFIM(Val{sym}, args...;kwargs...)
+QFIM(sym::Symbol, args...; kwargs...) = QFIM(Val{sym}, args...; kwargs...)
 
 ## QFI with exportLD
-function QFIM(::Type{Val{:exportLD}}, ρ::Matrix{T}, dρ::Matrix{T}; dtype=:SLD, eps=eps_default) where {T<:Complex}
-    F = QFIM(ρ,dρ;dtype=dtype, eps=eps)
-    LD = eval(dtype)(ρ,dρ;eps=eps)
+function QFIM(
+    ::Type{Val{:exportLD}},
+    ρ::Matrix{T},
+    dρ::Matrix{T};
+    dtype = :SLD,
+    eps = eps_default,
+) where {T<:Complex}
+    F = QFIM(ρ, dρ; dtype = dtype, eps = eps)
+    LD = eval(dtype)(ρ, dρ; eps = eps)
     return F, LD
 end
 
 ## QFIM with exportLD
-function QFIM(::Type{Val{:exportLD}}, ρ::Matrix{T}, dρ::Vector{Matrix{T}}; dtype=:SLD, eps=eps_default) where {T<:Complex}
-    F = QFIM(ρ,dρ;dtype=dtype, eps=eps)
-    LD = eval(dtype)(ρ,dρ;eps=eps)
+function QFIM(
+    ::Type{Val{:exportLD}},
+    ρ::Matrix{T},
+    dρ::Vector{Matrix{T}};
+    dtype = :SLD,
+    eps = eps_default,
+) where {T<:Complex}
+    F = QFIM(ρ, dρ; dtype = dtype, eps = eps)
+    LD = eval(dtype)(ρ, dρ; eps = eps)
     return F, LD
 end
 
 
 ## TODO: 👇 check type stability
-function QFIM_Bloch(r, dr; eps=1e-8)
+function QFIM_Bloch(r, dr; eps = 1e-8)
     para_num = length(dr)
     QFIM_res = zeros(para_num, para_num)
-        
-    dim = Int(sqrt(length(r)+1))
+
+    dim = Int(sqrt(length(r) + 1))
     Lambda = suN_generator(dim)
     if dim == 2
         r_norm = norm(r)^2
-        if abs(r_norm-1.0) < eps
-            for para_i in 1:para_num
-                for para_j in para_i:para_num
-                    QFIM_res[para_i, para_j] = dr[para_i]'*dr[para_j]
+        if abs(r_norm - 1.0) < eps
+            for para_i = 1:para_num
+                for para_j = para_i:para_num
+                    QFIM_res[para_i, para_j] = dr[para_i]' * dr[para_j]
                     QFIM_res[para_j, para_i] = QFIM_res[para_i, para_j]
                 end
             end
         else
-            for para_i in 1:para_num
-                for para_j in para_i:para_num
-                    QFIM_res[para_i, para_j] = dr[para_i]'*dr[para_j]+(r'*dr[para_i])*(r'*dr[para_j])/(1-r_norm)
+            for para_i = 1:para_num
+                for para_j = para_i:para_num
+                    QFIM_res[para_i, para_j] =
+                        dr[para_i]' * dr[para_j] +
+                        (r' * dr[para_i]) * (r' * dr[para_j]) / (1 - r_norm)
                     QFIM_res[para_j, para_i] = QFIM_res[para_i, para_j]
                 end
             end
         end
     else
-        rho = (Matrix(I,dim,dim)+sqrt(dim*(dim-1)/2)*r'*Lambda)/dim
-        G = zeros(ComplexF64, dim^2-1, dim^2-1)
-        for row_i in 1:dim^2-1
-            for col_j in row_i:dim^2-1
-                anti_commu = Lambda[row_i]*Lambda[col_j]+Lambda[col_j]*Lambda[row_i]
-                G[row_i, col_j] = 0.5*tr(rho*anti_commu)
+        rho = (Matrix(I, dim, dim) + sqrt(dim * (dim - 1) / 2) * r' * Lambda) / dim
+        G = zeros(ComplexF64, dim^2 - 1, dim^2 - 1)
+        for row_i = 1:dim^2-1
+            for col_j = row_i:dim^2-1
+                anti_commu = Lambda[row_i] * Lambda[col_j] + Lambda[col_j] * Lambda[row_i]
+                G[row_i, col_j] = 0.5 * tr(rho * anti_commu)
                 G[col_j, row_i] = G[row_i, col_j]
             end
         end
 
-        mat_tp = G*dim/(2*(dim-1))-r*r'
-        mat_inv = pinv(mat_tp) 
+        mat_tp = G * dim / (2 * (dim - 1)) - r * r'
+        mat_inv = pinv(mat_tp)
 
-        for para_m in 1:para_num
-            for para_n in para_m:para_num
+        for para_m = 1:para_num
+            for para_n = para_m:para_num
                 # println(dr[para_n]*mat_inv*dr[para_m]')
-                QFIM_res[para_m, para_n] = dr[para_n]'*mat_inv*dr[para_m]
+                QFIM_res[para_m, para_n] = dr[para_n]' * mat_inv * dr[para_m]
                 QFIM_res[para_n, para_m] = QFIM_res[para_m, para_n]
             end
         end
     end
     if para_num == 1
-        return QFIM_res[1,1]
+        return QFIM_res[1, 1]
     else
         return QFIM_res
     end
@@ -237,15 +288,17 @@ end
 #======================================================#
 ################# Gaussian States QFIM #################
 function Williamson_form(A::AbstractMatrix)
-    n = size(A)[1]//2 |>Int
-    J = zeros(n,n)|>x->[x one(x); -one(x) x]
+    n = size(A)[1] // 2 |> Int
+    J = zeros(n, n) |> x -> [x one(x); -one(x) x]
     A_sqrt = sqrt(A)
-    B = A_sqrt*J*A_sqrt
-    P = one(A)|>x->[x[:,1:2:2n-1] x[:,2:2:2n]]
+    B = A_sqrt * J * A_sqrt
+    P = one(A) |> x -> [x[:, 1:2:2n-1] x[:, 2:2:2n]]
     t, Q, vals = schur(B)
-    c = vals[1:2:2n-1].|>imag
-    D = c|>diagm|>x->x^(-0.5)
-    S = (J*A_sqrt*Q*P*[zeros(n,n) -D; D zeros(n,n)]|>transpose|>inv)*transpose(P)
+    c = vals[1:2:2n-1] .|> imag
+    D = c |> diagm |> x -> x^(-0.5)
+    S =
+        (J * A_sqrt * Q * P * [zeros(n, n) -D; D zeros(n, n)] |> transpose |> inv) *
+        transpose(P)
     return S, c
 end
 
@@ -253,38 +306,51 @@ end
 
 function A_Gauss(m::Int)
     e = bases(m)
-    s = e.*e'
-    a_Gauss .|> x -> [kron(s, x)/sqrt(2) for s in s]
+    s = e .* e'
+    a_Gauss .|> x -> [kron(s, x) / sqrt(2) for s in s]
 end
 
-function G_Gauss(S::M, dC::VM, c::V) where {M<:AbstractMatrix, V,VM<:AbstractVector}
+function G_Gauss(S::M, dC::VM, c::V) where {M<:AbstractMatrix,V,VM<:AbstractVector}
     para_num = length(dC)
-    m = size(S)[1]//2 |>Int
+    m = size(S)[1] // 2 |> Int
     As = A_Gauss(m)
-    gs =  [[[inv(S)*∂ₓC*inv(transpose(S))*a'|>tr for a in A] for A in As] for ∂ₓC in dC]
+    gs = [
+        [[inv(S) * ∂ₓC * inv(transpose(S)) * a' |> tr for a in A] for A in As] for ∂ₓC in dC
+    ]
     #[[inv(S)*∂ₓC*inv(transpose(S))*As[l][j,k]|>tr for j in 1:m, k in 1:m] for l in 1:4]
-    G = [zero(S) for _ in 1:para_num]
-    
-    for i in 1:para_num
-        for j in 1:m
-            for k in 1:m 
-                for l in 1:4
-                    G[i]+=gs[i][l][j,k]/(4*c[j]c[k]+(-1)^l)*inv(transpose(S))*As[l][j,k]*inv(S)
+    G = [zero(S) for _ = 1:para_num]
+
+    for i = 1:para_num
+        for j = 1:m
+            for k = 1:m
+                for l = 1:4
+                    G[i] +=
+                        gs[i][l][j, k] / (4 * c[j]c[k] + (-1)^l) *
+                        inv(transpose(S)) *
+                        As[l][j, k] *
+                        inv(S)
                 end
-            end 
+            end
         end
     end
     G
 end
 
-function QFIM_Gauss(R̄::V, dR̄::VV, D::M, dD::VM) where {V,VV,M,VM <:AbstractVecOrMat}
+function QFIM_Gauss(R̄::V, dR̄::VV, D::M, dD::VM) where {V,VV,M,VM<:AbstractVecOrMat}
     para_num = length(dR̄)
     quad_num = length(R̄)
-    C = [(D[i,j] + D[j,i])/2 - R̄[i]R̄[j] for i in 1:quad_num, j in 1:quad_num]
-    dC = [[(dD[k][i,j] + dD[k][j,i])/2 - dR̄[k][i]R̄[j] - R̄[i]dR̄[k][j] for i in 1:quad_num, j in 1:quad_num] for k in 1:para_num]
+    C = [(D[i, j] + D[j, i]) / 2 - R̄[i]R̄[j] for i = 1:quad_num, j = 1:quad_num]
+    dC = [
+        [
+            (dD[k][i, j] + dD[k][j, i]) / 2 - dR̄[k][i]R̄[j] - R̄[i]dR̄[k][j] for
+            i = 1:quad_num, j = 1:quad_num
+        ] for k = 1:para_num
+    ]
     S, cs = Williamson_form(C)
-    Gs = G_Gauss(S, dC, cs)    
-    F = [tr(Gs[i]*dC[j])+transpose(dR̄[i])*inv(C)*dR̄[j] for i in 1:para_num, j in 1:para_num]
-    F|>real
+    Gs = G_Gauss(S, dC, cs)
+    F = [
+        tr(Gs[i] * dC[j]) + transpose(dR̄[i]) * inv(C) * dR̄[j] for i = 1:para_num,
+        j = 1:para_num
+    ]
+    F |> real
 end
-
