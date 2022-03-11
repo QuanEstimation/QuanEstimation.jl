@@ -1,10 +1,6 @@
 abstract type AbstractDynamics end
 abstract type AbstractDynamicsData end
 
-abstract type AbstracParaType end
-abstract type single_para <: AbstracParaType end
-abstract type multi_para <: AbstracParaType end
-
 abstract type AbstractStateType end
 abstract type ket <: AbstractStateType end
 abstract type dm <: AbstractStateType end
