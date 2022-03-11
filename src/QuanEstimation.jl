@@ -1,6 +1,6 @@
 module QuanEstimation
-    using Random
+using Random
 
-    const GLOBAL_RNG = MersenneTwister(1234)
+const GLOBAL_RNG = MersenneTwister(1234)
 
 end

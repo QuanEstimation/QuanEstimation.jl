@@ -25,110 +25,110 @@ CFIM_Obj(M, W, eps, syms::Symbol...) = CFIM_Obj{eval.(syms)...}(M, W, eps)
 HCRB_Obj(W, eps, syms::Symbol...) = HCRB_Obj{eval.(syms)...}(W, eps)
 
 
-function objective(obj::QFIM{single_para, SLD}, dynamics::Lindblad)
-    (;W,eps) = obj
+function objective(obj::QFIM{single_para,SLD}, dynamics::Lindblad)
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    W[1]*QFIM_SLD(ρ,dρ[1];eps=eps)    
+    W[1] * QFIM_SLD(ρ, dρ[1]; eps = eps)
 end
 
-function objective(obj::QFIM{multi_para, SLD}, dynamics::Lindblad)
-    (;W,eps) = obj
+function objective(obj::QFIM{multi_para,SLD}, dynamics::Lindblad)
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    tr(W*pinv(QFIM_SLD(ρ,dρ;eps=eps)))
+    tr(W * pinv(QFIM_SLD(ρ, dρ; eps = eps)))
 end
 
-function objective(obj::QFIM{single_para, RLD}, dynamics::Lindblad)
-    (;W,eps) = obj
+function objective(obj::QFIM{single_para,RLD}, dynamics::Lindblad)
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    W[1]*QFIM_RLD(ρ,dρ[1];eps=eps)    
+    W[1] * QFIM_RLD(ρ, dρ[1]; eps = eps)
 end
 
-function objective(obj::QFIM{multi_para, RLD}, dynamics::Lindblad)
-    (;W,eps) = obj
+function objective(obj::QFIM{multi_para,RLD}, dynamics::Lindblad)
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    tr(W*pinv(QFIM_RLD(ρ,dρ;eps=eps)))  
+    tr(W * pinv(QFIM_RLD(ρ, dρ; eps = eps)))
 end
 
-function objective(obj::QFIM{single_para, LLD}, dynamics::Lindblad)
-    (;W,eps) = obj
+function objective(obj::QFIM{single_para,LLD}, dynamics::Lindblad)
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    W[1]*QFIM_LLD(ρ,dρ[1];eps=eps)    
+    W[1] * QFIM_LLD(ρ, dρ[1]; eps = eps)
 end
 
-function objective(obj::QFIM{multi_para, LLD}, dynamics::Lindblad)
-    (;W,eps) = obj
+function objective(obj::QFIM{multi_para,LLD}, dynamics::Lindblad)
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    tr(W*pinv(QFIM_LLD(ρ,dρ;eps=eps)))  
+    tr(W * pinv(QFIM_LLD(ρ, dρ; eps = eps)))
 end
 
-function objective(obj::QFIM{single_para, SLD}, dynamics::Kraus)
-    (;W,eps) = obj
+function objective(obj::QFIM{single_para,SLD}, dynamics::Kraus)
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    W[1]*QFIM_SLD(ρ,dρ[1];eps=eps)    
+    W[1] * QFIM_SLD(ρ, dρ[1]; eps = eps)
 end
 
-function objective(obj::QFIM{multi_para, SLD}, dynamics::Kraus)
-    (;W,eps) = obj
+function objective(obj::QFIM{multi_para,SLD}, dynamics::Kraus)
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    tr(W*pinv(QFIM_SLD(ρ,dρ;eps=eps)))
+    tr(W * pinv(QFIM_SLD(ρ, dρ; eps = eps)))
 end
 
-function objective(obj::QFIM{single_para, RLD}, dynamics::Kraus)
-    (;W,eps) = obj
+function objective(obj::QFIM{single_para,RLD}, dynamics::Kraus)
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    W[1]*QFIM_RLD(ρ,dρ[1];eps=eps)    
+    W[1] * QFIM_RLD(ρ, dρ[1]; eps = eps)
 end
 
-function objective(obj::QFIM{multi_para, RLD}, dynamics::Kraus)
-    (;W,eps) = obj
+function objective(obj::QFIM{multi_para,RLD}, dynamics::Kraus)
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    tr(W*pinv(QFIM_RLD(ρ,dρ;eps=eps)))  
+    tr(W * pinv(QFIM_RLD(ρ, dρ; eps = eps)))
 end
 
-function objective(obj::QFIM{single_para, LLD}, dynamics::Kraus)
-    (;W,eps) = obj
+function objective(obj::QFIM{single_para,LLD}, dynamics::Kraus)
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    W[1]*QFIM_LLD(ρ,dρ[1];eps=eps)    
+    W[1] * QFIM_LLD(ρ, dρ[1]; eps = eps)
 end
 
-function objective(obj::QFIM{multi_para, LLD}, dynamics::Kraus)
-    (;W,eps) = obj
+function objective(obj::QFIM{multi_para,LLD}, dynamics::Kraus)
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    tr(W*pinv(QFIM_LLD(ρ,dρ;eps=eps)))  
+    tr(W * pinv(QFIM_LLD(ρ, dρ; eps = eps)))
 end
 
 function objective(obj::CFIM{single_para}, dynamics::Lindblad)
-    (;W,eps) = obj
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    W[1]*CFIM(ρ,dρ[1];eps=eps)    
+    W[1] * CFIM(ρ, dρ[1]; eps = eps)
 end
 
 function objective(obj::CFIM{multi_para}, dynamics::Lindblad)
-    (;W,eps) = obj
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    tr(W*pinv(CFIM(ρ,dρ;eps=eps)))
+    tr(W * pinv(CFIM(ρ, dρ; eps = eps)))
 end
 
 function objective(obj::CFIM{single_para}, dynamics::Kraus)
-    (;W,eps) = obj
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    W[1]*CFIM(ρ,dρ[1];eps=eps)    
+    W[1] * CFIM(ρ, dρ[1]; eps = eps)
 end
 
 function objective(obj::CFIM{multi_para}, dynamics::Kraus)
-    (;W,eps) = obj
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    tr(W*pinv(CFIM(ρ,dρ;eps=eps)))
+    tr(W * pinv(CFIM(ρ, dρ; eps = eps)))
 end
 
 function objective(obj::HCRB{multi_para}, dynamics::Lindblad)
-    (;W,eps) = obj
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    Holevo_bound(ρ,dρ,W;eps=eps)
+    Holevo_bound(ρ, dρ, W; eps = eps)
 end
 
 function objective(obj::HCRB{multi_para}, dynamics::Kraus)
-    (;W,eps) = obj
+    (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    Holevo_bound(ρ,dρ,W;eps=eps)
+    Holevo_bound(ρ, dρ, W; eps = eps)
 end
