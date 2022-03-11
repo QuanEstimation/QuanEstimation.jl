@@ -59,6 +59,7 @@ function SLD_liouville(
     ∂ρ_∂x::Vector{Matrix{T}};
     eps = eps_default,
 ) where {T<:Complex}
+
     (x -> SLD_liouville(ρ, x; eps = eps)).(∂ρ_∂x)
 end
 
@@ -187,6 +188,7 @@ function QFIM(
     dtype = :SLD,
     eps = eps_default,
 ) where {T<:Complex}
+
     Symbol("QFIM_" * string(dtype))(ρ, dρ; eps = eps)
 end
 
@@ -197,6 +199,7 @@ function QFIM(
     dtype = :SLD,
     eps = eps_default,
 ) where {T<:Complex}
+
     Symbol("QFIM_" * string(dtype))(ρ, dρ; eps = eps)
 end
 
@@ -211,6 +214,7 @@ function QFIM(
     dtype = :SLD,
     eps = eps_default,
 ) where {T<:Complex}
+
     F = QFIM(ρ, dρ; dtype = dtype, eps = eps)
     LD = eval(dtype)(ρ, dρ; eps = eps)
     return F, LD
@@ -224,6 +228,7 @@ function QFIM(
     dtype = :SLD,
     eps = eps_default,
 ) where {T<:Complex}
+
     F = QFIM(ρ, dρ; dtype = dtype, eps = eps)
     LD = eval(dtype)(ρ, dρ; eps = eps)
     return F, LD
@@ -346,11 +351,13 @@ function QFIM_Gauss(R̄::V, dR̄::VV, D::M, dD::VM) where {V,VV,M,VM<:AbstractVe
             i = 1:quad_num, j = 1:quad_num
         ] for k = 1:para_num
     ]
+
     S, cs = Williamson_form(C)
     Gs = G_Gauss(S, dC, cs)
     F = [
         tr(Gs[i] * dC[j]) + transpose(dR̄[i]) * inv(C) * dR̄[j] for i = 1:para_num,
         j = 1:para_num
     ]
+
     F |> real
 end
