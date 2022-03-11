@@ -20,7 +20,6 @@ struct HCRB{P} <: AbstractObj
     eps::Number
 end
 
-QFIM_Obj(W, eps, syms::Symbol...) = QFIM_Obj{eval.(syms)...}(W,eps)
-CFIM_Obj(M, W, eps, syms::Symbol...) = CFIM_Obj{eval.(syms)...}(M,W,eps)
-HCRB_Obj(W, eps, syms::Symbol...) = HCRB_Obj{eval.(syms)...}(W,eps)
-
+QFIM_Obj(W, eps, syms::Symbol...) = QFIM_Obj{eval.(syms)...}(W, eps)
+CFIM_Obj(M, W, eps, syms::Symbol...) = CFIM_Obj{eval.(syms)...}(M, W, eps)
+HCRB_Obj(W, eps, syms::Symbol...) = HCRB_Obj{eval.(syms)...}(W, eps)
