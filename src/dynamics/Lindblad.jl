@@ -161,11 +161,11 @@ Lindblad(
     H0::AbstractVecOrMat,
     dH::AbstractVector,
     Hc::AbstractVector,
-    cc::AbstractVector,
+    ctrl::AbstractVector,
     ρ0::AbstractMatrix,
     tspan::AbstractVector,
 ) = Lindblad(
-    Lindblad_noiseless_controlled(H0, dH, ρ0, tspan, Hc, cc),
+    Lindblad_noiseless_controlled(H0, dH, ρ0, tspan, Hc, ctrl),
     :noiseless,
     :controlled,
 )
@@ -174,13 +174,13 @@ Lindblad(
     H0::AbstractVecOrMat,
     dH::AbstractVector,
     Hc::AbstractVector,
-    cc::AbstractVector,
+    ctrl::AbstractVector,
     ρ0::AbstractMatrix,
     tspan::AbstractVector,
     decay_opt::AbstractVector,
     γ::AbstractVector,
 ) = Lindblad(
-    Lindblad_noisy_controlled(H0, dH, ρ0, tspan, decay_opt, γ, Hc, cc),
+    Lindblad_noisy_controlled(H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl),
     :noisy,
     :controlled,
 )
@@ -231,11 +231,11 @@ Lindblad(
     H0::AbstractVecOrMat,
     dH::AbstractVector,
     Hc::AbstractVector,
-    cc::AbstractVector,
+    ctrl::AbstractVector,
     ψ0::AbstractVector,
     tspan::AbstractVector,
 ) = Lindblad(
-    Lindblad_noiseless_controlled(H0, dH, ψ0, tspan, Hc, cc),
+    Lindblad_noiseless_controlled(H0, dH, ψ0, tspan, Hc, ctrl),
     :noiseless,
     :controlled,
     :ket,
@@ -245,13 +245,13 @@ Lindblad(
     H0::AbstractVecOrMat,
     dH::AbstractVector,
     Hc::AbstractVector,
-    cc::AbstractVector,
+    ctrl::AbstractVector,
     ψ0::AbstractVector,
     tspan::AbstractVector,
     decay_opt::AbstractVector,
     γ::AbstractVector,
 ) = Lindblad(
-    Lindblad_noisy_controlled(H0, dH, ψ0, tspan, decay_opt, γ, Hc, cc),
+    Lindblad_noisy_controlled(H0, dH, ψ0, tspan, decay_opt, γ, Hc, ctrl),
     :noisy,
     :controlled,
     :ket,
@@ -343,42 +343,42 @@ end
 
 function Htot(
     H0::Matrix{T},
-    control_Hamiltonian::Vector{Matrix{T}},
-    control_coefficients,
+    Hc::Vector{Matrix{T}},
+    ctrl,
 ) where {T<:Complex,R}
     Htot =
         [H0] .+ (
             [
-                control_coefficients[i] .* [control_Hamiltonian[i]] for
-                i = 1:length(control_coefficients)
+                ctrl[i] .* [Hc[i]] for
+                i = 1:length(ctrl)
             ] |> sum
         )
 end
 
 function Htot(
     H0::Matrix{T},
-    control_Hamiltonian::Vector{Matrix{T}},
-    control_coefficients::Vector{R},
+    Hc::Vector{Matrix{T}},
+    ctrl::Vector{R},
 ) where {T<:Complex,R<:Real}
     Htot =
         H0 + (
             [
-                control_coefficients[i] * control_Hamiltonian[i] for
-                i = 1:length(control_coefficients)
+                ctrl[i] * Hc[i] for
+                i = 1:length(ctrl)
             ] |> sum
         )
 end
 
 function Htot(
     H0::Vector{Matrix{T}},
-    control_Hamiltonian::Vector{Matrix{T}},
-    control_coefficients,
+    Hc::Vector{Matrix{T}},
+    ctrl,
 ) where {T<:Complex}
     Htot =
         H0 + (
             [
-                control_coefficients[i] .* [control_Hamiltonian[i]] for
-                i = 1:length(control_coefficients)
+                ctrl[i] .* [Hc[i]] for
+                i = 1:length(ctrl)
             ] |> sum
         )
 end
@@ -400,19 +400,19 @@ function expm(
     ρ0::Matrix{T},
     decay_opt::Vector{Matrix{T}},
     γ,
-    control_Hamiltonian::Vector{Matrix{T}},
-    control_coefficients::Vector{Vector{R}},
+    Hc::Vector{Matrix{T}},
+    ctrl::Vector{Vector{R}},
     tspan,
 ) where {T<:Complex,R<:Real}
 
-    ctrl_num = length(control_Hamiltonian)
-    ctrl_interval = ((length(tspan) - 1) / length(control_coefficients[1])) |> Int
-    control_coefficients = [
-        repeat(control_coefficients[i], 1, ctrl_interval) |> transpose |> vec for
+    ctrl_num = length(Hc)
+    ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
+    ctrl = [
+        repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for
         i = 1:ctrl_num
     ]
 
-    H = Htot(H0, control_Hamiltonian, control_coefficients)
+    H = Htot(H0, Hc, ctrl)
     ∂H_L = liouville_commu(∂H_∂x)
 
     Δt = tspan[2] - tspan[1]
@@ -436,20 +436,20 @@ function expm(
     ρ0::Matrix{T},
     decay_opt::Vector{Matrix{T}},
     γ,
-    control_Hamiltonian::Vector{Matrix{T}},
-    control_coefficients::Vector{Vector{R}},
+    Hc::Vector{Matrix{T}},
+    ctrl::Vector{Vector{R}},
     tspan,
 ) where {T<:Complex,R<:Real}
 
     para_num = length(∂H_∂x)
-    ctrl_num = length(control_Hamiltonian)
-    ctrl_interval = ((length(tspan) - 1) / length(control_coefficients[1])) |> Int
-    control_coefficients = [
-        repeat(control_coefficients[i], 1, ctrl_interval) |> transpose |> vec for
+    ctrl_num = length(Hc)
+    ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
+    ctrl = [
+        repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for
         i = 1:ctrl_num
     ]
 
-    H = Htot(H0, control_Hamiltonian, control_coefficients)
+    H = Htot(H0, Hc, ctrl)
     ∂H_L = [liouville_commu(∂H_∂x[i]) for i = 1:para_num]
 
     Δt = tspan[2] - tspan[1]
