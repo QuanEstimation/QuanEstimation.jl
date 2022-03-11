@@ -341,18 +341,8 @@ function liouvillian(
     -1.0im * freepart + dissp
 end
 
-function Htot(
-    H0::Matrix{T},
-    Hc::Vector{Matrix{T}},
-    ctrl,
-) where {T<:Complex,R}
-    Htot =
-        [H0] .+ (
-            [
-                ctrl[i] .* [Hc[i]] for
-                i = 1:length(ctrl)
-            ] |> sum
-        )
+function Htot(H0::Matrix{T}, Hc::Vector{Matrix{T}}, ctrl) where {T<:Complex,R}
+    Htot = [H0] .+ ([ctrl[i] .* [Hc[i]] for i = 1:length(ctrl)] |> sum)
 end
 
 function Htot(
@@ -360,27 +350,11 @@ function Htot(
     Hc::Vector{Matrix{T}},
     ctrl::Vector{R},
 ) where {T<:Complex,R<:Real}
-    Htot =
-        H0 + (
-            [
-                ctrl[i] * Hc[i] for
-                i = 1:length(ctrl)
-            ] |> sum
-        )
+    Htot = H0 + ([ctrl[i] * Hc[i] for i = 1:length(ctrl)] |> sum)
 end
 
-function Htot(
-    H0::Vector{Matrix{T}},
-    Hc::Vector{Matrix{T}},
-    ctrl,
-) where {T<:Complex}
-    Htot =
-        H0 + (
-            [
-                ctrl[i] .* [Hc[i]] for
-                i = 1:length(ctrl)
-            ] |> sum
-        )
+function Htot(H0::Vector{Matrix{T}}, Hc::Vector{Matrix{T}}, ctrl) where {T<:Complex}
+    Htot = H0 + ([ctrl[i] .* [Hc[i]] for i = 1:length(ctrl)] |> sum)
 end
 
 function expL(H, decay_opt, γ, dt, tj)
@@ -407,10 +381,7 @@ function expm(
 
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    ctrl = [
-        repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for
-        i = 1:ctrl_num
-    ]
+    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
 
     H = Htot(H0, Hc, ctrl)
     ∂H_L = liouville_commu(∂H_∂x)
@@ -444,10 +415,7 @@ function expm(
     para_num = length(∂H_∂x)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    ctrl = [
-        repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for
-        i = 1:ctrl_num
-    ]
+    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
 
     H = Htot(H0, Hc, ctrl)
     ∂H_L = [liouville_commu(∂H_∂x[i]) for i = 1:para_num]
