@@ -95,7 +95,9 @@ function update!(opt::ControlOpt, alg::PSO, obj, dynamics, output)
                     control_coeff_pre[dk][ck] = particles[pk].data.ctrl[dk][ck]
                     velocity[dk, ck, pk] =
                         c0 * velocity[dk, ck, pk] +
-                        c1 * rand(rng) * (pbest[dk, ck, pk] - particles[pk].data.ctrl[dk][ck])
+                        c1 *
+                        rand(rng) *
+                        (pbest[dk, ck, pk] - particles[pk].data.ctrl[dk][ck])
                     +c2 * rand(rng) * (gbest[dk, ck] - particles[pk].data.ctrl[dk][ck])
                     particles[pk].data.ctrl[dk][ck] += velocity[dk, ck, pk]
                 end
@@ -105,10 +107,8 @@ function update!(opt::ControlOpt, alg::PSO, obj, dynamics, output)
                 for cm = 1:ctrl_length
                     particles[pk].data.ctrl[dm][cm] = (
                         x ->
-                            x < opt.ctrl_bound[1] ?
-                            opt.ctrl_bound[1] :
-                            x > opt.ctrl_bound[2] ?
-                            opt.ctrl_bound[2] : x
+                            x < opt.ctrl_bound[1] ? opt.ctrl_bound[1] :
+                            x > opt.ctrl_bound[2] ? opt.ctrl_bound[2] : x
                     )(
                         particles[pk].data.ctrl[dm][cm],
                     )

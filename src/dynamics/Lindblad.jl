@@ -352,7 +352,7 @@ function liouvillian(
     H::Matrix{T},
     decay_opt::Vector{Matrix{T}},
     γ,
-    t=1,
+    t = 1,
 ) where {T<:Complex}
     freepart = liouville_commu(H)
     dissp = norm(γ) + 1 ≈ 1 ? freepart |> zero : dissipation(decay_opt, γ, t)
@@ -375,7 +375,7 @@ function Htot(H0::Vector{Matrix{T}}, Hc::Vector{Matrix{T}}, ctrl) where {T<:Comp
     H0 + ([ctrl[i] .* [Hc[i]] for i = 1:length(ctrl)] |> sum)
 end
 
-function expL(H, decay_opt, γ, dt, tj=1)
+function expL(H, decay_opt, γ, dt, tj = 1)
     Ld = dt * liouvillian(H, decay_opt, γ, tj)
     exp(Ld)
 end
@@ -558,7 +558,7 @@ end
 
 #### evolution of pure states under time-independent Hamiltonian without noise and controls ####
 function evolve(dynamics::Lindblad{noiseless,free,ket})
-    (; H0, dH, psi0, tspan )= dynamics.data
+    (; H0, dH, psi0, tspan) = dynamics.data
 
     para_num = length(dH)
     Δt = tspan[2] - tspan[1]
@@ -649,7 +649,7 @@ end
 #### evolution of density matrix under time-independent Hamiltonian  
 #### with noise but without controls
 function evolve(dynamics::Lindblad{noisy,free,dm})
-    (; H0, dH, ρ0, tspan, decay_opt, γ )= dynamics.data
+    (; H0, dH, ρ0, tspan, decay_opt, γ) = dynamics.data
 
     para_num = length(dH)
     ρt = ρ0 |> vec
@@ -667,7 +667,7 @@ end
 #### evolution of pure states under time-dependent Hamiltonian  
 #### with noise but without controls
 function evolve(dynamics::Lindblad{noisy,timedepend,ket})
-    (;H0, dH, psi0, tspan, decay_opt, γ) = dynamics.data
+    (; H0, dH, psi0, tspan, decay_opt, γ) = dynamics.data
 
     para_num = length(dH)
     dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
@@ -686,7 +686,7 @@ end
 #### evolution of density matrix under time-dependent Hamiltonian  
 #### with noise but without controls
 function evolve(dynamics::Lindblad{noisy,timedepend,dm})
-    (;H0, dH, ρ0, tspan, decay_opt, γ) = dynamics.data
+    (; H0, dH, ρ0, tspan, decay_opt, γ) = dynamics.data
 
     para_num = length(dH)
     dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
@@ -705,7 +705,7 @@ end
 #### evolution of density matrix under time-independent Hamiltonian 
 #### with controls but without noise #### 
 function evolve(dynamics::Lindblad{noiseless,controlled,dm})
-    (;H0, dH, ρ0, tspan, Hc, ctrl) = dynamics.data
+    (; H0, dH, ρ0, tspan, Hc, ctrl) = dynamics.data
 
     para_num = length(dH)
     ctrl_num = length(Hc)
@@ -727,8 +727,8 @@ end
 
 #### evolution of density matrix under time-independent Hamiltonian with noise and controls #### 
 function evolve(dynamics::Lindblad{noisy,controlled,dm})
-    (;H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl)= dynamics.data
-    
+    (; H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl) = dynamics.data
+
     para_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
@@ -785,45 +785,57 @@ end
 #     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 # end
 
-function propagate(dynamics::Lindblad{noisy,controlled,dm,P}, ρₜ::AbstractMatrix, dρₜ::AbstractVector, ctrl::Vector{R},  Δt::Real) where {R <: Real, P}
-    (;H0, dH, decay_opt,γ, Hc, tspan) = dynamics.data
+function propagate(
+    dynamics::Lindblad{noisy,controlled,dm,P},
+    ρₜ::AbstractMatrix,
+    dρₜ::AbstractVector,
+    ctrl::Vector{R},
+    Δt::Real,
+) where {R<:Real,P}
+    (; H0, dH, decay_opt, γ, Hc, tspan) = dynamics.data
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
     para_num = length(dH)
     H = Htot(H0, Hc, ctrl)
-    dH_L = [liouville_commu(dH[i]) for i in 1:para_num]
+    dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
     expL_t = expL(H, decay_opt, γ, Δt)
     ρₜ_next = ρₜ |> vec
-    dρₜ_next = [(dρₜ[para] |> vec) for para in 1:para_num]
-    for i in 1:ctrl_interval
-        ρₜ_next = expL_t * ρₜ_next 
-        for para in 1:para_num
+    dρₜ_next = [(dρₜ[para] |> vec) for para = 1:para_num]
+    for i = 1:ctrl_interval
+        ρₜ_next = expL_t * ρₜ_next
+        for para = 1:para_num
             dρₜ_next[para] = -im * Δt * dH_L[para] * ρₜ_next + expL_t * dρₜ_next[para]
         end
     end
     ρₜ_next |> vec2mat, dρₜ_next |> vec2mat
 end
 
-function propagate(dynamics::Lindblad{noiseless,controlled,dm,P}, ρₜ::AbstractMatrix, dρₜ::AbstractVector, ctrl::Vector{R},  Δt::Real) where {R <: Real, P}
-    (;H0, dH, Hc, tspan) = dynamics.data
+function propagate(
+    dynamics::Lindblad{noiseless,controlled,dm,P},
+    ρₜ::AbstractMatrix,
+    dρₜ::AbstractVector,
+    ctrl::Vector{R},
+    Δt::Real,
+) where {R<:Real,P}
+    (; H0, dH, Hc, tspan) = dynamics.data
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
     para_num = length(dH)
     H = Htot(H0, Hc, ctrl)
-    dH_L = [liouville_commu(dH[i]) for i in 1:para_num]
+    dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
     expL_t = expL(H, Δt)
     ρₜ_next = ρₜ |> vec
-    dρₜ_next = [(dρₜ[para] |> vec) for para in 1:para_num]
-    for i in 1:ctrl_interval
-        ρₜ_next = expL_t * ρₜ_next 
-        for para in 1:para_num
+    dρₜ_next = [(dρₜ[para] |> vec) for para = 1:para_num]
+    for i = 1:ctrl_interval
+        ρₜ_next = expL_t * ρₜ_next
+        for para = 1:para_num
             dρₜ_next[para] = -im * Δt * dH_L[para] * ρₜ_next + expL_t * dρₜ_next[para]
         end
     end
     ρₜ_next |> vec2mat, dρₜ_next |> vec2mat
 end
 
-function propagate(ρₜ, dρₜ, dynamics, ctrl, t=1, ctrl_interval=1)
+function propagate(ρₜ, dρₜ, dynamics, ctrl, t = 1, ctrl_interval = 1)
     Δt = dynamics.tspan[t+1] - system.tspan[t]
-    propagate(dynamics,ρₜ, dρₜ, ctrl, Δt, ctrl_interval)
+    propagate(dynamics, ρₜ, dρₜ, ctrl, Δt, ctrl_interval)
 end
 
 # function propagate!(system)

@@ -33,7 +33,7 @@ end
 RLBase.action_space(env::ControlEnv) = env.action_space
 RLBase.state_space(env::ControlEnv) = env.state_space
 RLBase.reward(env::ControlEnv) = env.reward
-RLBase.is_terminated(env::ControlEnv) = env.done 
+RLBase.is_terminated(env::ControlEnv) = env.done
 RLBase.state(env::ControlEnv) = env.state
 
 #### control optimization ####
@@ -48,8 +48,7 @@ function update!(opt::ControlOpt, alg::DDPG, obj, dynamics, output)
     state = dynamics.data.ρ0
     dstate = [state |> zero for _ = 1:para_num]
     state = state |> state_flatten
-    action_space =
-        Space([opt.ctrl_bound[1] .. opt.ctrl_bound[2] for _ = 1:ctrl_num])
+    action_space = Space([opt.ctrl_bound[1] .. opt.ctrl_bound[2] for _ = 1:ctrl_num])
     state_space = Space(fill(-1.0e35 .. 1.0e35, length(state)))
 
     dynamics_copy = set_ctrl(dynamics, [zeros(ctrl_length) for i = 1:ctrl_num])
@@ -150,7 +149,7 @@ function update!(opt::ControlOpt, alg::DDPG, obj, dynamics, output)
     hook = TotalRewardPerEpisode(is_display_on_exit = false)
     RLBase.run(agent, env, stop_condition, hook)
 
-    set_io!(output,output.f_list[end])
+    set_io!(output, output.f_list[end])
     if save_type(output) == :no_save
         SaveReward(env.total_reward_all)
     end
@@ -159,7 +158,7 @@ end
 
 function Base.rsplit(v, l::Int)
     u = reshape(v, l, length(v) ÷ l)
-    [u[:, i] for i in 1:size(u, 2)]
+    [u[:, i] for i = 1:size(u, 2)]
 end
 
 state_flatten(s) = vcat((s |> reim .|> vec)...)
@@ -186,7 +185,7 @@ end
 function _step!(env::ControlEnv, a)
     env.t += 1
     ρₜ, ∂ₓρₜ = env.state |> density_matrix, env.dstate
-    ρₜₙ, ∂ₓρₜₙ = propagate(env.dynamics, ρₜ, ∂ₓρₜ,  a, env.t)## TODO:
+    ρₜₙ, ∂ₓρₜₙ = propagate(env.dynamics, ρₜ, ∂ₓρₜ, a, env.t)## TODO:
     env.state = ρₜₙ |> state_flatten
     env.dstate = ∂ₓρₜₙ
     env.done = env.t > env.ctrl_length
@@ -207,5 +206,3 @@ function _step!(env::ControlEnv, a)
 end
 
 #### state optimization ####
-
-
