@@ -158,17 +158,17 @@ end
 function CFIM(ρ::Matrix{T}, dρ::Matrix{T}; eps = eps_default) where {T<:Complex}
     M = SIC(size(ρ)[1])
     m_num = length(M)
-    F = 0.
-    for i in 1:m_num
+    F = 0.0
+    for i = 1:m_num
         mp = M[i]
         p = real(tr(ρ * mp))
         dp = real(tr(dρ * mp))
-        cadd = 0.
+        cadd = 0.0
         if p > eps
-            cadd = (dp*dp) / p
+            cadd = (dp * dp) / p
         end
         F += cadd
-    end 
+    end
     real(F)
 end
 
@@ -187,17 +187,17 @@ end
 
 function CFIM(ρ::Matrix{T}, dρ::Matrix{T}, M; eps = eps_default) where {T<:Complex}
     m_num = length(M)
-    F = 0.
-    for i in 1:m_num
+    F = 0.0
+    for i = 1:m_num
         mp = M[i]
         p = real(tr(ρ * mp))
         dp = real(tr(dρ * mp))
-        cadd = 0.
+        cadd = 0.0
         if p > eps
-            cadd = (dp*dp) / p
+            cadd = (dp * dp) / p
         end
         F += cadd
-    end 
+    end
     real(F)
 end
 

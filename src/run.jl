@@ -15,8 +15,8 @@ mutable struct QuanEstSystem{
 end
 
 function run(system::QuanEstSystem)
-    (;optim, algorithm, objective, dynamics, output) = system
+    (; optim, algorithm, objective, dynamics, output) = system
     show(system) # io1
-    update!(optim, algorithm, objective, dynamics,output)
+    update!(optim, algorithm, objective, dynamics, output)
     show(objective, output) #io4
 end

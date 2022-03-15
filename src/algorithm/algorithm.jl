@@ -7,7 +7,7 @@ abstract type AbstractAlgorithm end
 struct GRAPE <: AbstractAlgorithm
     max_episode::Number
 end
-    
+
 struct GRAPE_Adam <: AbstractAlgorithm
     max_episode::Number
     ϵ::Number
@@ -15,7 +15,7 @@ struct GRAPE_Adam <: AbstractAlgorithm
     beta2::Number
 end
 
-GRAPE(max_episode,ϵ,beta1,beta2) =  GRAPE_Adam(max_episode,ϵ,beta1,beta2)
+GRAPE(max_episode, ϵ, beta1, beta2) = GRAPE_Adam(max_episode, ϵ, beta1, beta2)
 
 struct AD <: AbstractAlgorithm
     max_episode::Number
@@ -29,10 +29,10 @@ struct AD_Adam <: AbstractAlgorithm
     beta2::Number
 end
 
-AD(max_episode,ϵ,beta1,beta2) =  AD_Adam(max_episode,ϵ,beta1,beta2)
+AD(max_episode, ϵ, beta1, beta2) = AD_Adam(max_episode, ϵ, beta1, beta2)
 
 struct PSO <: AbstractAlgorithm
-    max_episode::Union{T, Vector{T}} where T<:Number
+    max_episode::Union{T,Vector{T}} where {T<:Number}
     p_num::Number
     ini_particle::AbstractVector
     c0::Number
@@ -63,7 +63,7 @@ struct DDPG <: AbstractAlgorithm
     max_episode::Number
     layer_num::Number
     layer_dim::Number
-    rng::AbstractRNG 
+    rng::AbstractRNG
 end
 
 DDPG(max_episode, layer_num, layer_dim) =
@@ -86,7 +86,7 @@ NM(max_episode, state_num, nelder_mead, ar, ae, ac, as0) =
     NM(max_episode, state_num, nelder_mead, ar, ae, ac, as0, GLOBAL_RNG)
 NM(max_episode, state_num, nelder_mead, ar, ae, ac, as0, seed::Number) =
     NM(max_episode, state_num, nelder_mead, ar, ae, ac, as0, MersenneTwister(seed))
-    
+
 alg_type(::AD) = :AD
 alg_type(::AD_Adam) = :AD
 alg_type(::GRAPE) = :GRAPE

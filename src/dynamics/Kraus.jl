@@ -26,7 +26,7 @@ Kraus(K::AbstractVector, dK::AbstractVector, ψ::AbstractVector) =
 
 #### evolution of pure states under time-independent Hamiltonian without noise and controls ####
 function evolve(dynamics::Kraus{ket})
-    (;K, dK, ψ₀) = dynamics
+    (; K, dK, ψ₀) = dynamics
     ρ₀ = ψ₀ * ψ₀'
     ρ = [K * ρ₀ * K' for K in K] |> sum
     dρ = [[dK * ρ₀ * K' + K * ρ₀ * dK'] |> sum for dK in dK]
@@ -36,7 +36,7 @@ end
 
 #### evolution of density matrix under time-independent Hamiltonian without noise and controls ####
 function evolve(dynamics::Kraus{dm})
-    (;K, dK, ρ₀) = dynamics
+    (; K, dK, ρ₀) = dynamics
     ρ = [K * ρ₀ * K' for K in K] |> sum
     dρ = [[dK * ρ₀ * K' + K * ρ₀ * dK'] |> sum for dK in dK]
 
