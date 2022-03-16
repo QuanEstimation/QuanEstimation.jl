@@ -14,7 +14,7 @@ end
 
 GRAPE(max_episode, ϵ, beta1, beta2) = GRAPE_Adam(max_episode, ϵ, beta1, beta2)
 
-abstract type AbstractAD <:  AbstractAlgorithm end
+abstract type AbstractAD <: AbstractAlgorithm end
 struct AD <: AbstractAD
     max_episode::Number
     ϵ::Number
