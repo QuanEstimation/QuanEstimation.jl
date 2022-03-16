@@ -19,26 +19,38 @@ struct Kraus_pure <: AbstractDynamicsData
 end
 
 # Constructor for Kraus dynamics
-Kraus(K::AbstractVector, dK::AbstractVector, ρ::AbstractMatrix) =
-    Kraus{dm}(Kraus_data(K, dK, ρ), :noiseless, :free, :dm)
-Kraus(K::AbstractVector, dK::AbstractVector, ψ::AbstractVector) =
-    Kraus{ket}(Kraus_data(K, dK, ψ), :noiseless, :free, :ket)
+Kraus(K::AbstractVector, dK::AbstractVector, ρ0::AbstractMatrix) =
+    Kraus{dm}(Kraus_data(K, dK, ρ0), :noiseless, :free, :dm)
+Kraus(K::AbstractVector, dK::AbstractVector, ψ0::AbstractVector) =
+    Kraus{ket}(Kraus_data(K, dK, ψ0), :noiseless, :free, :ket)
+
+function set_state(dynamics::Kraus, state::AbstractVector)
+    temp = deepcopy(dynamics)
+    temp.data.ψ0 = state
+    temp
+end
+    
+function set_state(dynamics::Kraus, state::AbstractMatrix)
+    temp = deepcopy(dynamics)
+    temp.data.ρ0 = state
+    temp
+end
 
 #### evolution of pure states under time-independent Hamiltonian without noise and controls ####
 function evolve(dynamics::Kraus{ket})
-    (; K, dK, ψ₀) = dynamics
-    ρ₀ = ψ₀ * ψ₀'
-    ρ = [K * ρ₀ * K' for K in K] |> sum
-    dρ = [[dK * ρ₀ * K' + K * ρ₀ * dK'] |> sum for dK in dK]
+    (; K, dK, ψ0) = dynamics
+    ρ0 = ψ0 * ψ0'
+    ρ = [K * ρ0 * K' for K in K] |> sum
+    dρ = [[dK * ρ0 * K' + K * ρ0 * dK'] |> sum for dK in dK]
 
     ρ, dρ
 end
 
 #### evolution of density matrix under time-independent Hamiltonian without noise and controls ####
 function evolve(dynamics::Kraus{dm})
-    (; K, dK, ρ₀) = dynamics
-    ρ = [K * ρ₀ * K' for K in K] |> sum
-    dρ = [[dK * ρ₀ * K' + K * ρ₀ * dK'] |> sum for dK in dK]
+    (; K, dK, ρ0) = dynamics
+    ρ = [K * ρ0 * K' for K in K] |> sum
+    dρ = [[dK * ρ0 * K' + K * ρ0 * dK'] |> sum for dK in dK]
 
     ρ, dρ
 end

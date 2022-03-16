@@ -265,13 +265,13 @@ end
 
 function set_state(dynamics::Lindblad, state::AbstractVector)
     temp = deepcopy(dynamics)
-    temp.data.ψ₀ = state
+    temp.data.ψ0 = state
     temp
 end
 
 function set_state(dynamics::Lindblad, state::AbstractMatrix)
     temp = deepcopy(dynamics)
-    temp.data.ρ₀ = state
+    temp.data.ρ0 = state
     temp
 end
 
