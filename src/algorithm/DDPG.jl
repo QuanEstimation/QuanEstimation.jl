@@ -4,12 +4,6 @@ using StableRNGs
 using Flux.Losses
 using IntervalSets
 
-RLBase.action_space(env) = env.action_space
-RLBase.state_space(env) = env.state_space
-RLBase.reward(env) = env.reward
-RLBase.is_terminated(env) = env.done 
-RLBase.state(env) = env.state
-
 function Base.rsplit( v, l::Int)
     u = reshape(v,l,length(v)÷l)
     [u[:,i] for i=1:size(u,2)]
@@ -164,6 +158,12 @@ function update!(opt::ControlOpt, alg::DDPG, obj, dynamics, output)
     end
 end
 
+RLBase.action_space(env::ControlEnv) = env.action_space
+RLBase.state_space(env::ControlEnv) = env.state_space
+RLBase.reward(env::ControlEnv) = env.reward
+RLBase.is_terminated(env::ControlEnv) = env.done 
+RLBase.state(env::ControlEnv) = env.state
+
 function RLBase.reset!(env::ControlEnv)
     state = env.dynamics.data.ρ0
     env.dstate = [state |> zero for _ = 1:(env.para_num)]
@@ -224,6 +224,12 @@ mutable struct StateEnv{T<:Complex, M<:Real, R<:AbstractRNG}
     episode::Int
 end
 
+RLBase.action_space(env::StateEnv) = env.action_space
+RLBase.state_space(env::StateEnv) = env.state_space
+RLBase.reward(env::StateEnv) = env.reward
+RLBase.is_terminated(env::StateEnv) = env.done 
+RLBase.state(env::StateEnv) = env.state
+
 function update!(Sopt::StateOpt, alg::DDPG, obj, dynamics, output)
     (; max_episode, layer_num, layer_dim, rng) = alg
     episode = 1
@@ -271,7 +277,7 @@ function update!(Sopt::StateOpt, alg::DDPG, obj, dynamics, output)
 
     stop_condition = StopAfterStep(max_episode, is_show_progress=false)
     hook = TotalRewardPerEpisode(is_display_on_exit=false)
-    run(agent, env, stop_condition, hook)
+    RLBase.run(agent, env, stop_condition, hook)
 
     show(output, output)
     if save_type(output) == :no_save

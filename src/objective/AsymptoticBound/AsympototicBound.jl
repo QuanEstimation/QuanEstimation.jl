@@ -42,6 +42,21 @@ LD_type(::QFIM_Obj{P,SLD}) where {P} = :SLD
 LD_type(::QFIM_Obj{P,RLD}) where {P} = :RLD
 LD_type(::QFIM_Obj{P,LLD}) where {P} = :LLD
 
+QFIM_Obj(opt::CFIM{P}) where P = QFIM_Obj{P, SLD}(opt.W, opt.eps)
+QFIM_Obj(opt::CFIM{P}, LDtype::Symbol) where P = QFIM_Obj{P, eval(LDtype)}(opt.W, opt.eps)
+
+function set_M(obj::CFIM_Obj{single_para}, M::AbstractMatrix)
+    temp = deepcopy(obj)
+    temp.M = M
+    temp
+end
+
+function set_M(obj::CFIM_Obj{multi_para}, M::AbstractMatrix)
+    temp = deepcopy(obj)
+    temp.M = M
+    temp
+end
+
 function objective(obj::QFIM_Obj{single_para,SLD}, dynamics::Lindblad)
     (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
@@ -165,6 +180,76 @@ function objective(obj::HCRB_Obj{multi_para}, dynamics::Kraus)
     (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
     f = Holevo_bound(ρ, dρ, W; eps = eps)
+    return f, 1.0 / f
+end
+
+#### objective function for linear combination in Mopt ####
+function objective(opt::Mopt_LinearComb, obj::CFIM_Obj{single_para}, dynamics::Lindblad)
+    (; W, eps) = obj
+    M = [sum([opt.B[i][j]*opt.POVM_basis[j] for j in 1:length(opt.POVM_basis)]) for i in 1:opt.M_num]
+    ρ, dρ = evolve(dynamics)
+    f = W[1] * CFIM(ρ, dρ[1], M; eps = eps)
+    return f, f
+end
+
+function objective(opt::Mopt_LinearComb, obj::CFIM_Obj{multi_para}, dynamics::Lindblad)
+    (; W, eps) = obj
+    M = [sum([opt.B[i][j]*opt.POVM_basis[j] for j in 1:length(opt.POVM_basis)]) for i in 1:opt.M_num]
+    ρ, dρ = evolve(dynamics)
+    f = tr(W * pinv(CFIM(ρ, dρ, M; eps = eps)))
+    return f, 1.0 / f
+end
+
+function objective(opt::Mopt_LinearComb, obj::CFIM_Obj{single_para}, dynamics::Kraus)
+    (; W, eps) = obj
+    M = [sum([opt.B[i][j]*opt.POVM_basis[j] for j in 1:length(opt.POVM_basis)]) for i in 1:opt.M_num]
+    ρ, dρ = evolve(dynamics)
+    f = W[1] * CFIM(ρ, dρ[1], M; eps = eps)
+    return f, f
+end
+
+function objective(opt::Mopt_LinearComb, obj::CFIM_Obj{multi_para}, dynamics::Kraus)
+    (; W, eps) = obj
+    M = [sum([opt.B[i][j]*opt.POVM_basis[j] for j in 1:length(opt.POVM_basis)]) for i in 1:opt.M_num]
+    ρ, dρ = evolve(dynamics)
+    f = tr(W * pinv(CFIM(ρ, dρ, M; eps = eps)))
+    return f, 1.0 / f
+end
+
+#### objective function for rotation in Mopt ####
+function objective(opt::Mopt_Rotation, obj::CFIM_Obj{single_para}, dynamics::Lindblad)
+    (; W, eps) = obj
+    U = rotation_matrix(opt.s, opt.Lambda)
+    M = [U*opt.POVM_basis[i]*U' for i in 1:length(opt.POVM_basis)]
+    ρ, dρ = evolve(dynamics)
+    f = W[1] * CFIM(ρ, dρ[1], M; eps = eps)
+    return f, f
+end
+
+function objective(opt::Mopt_Rotation, obj::CFIM_Obj{multi_para}, dynamics::Lindblad)
+    (; W, eps) = obj
+    U = rotation_matrix(opt.s, opt.Lambda)
+    M = [U*opt.POVM_basis[i]*U' for i in 1:length(opt.POVM_basis)]
+    ρ, dρ = evolve(dynamics)
+    f = tr(W * pinv(CFIM(ρ, dρ, M; eps = eps)))
+    return f, 1.0 / f
+end
+
+function objective(opt::Mopt_Rotation, obj::CFIM_Obj{single_para}, dynamics::Kraus)
+    (; W, eps) = obj
+    U = rotation_matrix(opt.s, opt.Lambda)
+    M = [U*opt.POVM_basis[i]*U' for i in 1:length(opt.POVM_basis)]
+    ρ, dρ = evolve(dynamics)
+    f = W[1] * CFIM(ρ, dρ[1], M; eps = eps)
+    return f, f
+end
+
+function objective(opt::Mopt_Rotation, obj::CFIM_Obj{multi_para}, dynamics::Kraus)
+    (; W, eps) = obj
+    U = rotation_matrix(opt.s, opt.Lambda)
+    M = [U*opt.POVM_basis[i]*U' for i in 1:length(opt.POVM_basis)]
+    ρ, dρ = evolve(dynamics)
+    f = tr(W * pinv(CFIM(ρ, dρ, M; eps = eps)))
     return f, 1.0 / f
 end
 
