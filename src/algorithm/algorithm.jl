@@ -1,14 +1,11 @@
 abstract type AbstractAlgorithm end
 
-# abstract type AbstractUpdateType end
-# abstract type GradDescent <: AbstractUpdateType end
-# abstract type Adam <: AbstractUpdateType end
-
-struct GRAPE <: AbstractAlgorithm
+abstract type AbstractGRAPE <: AbstractAlgorithm end
+struct GRAPE <: AbstractGRAPE
     max_episode::Number
 end
 
-struct GRAPE_Adam <: AbstractAlgorithm
+struct GRAPE_Adam <: AbstractGRAPE
     max_episode::Number
     ϵ::Number
     beta1::Number
@@ -17,12 +14,13 @@ end
 
 GRAPE(max_episode, ϵ, beta1, beta2) = GRAPE_Adam(max_episode, ϵ, beta1, beta2)
 
-struct AD <: AbstractAlgorithm
+abstract type AbstractAD <:  AbstractAlgorithm end
+struct AD <: AbstractAD
     max_episode::Number
     ϵ::Number
 end
 
-struct AD_Adam <: AbstractAlgorithm
+struct AD_Adam <: AbstractAD
     max_episode::Number
     ϵ::Number
     beta1::Number

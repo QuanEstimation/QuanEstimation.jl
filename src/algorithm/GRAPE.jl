@@ -1,4 +1,4 @@
-function update!(opt::ControlOpt, alg::GRAPE_Adam, obj::QFIM{SLD}, dynamics)
+function update!(opt::ControlOpt, alg::AbstractGRAPE, obj::QFIM{SLD}, dynamics)
     (; max_episode) = alg
     ctrl_length = length(dynamics.data.ctrl[1])
     ctrl_num = length(dynamics.data.Hc)
@@ -23,32 +23,7 @@ function update!(opt::ControlOpt, alg::GRAPE_Adam, obj::QFIM{SLD}, dynamics)
     set_io!(output, f_out)
 end
 
-function update!(opt::ControlOpt, alg::GRAPE, obj::QFIM{SLD}, dynamics)
-    (; max_episode) = alg
-    ctrl_length = length(dynamics.data.ctrl[1])
-    ctrl_num = length(dynamics.data.Hc)
-    
-    dynamics_copy = set_ctrl(dynamics, [zeros(ctrl_length) for i in 1:ctrl_num])
-    f_noctrl, f_comp = objective(obj, dynamics_copy)
-    f_ini, f_comp = objective(obj, dynamics)
-    set_f!(output, f_ini)
-    set_buffer!(output, dynamics.data.ctrl)
-    set_io!(output, f_noctrl, f_ini)
-    show(opt, output, obj)
-    f_out = 0.0
-    for ei in 1:(max_episode-1)
-        gradient_QFIM_analy(opt, alg, obj, dynamics)
-        bound!(dynamics.data.ctrl, opt.ctrl_bound)
-        f_out, f_now = objective(obj, dynamics)
-        set_f!(output, f_out)
-        set_buffer!(output, dynamics.data.ctrl)
-        set_io!(output, f_out, ei)
-        show(output, obj)
-    end
-    set_io!(output, f_out)
-end
-
-function update!(opt::ControlOpt, alg::GRAPE_Adam, obj::CFIM, dynamics)
+function update!(opt::ControlOpt, alg::AbstractGRAPE, obj::CFIM, dynamics)
     (; max_episode) = alg
     ctrl_length = length(dynamics.data.ctrl[1])
     ctrl_num = length(dynamics.data.Hc)
@@ -63,31 +38,6 @@ function update!(opt::ControlOpt, alg::GRAPE_Adam, obj::CFIM, dynamics)
     f_out = 0.0
     for ei in 1:(max_episode-1)
         gradient_CFIM_analy_Adam(opt, alg, obj, dynamics)
-        bound!(dynamics.data.ctrl, opt.ctrl_bound)
-        f_out, f_now = objective(obj, dynamics)
-        set_f!(output, f_out)
-        set_buffer!(output, dynamics.data.ctrl)
-        set_io!(output, f_out, ei)
-        show(output, obj)
-    end
-    set_io!(output, f_out)
-end
-
-function update!(opt::ControlOpt, alg::GRAPE, obj::CFIM, dynamics)
-    (; max_episode) = alg
-    ctrl_length = length(dynamics.data.ctrl[1])
-    ctrl_num = length(dynamics.data.Hc)
-    
-    dynamics_copy = set_ctrl(dynamics, [zeros(ctrl_length) for i in 1:ctrl_num])
-    f_noctrl, f_comp = objective(obj, dynamics_copy)
-    f_ini, f_comp = objective(obj, dynamics)
-    set_f!(output, f_ini)
-    set_buffer!(output, dynamics.data.ctrl)
-    set_io!(output, f_noctrl, f_ini)
-    show(opt, output, obj)
-    f_out = 0.0
-    for ei in 1:(max_episode-1)
-        gradient_CFIM_analy(opt, alg, obj, dynamics)
         bound!(dynamics.data.ctrl, opt.ctrl_bound)
         f_out, f_now = objective(obj, dynamics)
         set_f!(output, f_out)
