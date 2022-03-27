@@ -1,4 +1,4 @@
-function update!(opt::ControlOpt, alg::GRAPE_Adam, obj::QFIM{SLD}, dynamics)
+function update!(opt::ControlOpt, alg::AbstractGRAPE, obj::QFIM_Obj, dynamics, output)
     (; max_episode) = alg
     ctrl_length = length(dynamics.data.ctrl[1])
     ctrl_num = length(dynamics.data.Hc)
@@ -10,32 +10,6 @@ function update!(opt::ControlOpt, alg::GRAPE_Adam, obj::QFIM{SLD}, dynamics)
     set_buffer!(output, dynamics.data.ctrl)
     set_io!(output, f_noctrl, f_ini)
     show(opt, output, obj)
-    f_out = 0.0
-    for ei in 1:(max_episode-1)
-        gradient_QFIM_analy_Adam(opt, alg, obj, dynamics)
-        bound!(dynamics.data.ctrl, opt.ctrl_bound)
-        f_out, f_now = objective(obj, dynamics)
-        set_f!(output, f_out)
-        set_buffer!(output, dynamics.data.ctrl)
-        set_io!(output, f_out, ei)
-        show(output, obj)
-    end
-    set_io!(output, f_out)
-end
-
-function update!(opt::ControlOpt, alg::GRAPE, obj::QFIM{SLD}, dynamics)
-    (; max_episode) = alg
-    ctrl_length = length(dynamics.data.ctrl[1])
-    ctrl_num = length(dynamics.data.Hc)
-    
-    dynamics_copy = set_ctrl(dynamics, [zeros(ctrl_length) for i in 1:ctrl_num])
-    f_noctrl, f_comp = objective(obj, dynamics_copy)
-    f_ini, f_comp = objective(obj, dynamics)
-    set_f!(output, f_ini)
-    set_buffer!(output, dynamics.data.ctrl)
-    set_io!(output, f_noctrl, f_ini)
-    show(opt, output, obj)
-    f_out = 0.0
     for ei in 1:(max_episode-1)
         gradient_QFIM_analy(opt, alg, obj, dynamics)
         bound!(dynamics.data.ctrl, opt.ctrl_bound)
@@ -45,10 +19,10 @@ function update!(opt::ControlOpt, alg::GRAPE, obj::QFIM{SLD}, dynamics)
         set_io!(output, f_out, ei)
         show(output, obj)
     end
-    set_io!(output, f_out)
+    set_io!(output, output.f_list[end])
 end
 
-function update!(opt::ControlOpt, alg::GRAPE_Adam, obj::CFIM, dynamics)
+function update!(opt::ControlOpt, alg::AbstractGRAPE, obj::CFIM_Obj, dynamics, output)
     (; max_episode) = alg
     ctrl_length = length(dynamics.data.ctrl[1])
     ctrl_num = length(dynamics.data.Hc)
@@ -60,32 +34,6 @@ function update!(opt::ControlOpt, alg::GRAPE_Adam, obj::CFIM, dynamics)
     set_buffer!(output, dynamics.data.ctrl)
     set_io!(output, f_noctrl, f_ini)
     show(opt, output, obj)
-    f_out = 0.0
-    for ei in 1:(max_episode-1)
-        gradient_CFIM_analy_Adam(opt, alg, obj, dynamics)
-        bound!(dynamics.data.ctrl, opt.ctrl_bound)
-        f_out, f_now = objective(obj, dynamics)
-        set_f!(output, f_out)
-        set_buffer!(output, dynamics.data.ctrl)
-        set_io!(output, f_out, ei)
-        show(output, obj)
-    end
-    set_io!(output, f_out)
-end
-
-function update!(opt::ControlOpt, alg::GRAPE, obj::CFIM, dynamics)
-    (; max_episode) = alg
-    ctrl_length = length(dynamics.data.ctrl[1])
-    ctrl_num = length(dynamics.data.Hc)
-    
-    dynamics_copy = set_ctrl(dynamics, [zeros(ctrl_length) for i in 1:ctrl_num])
-    f_noctrl, f_comp = objective(obj, dynamics_copy)
-    f_ini, f_comp = objective(obj, dynamics)
-    set_f!(output, f_ini)
-    set_buffer!(output, dynamics.data.ctrl)
-    set_io!(output, f_noctrl, f_ini)
-    show(opt, output, obj)
-    f_out = 0.0
     for ei in 1:(max_episode-1)
         gradient_CFIM_analy(opt, alg, obj, dynamics)
         bound!(dynamics.data.ctrl, opt.ctrl_bound)
@@ -95,7 +43,7 @@ function update!(opt::ControlOpt, alg::GRAPE, obj::CFIM, dynamics)
         set_io!(output, f_out, ei)
         show(output, obj)
     end
-    set_io!(output, f_out)
+    set_io!(output, output.f_list[end])
 end
 
 function dynamics_analy(dynamics, dim, tnum, para_num, ctrl_num)
@@ -154,7 +102,7 @@ function dynamics_analy(dynamics, dim, tnum, para_num, ctrl_num)
     return ρt_T, ∂ρt_T, δρt_δV, ∂xδρt_δV
 end
 
-function gradient_QFIM_analy_Adam(opt, alg, obj, dynamics)
+function gradient_QFIM_analy(opt, alg::GRAPE_Adam, obj, dynamics)
     dim = size(dynamics.data.ρ0)[1]
     tnum = length(dynamics.data.tspan)
     para_num = length(dynamics.data.dH)
@@ -162,8 +110,8 @@ function gradient_QFIM_analy_Adam(opt, alg, obj, dynamics)
     
     ρt_T, ∂ρt_T, δρt_δV, ∂xδρt_δV = dynamics_analy(dynamics, dim, tnum, para_num, ctrl_num)
 
-    Lx = SLD(ρt_T, ∂ρt_T, obj.eps)
-    F_T = QFIM(ρt_T, ∂ρt_T, obj.eps)
+    Lx = SLD(ρt_T, ∂ρt_T; eps=obj.eps)
+    F_T = QFIM_SLD(ρt_T, ∂ρt_T; eps=obj.eps)
 
     if para_num == 1
         cost_function = F_T[1]
@@ -229,7 +177,7 @@ function gradient_QFIM_analy_Adam(opt, alg, obj, dynamics)
     end
 end
 
-function gradient_QFIM_analy(opt, alg, obj, dynamics)
+function gradient_QFIM_analy(opt, alg::GRAPE, obj, dynamics)
     dim = size(dynamics.data.ρ0)[1]
     tnum = length(dynamics.data.tspan)
     para_num = length(dynamics.data.dH)
@@ -237,8 +185,8 @@ function gradient_QFIM_analy(opt, alg, obj, dynamics)
     
     ρt_T, ∂ρt_T, δρt_δV, ∂xδρt_δV = dynamics_analy(dynamics, dim, tnum, para_num, ctrl_num)
 
-    Lx = SLD(ρt_T, ∂ρt_T, obj.eps)
-    F_T = QFIM(ρt_T, ∂ρt_T, obj.eps)
+    Lx = SLD(ρt_T, ∂ρt_T; eps=obj.eps)
+    F_T = QFIM_SLD(ρt_T, ∂ρt_T; eps=obj.eps)
 
     cost_function = F_T[1]
     
@@ -311,7 +259,7 @@ function gradient_CFIM_analy_Adam(opt, alg, obj, dynamics)
     ρt_T, ∂ρt_T, δρt_δV, ∂xδρt_δV = dynamics_analy(dynamics, dim, tnum, para_num, ctrl_num)
 
     if para_num == 1
-        F_T = CFI(ρt_T, ∂ρt_T[1], obj.M, obj.eps)
+        F_T = CFIM(ρt_T, ∂ρt_T[1], obj.M; eps=obj.eps)
         cost_function = F_T
         L1_tidle = zeros(ComplexF64, dim, dim)
         L2_tidle = zeros(ComplexF64, dim, dim)
@@ -337,7 +285,7 @@ function gradient_CFIM_analy_Adam(opt, alg, obj, dynamics)
             end
         end
     elseif para_num == 2
-        F_T = CFIM(ρt_T, ∂ρt_T, obj.M, obj.eps)
+        F_T = CFIM(ρt_T, ∂ρt_T, obj.M; eps=obj.eps)
         L1_tidle = [zeros(ComplexF64, dim, dim) for i in 1:para_num]
         L2_tidle = [[zeros(ComplexF64, dim, dim) for i in 1:para_num] for j in 1:para_num]
     
@@ -388,7 +336,7 @@ function gradient_CFIM_analy_Adam(opt, alg, obj, dynamics)
             end
         end
     else
-        F_T = CFIM(ρt_T, ∂ρt_T, obj.M, obj.eps)
+        F_T = CFIM(ρt_T, ∂ρt_T, obj.M; eps=obj.eps)
         L1_tidle = [zeros(ComplexF64, dim, dim) for i in 1:para_num]
         L2_tidle = [zeros(ComplexF64, dim, dim) for i in 1:para_num]
     
@@ -434,7 +382,7 @@ function gradient_CFIM_analy(opt, alg, obj, dynamics)
     ρt_T, ∂ρt_T, δρt_δV, ∂xδρt_δV = dynamics_analy(dynamics, dim, tnum, para_num, ctrl_num)
 
     if para_num == 1
-        F_T = CFI(ρt_T, ∂ρt_T[1], obj.M, obj.eps)
+        F_T = CFIM(ρt_T, ∂ρt_T[1], obj.M; eps=obj.eps)
         cost_function = F_T
         L1_tidle = zeros(ComplexF64, dim, dim)
         L2_tidle = zeros(ComplexF64, dim, dim)
@@ -459,7 +407,7 @@ function gradient_CFIM_analy(opt, alg, obj, dynamics)
             end
         end
     elseif para_num == 2
-        F_T = CFIM(ρt_T, ∂ρt_T, obj.M, obj.eps)
+        F_T = CFIM(ρt_T, ∂ρt_T, obj.M; eps=obj.eps)
         L1_tidle = [zeros(ComplexF64, dim, dim) for i in 1:para_num]
         L2_tidle = [[zeros(ComplexF64, dim, dim) for i in 1:para_num] for j in 1:para_num]
     
@@ -509,7 +457,7 @@ function gradient_CFIM_analy(opt, alg, obj, dynamics)
             end
         end
     else
-        F_T = CFIM(ρt_T, ∂ρt_T, obj.M, obj.eps)
+        F_T = CFIM(ρt_T, ∂ρt_T, obj.M; eps=obj.eps)
         L1_tidle = [zeros(ComplexF64, dim, dim) for i in 1:para_num]
         L2_tidle = [zeros(ComplexF64, dim, dim) for i in 1:para_num]
     

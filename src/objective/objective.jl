@@ -3,8 +3,9 @@ abstract type AbstractObj end
 abstract type quantum end
 abstract type classical end
 
-abstract type AbstracParaType end
-abstract type single_para <: AbstracParaType end
-abstract type multi_para <: AbstracParaType end
+abstract type AbstractParaType end
+abstract type single_para <: AbstractParaType end
+abstract type multi_para <: AbstractParaType end
 
-include("AsymptoticBound/AsympototicBound.jl")
+include("AsymptoticBound/AsymptoticBound.jl")
+include("BayesianBound/BayesianBound.jl")

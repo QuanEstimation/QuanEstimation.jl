@@ -1,3 +1,6 @@
+include("mintime.jl")
+include("BayesEstimation.jl")
+
 destroy(N) = diagm(1 => [1/sqrt(n) for n in 1:N-1])
 
 bases(dim; T=ComplexF64) = [e for e in I(dim).|>T|>eachrow]
@@ -165,14 +168,12 @@ function bound!(ctrl::Vector{Vector{Float64}}, ctrl_bound)
             ctrl[ck][tk] = (x-> x < ctrl_bound[1] ? ctrl_bound[1] : x > ctrl_bound[2] ? ctrl_bound[2] : x)(ctrl[ck][tk])
         end 
     end
-    ctrl
 end
 
 function bound!(ctrl::Vector{Float64}, ctrl_bound)
     for ck in 1:length(ctrl)
         ctrl[ck] = (x-> x < ctrl_bound[1] ? ctrl_bound[1] : x > ctrl_bound[2] ? ctrl_bound[2] : x)(ctrl[ck])
     end
-    ctrl
 end
 
 function Adam(gt, t, para, mt, vt, ϵ, beta1, beta2, eps)
@@ -192,6 +193,14 @@ function bound_LC_coeff!(coefficients::Vector{Vector{Float64}})
     for ck in 1:M_num
         for tk in 1:basis_num
             coefficients[ck][tk] = (x-> x < 0.0 ? 0.0 : x > 1.0 ? 1.0 : x)(coefficients[ck][tk])
+        end 
+    end
+
+    Sum_col = [sum([coefficients[m][n] for m in 1:M_num])  for n in 1:basis_num]
+    for si in 1:basis_num
+        if Sum_col[si] == 0.0
+            int_num = sample(1:M_num, 1, replace=false)[1]
+            coefficients[int_num][si] = 1.0
         end
     end
 
@@ -209,7 +218,6 @@ function bound_LC_coeff!(coefficients::Vector{Vector{Float64}})
             coefficients[i][j] = coefficients[i][j]/Sum_col[j]
         end
     end
-    coefficients
 end
 
 #### bound coefficients of rotation in Mopt ####
@@ -217,8 +225,7 @@ function bound_rot_coeff!(coefficients::Vector{Float64})
     n = length(coefficients)
     for tk in 1:n
         coefficients[tk] = (x-> x < 0.0 ? 0.0 : x > 2*pi ? 2*pi : x)(coefficients[tk])
-    end 
-    coefficients
+    end
 end
 
 function gramschmidt(A::Vector{Vector{ComplexF64}})
@@ -240,13 +247,13 @@ function rotation_matrix(coefficients, Lambda)
     dim = size(Lambda[1])[1]
     U = Matrix{ComplexF64}(I,dim,dim)
     for i in 1:length(Lambda)
-        U = U*exp(1.0im*coefficients[i]*Lambda[i])
+        U = U*exp(1.0im*coefficients[i]*Matrix(Lambda[i]))
     end
     U
 end
 
 #### initialization states for DE and PSO method ####
-function initial_state!(psi0, dynamics, p_num)
+function initial_state!(psi0, dynamics, p_num, rng)
     dim = length(dynamics[1].data.ψ0)
     if length(psi0) > p_num
         psi0 = [psi0[i] for i in 1:p_num]
@@ -263,7 +270,7 @@ function initial_state!(psi0, dynamics, p_num)
 end
 
 #### initialization control coefficients for DE and PSO method ####
-function initial_ctrl!(opt, ctrl0, dynamics, p_num)
+function initial_ctrl!(opt, ctrl0, dynamics, p_num, rng)
     ctrl_length = length(dynamics[1].data.ctrl[1])
     ctrl_num = length(dynamics[1].data.Hc)
     if length(ctrl0) > p_num
@@ -286,7 +293,7 @@ function initial_ctrl!(opt, ctrl0, dynamics, p_num)
 end
 
 #### initialization velocity for PSO ####
-function initial_velocity_ctrl(opt, ctrl_length, ctrl_num, p_num)
+function initial_velocity_ctrl(opt, ctrl_length, ctrl_num, p_num, rng)
     if opt.ctrl_bound[1] == -Inf || opt.ctrl_bound[2] == Inf
         velocity = 0.1*(2.0*rand(rng, ctrl_num, ctrl_length, p_num)-ones(ctrl_num, ctrl_length, p_num))
     else
@@ -298,8 +305,7 @@ function initial_velocity_ctrl(opt, ctrl_length, ctrl_num, p_num)
 end
 
 #### initialization measurements for DE and PSO ####
-function initial_M!(measurement0, C_all, dim, p_num)
-    M_num = length(measurement0[1])
+function initial_M!(measurement0, C_all, dim, p_num, M_num, rng)
     if length(measurement0) > p_num
         measurement0 = [measurement0[i] for i in 1:p_num]
     end 
@@ -318,6 +324,32 @@ function initial_M!(measurement0, C_all, dim, p_num)
         # orthogonality and normalization 
         C_all[pj] = gramschmidt(C_all[pj])
     end
-    C_all
+end
+
+function initial_LinearComb!(measurement0, B_all, basis_num, M_num, p_num, rng)
+    if length(measurement0) > p_num
+        measurement0 = [measurement0[i] for i in 1:p_num]
+    end 
+    for pj in 1:length(measurement0)
+        B_all[pj] = [[measurement0[pj][i,j] for j in 1:basis_num] for i in 1:M_num]
+    end
+
+    for pj in (length(measurement0)+1):p_num
+        B_all[pj] = [rand(rng, basis_num) for i in 1:M_num]
+        bound_LC_coeff!(B_all[pj])
+    end
+end
+
+function initial_Rotation!(measurement0, s_all, dim, p_num, rng)
+    if length(measurement0) > p_num
+        measurement0 = [measurement0[i] for i in 1:p_num]
+    end 
+    for pj in 1:length(measurement0)
+        s_all[pj] = [measurement0[pj][i] for i in 1:dim*dim]
+    end
+
+    for pj in (length(measurement0)+1):p_num
+        s_all[pj] = rand(rng, dim*dim)
+    end
 end
 
