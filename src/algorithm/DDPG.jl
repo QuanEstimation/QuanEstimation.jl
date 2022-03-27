@@ -4,15 +4,15 @@ using StableRNGs
 using Flux.Losses
 using IntervalSets
 
-function Base.rsplit( v, l::Int)
-    u = reshape(v,l,length(v)÷l)
-    [u[:,i] for i=1:size(u,2)]
+function Base.rsplit(v, l::Int)
+    u = reshape(v, l, length(v) ÷ l)
+    [u[:, i] for i = 1:size(u, 2)]
 end
 
-state_flatten(s) = vcat((s|>reim.|>vec)...)
-rsplit_half(v) = Base.rsplit(v, length(v)÷2)
+state_flatten(s) = vcat((s |> reim .|> vec)...)
+rsplit_half(v) = Base.rsplit(v, length(v) ÷ 2)
 to_psi(s) = complex.(rsplit_half(s)...)
-density_matrix(s) = complex.(rsplit_half(s)...)|>vec2mat
+density_matrix(s) = complex.(rsplit_half(s)...) |> vec2mat
 
 mutable struct ControlEnv <: AbstractEnv
     obj::AbstractObj
@@ -59,11 +59,11 @@ function update!(opt::ControlOpt, alg::DDPG, obj, dynamics, output)
     # f_noctrl = objective(Val{:expm}, obj, dynamics_copy)
 
     #### the objective function for non controlled scenario ####
-    f_noctrl = zeros(ctrl_length+1)
+    f_noctrl = zeros(ctrl_length + 1)
     f_noctrl_out = 0.0
     ρₜₙ, ∂ₓρₜₙ = state |> density_matrix, dstate
-    for ti in 2:ctrl_length+1
-        ρₜₙ, ∂ₓρₜₙ = propagate(dynamics, ρₜₙ, ∂ₓρₜₙ, [0.0 for i in 1:ctrl_num], ti)
+    for ti = 2:ctrl_length+1
+        ρₜₙ, ∂ₓρₜₙ = propagate(dynamics, ρₜₙ, ∂ₓρₜₙ, [0.0 for i = 1:ctrl_num], ti)
         f_noctrl_out, f_noctrl[ti] = objective(obj, ρₜₙ, ∂ₓρₜₙ)
     end
 
@@ -173,7 +173,7 @@ end
 RLBase.action_space(env::ControlEnv) = env.action_space
 RLBase.state_space(env::ControlEnv) = env.state_space
 RLBase.reward(env::ControlEnv) = env.reward
-RLBase.is_terminated(env::ControlEnv) = env.done 
+RLBase.is_terminated(env::ControlEnv) = env.done
 RLBase.state(env::ControlEnv) = env.state
 
 function RLBase.reset!(env::ControlEnv)
@@ -218,7 +218,7 @@ function _step!(env::ControlEnv, a)
 end
 
 #### state optimization ####
-mutable struct StateEnv  <: AbstractEnv
+mutable struct StateEnv <: AbstractEnv
     obj::AbstractObj
     dynamics::AbstractDynamics
     output::AbstractOutput
@@ -240,57 +240,107 @@ end
 RLBase.action_space(env::StateEnv) = env.action_space
 RLBase.state_space(env::StateEnv) = env.state_space
 RLBase.reward(env::StateEnv) = env.reward
-RLBase.is_terminated(env::StateEnv) = env.done 
+RLBase.is_terminated(env::StateEnv) = env.done
 RLBase.state(env::StateEnv) = env.state
 
 function update!(Sopt::StateOpt, alg::DDPG, obj, dynamics::Lindblad, output)
     (; max_episode, layer_num, layer_dim, rng) = alg
     episode = 1
-    
+
     para_num = length(dynamics.data.dH)
     state = dynamics.data.ψ0
     state = state |> state_flatten
     ctrl_num = length(state)
-    action_space = Space(fill(-1.0e35..1.0e35, length(state)))
-    state_space = Space(fill(-1.0e35..1.0e35, length(state))) 
+    action_space = Space(fill(-1.0e35 .. 1.0e35, length(state)))
+    state_space = Space(fill(-1.0e35 .. 1.0e35, length(state)))
     f_list = Vector{Float64}()
     reward_all = [0.0]
     f_ini, f_comp = objective(obj, dynamics)
 
-    env = StateEnv(obj, dynamics, output, action_space, state_space, state, true, rng, 0.0, 0.0, ctrl_num, 
-                    para_num, f_ini, f_list, reward_all, episode)
+    env = StateEnv(
+        obj,
+        dynamics,
+        output,
+        action_space,
+        state_space,
+        state,
+        true,
+        rng,
+        0.0,
+        0.0,
+        ctrl_num,
+        para_num,
+        f_ini,
+        f_list,
+        reward_all,
+        episode,
+    )
     reset!(env)
     SaveReward(env.output, 0.0)
 
-    ns = 2*length(dynamics.data.ψ0)
+    ns = 2 * length(dynamics.data.ψ0)
     na = env.ctrl_num
     init = glorot_uniform(rng)
 
-    create_actor() = Chain(Dense(ns, layer_dim, relu; init=init),
-                           [Dense(layer_dim, layer_dim, relu; init=init) for _ in 1:layer_num]...,
-                            Dense(layer_dim, na, tanh; init=init),)
+    create_actor() = Chain(
+        Dense(ns, layer_dim, relu; init = init),
+        [Dense(layer_dim, layer_dim, relu; init = init) for _ = 1:layer_num]...,
+        Dense(layer_dim, na, tanh; init = init),
+    )
 
-    create_critic() = Chain(Dense(ns+na, layer_dim, relu; init=init),
-                            [Dense(layer_dim, layer_dim, relu; init=init) for _ in 1:layer_num]...,
-                            Dense(layer_dim, 1; init=init),)
+    create_critic() = Chain(
+        Dense(ns + na, layer_dim, relu; init = init),
+        [Dense(layer_dim, layer_dim, relu; init = init) for _ = 1:layer_num]...,
+        Dense(layer_dim, 1; init = init),
+    )
 
-    agent = Agent(policy=DDPGPolicy(behavior_actor=NeuralNetworkApproximator(model=create_actor(), optimizer=ADAM(),),
-                                    behavior_critic=NeuralNetworkApproximator(model=create_critic(), optimizer=ADAM(),),
-                                    target_actor=NeuralNetworkApproximator(model=create_actor(), optimizer=ADAM(),),
-                                    target_critic=NeuralNetworkApproximator(model=create_critic(), optimizer=ADAM(),),
-                                    γ=0.99f0, ρ=0.995f0, na=env.ctrl_num, batch_size=64, start_steps=100,
-                                    start_policy=RandomPolicy(Space([-1.0..1.0 for _ in 1:env.ctrl_num]); rng=rng),
-                                    update_after=50, update_freq=1, act_limit=1.0e35,
-                                    act_noise=0.01, rng=rng,),
-                  trajectory=CircularArraySARTTrajectory(capacity=400, state=Vector{Float64} => (ns,), action=Vector{Float64} => (na,),),)
-                  
+    agent = Agent(
+        policy = DDPGPolicy(
+            behavior_actor = NeuralNetworkApproximator(
+                model = create_actor(),
+                optimizer = ADAM(),
+            ),
+            behavior_critic = NeuralNetworkApproximator(
+                model = create_critic(),
+                optimizer = ADAM(),
+            ),
+            target_actor = NeuralNetworkApproximator(
+                model = create_actor(),
+                optimizer = ADAM(),
+            ),
+            target_critic = NeuralNetworkApproximator(
+                model = create_critic(),
+                optimizer = ADAM(),
+            ),
+            γ = 0.99f0,
+            ρ = 0.995f0,
+            na = env.ctrl_num,
+            batch_size = 64,
+            start_steps = 100,
+            start_policy = RandomPolicy(
+                Space([-1.0 .. 1.0 for _ = 1:env.ctrl_num]);
+                rng = rng,
+            ),
+            update_after = 50,
+            update_freq = 1,
+            act_limit = 1.0e35,
+            act_noise = 0.01,
+            rng = rng,
+        ),
+        trajectory = CircularArraySARTTrajectory(
+            capacity = 400,
+            state = Vector{Float64} => (ns,),
+            action = Vector{Float64} => (na,),
+        ),
+    )
+
     set_f!(output, f_ini)
     set_buffer!(output, transpose(dynamics.data.ψ0))
     set_io!(output, f_ini)
     show(Sopt, output, obj)
 
-    stop_condition = StopAfterStep(max_episode, is_show_progress=false)
-    hook = TotalRewardPerEpisode(is_display_on_exit=false)
+    stop_condition = StopAfterStep(max_episode, is_show_progress = false)
+    hook = TotalRewardPerEpisode(is_display_on_exit = false)
     RLBase.run(agent, env, stop_condition, hook)
 
     set_io!(output, output.f_list[end])
@@ -302,51 +352,101 @@ end
 function update!(Sopt::StateOpt, alg::DDPG, obj, dynamics::Kraus, output)
     (; max_episode, layer_num, layer_dim, rng) = alg
     episode = 1
-    
+
     para_num = length(dynamics.data.dK)
     state = dynamics.data.ψ0
     state = state |> state_flatten
     ctrl_num = length(state)
-    action_space = Space(fill(-1.0e35..1.0e35, length(state)))
-    state_space = Space(fill(-1.0e35..1.0e35, length(state))) 
+    action_space = Space(fill(-1.0e35 .. 1.0e35, length(state)))
+    state_space = Space(fill(-1.0e35 .. 1.0e35, length(state)))
     f_list = Vector{Float64}()
     reward_all = [0.0]
     f_ini, f_comp = objective(obj, dynamics)
 
-    env = StateEnv(obj, dynamics, output, action_space, state_space, state, true, rng, 0.0, 0.0, ctrl_num, 
-                    para_num, f_ini, f_list, reward_all, episode)
+    env = StateEnv(
+        obj,
+        dynamics,
+        output,
+        action_space,
+        state_space,
+        state,
+        true,
+        rng,
+        0.0,
+        0.0,
+        ctrl_num,
+        para_num,
+        f_ini,
+        f_list,
+        reward_all,
+        episode,
+    )
     reset!(env)
     SaveReward(env.output, 0.0)
 
-    ns = 2*length(dynamics.data.ψ0)
+    ns = 2 * length(dynamics.data.ψ0)
     na = env.ctrl_num
     init = glorot_uniform(rng)
 
-    create_actor() = Chain(Dense(ns, layer_dim, relu; init=init),
-                           [Dense(layer_dim, layer_dim, relu; init=init) for _ in 1:layer_num]...,
-                            Dense(layer_dim, na, tanh; init=init),)
+    create_actor() = Chain(
+        Dense(ns, layer_dim, relu; init = init),
+        [Dense(layer_dim, layer_dim, relu; init = init) for _ = 1:layer_num]...,
+        Dense(layer_dim, na, tanh; init = init),
+    )
 
-    create_critic() = Chain(Dense(ns+na, layer_dim, relu; init=init),
-                            [Dense(layer_dim, layer_dim, relu; init=init) for _ in 1:layer_num]...,
-                            Dense(layer_dim, 1; init=init),)
+    create_critic() = Chain(
+        Dense(ns + na, layer_dim, relu; init = init),
+        [Dense(layer_dim, layer_dim, relu; init = init) for _ = 1:layer_num]...,
+        Dense(layer_dim, 1; init = init),
+    )
 
-    agent = Agent(policy=DDPGPolicy(behavior_actor=NeuralNetworkApproximator(model=create_actor(), optimizer=ADAM(),),
-                                    behavior_critic=NeuralNetworkApproximator(model=create_critic(), optimizer=ADAM(),),
-                                    target_actor=NeuralNetworkApproximator(model=create_actor(), optimizer=ADAM(),),
-                                    target_critic=NeuralNetworkApproximator(model=create_critic(), optimizer=ADAM(),),
-                                    γ=0.99f0, ρ=0.995f0, na=env.ctrl_num, batch_size=64, start_steps=100,
-                                    start_policy=RandomPolicy(Space([-1.0..1.0 for _ in 1:env.ctrl_num]); rng=rng),
-                                    update_after=50, update_freq=1, act_limit=1.0e35,
-                                    act_noise=0.01, rng=rng,),
-                  trajectory=CircularArraySARTTrajectory(capacity=400, state=Vector{Float64} => (ns,), action=Vector{Float64} => (na,),),)
-                  
+    agent = Agent(
+        policy = DDPGPolicy(
+            behavior_actor = NeuralNetworkApproximator(
+                model = create_actor(),
+                optimizer = ADAM(),
+            ),
+            behavior_critic = NeuralNetworkApproximator(
+                model = create_critic(),
+                optimizer = ADAM(),
+            ),
+            target_actor = NeuralNetworkApproximator(
+                model = create_actor(),
+                optimizer = ADAM(),
+            ),
+            target_critic = NeuralNetworkApproximator(
+                model = create_critic(),
+                optimizer = ADAM(),
+            ),
+            γ = 0.99f0,
+            ρ = 0.995f0,
+            na = env.ctrl_num,
+            batch_size = 64,
+            start_steps = 100,
+            start_policy = RandomPolicy(
+                Space([-1.0 .. 1.0 for _ = 1:env.ctrl_num]);
+                rng = rng,
+            ),
+            update_after = 50,
+            update_freq = 1,
+            act_limit = 1.0e35,
+            act_noise = 0.01,
+            rng = rng,
+        ),
+        trajectory = CircularArraySARTTrajectory(
+            capacity = 400,
+            state = Vector{Float64} => (ns,),
+            action = Vector{Float64} => (na,),
+        ),
+    )
+
     set_f!(output, f_ini)
     set_buffer!(output, transpose(dynamics.data.ψ0))
     set_io!(output, f_ini)
     show(Sopt, output, obj)
 
-    stop_condition = StopAfterStep(max_episode, is_show_progress=false)
-    hook = TotalRewardPerEpisode(is_display_on_exit=false)
+    stop_condition = StopAfterStep(max_episode, is_show_progress = false)
+    hook = TotalRewardPerEpisode(is_display_on_exit = false)
     RLBase.run(agent, env, stop_condition, hook)
 
     set_io!(output, output.f_list[end])
@@ -368,21 +468,21 @@ end
 
 function _step!(env::StateEnv, a)
     state_new = (env.state + a) |> to_psi
-    env.dynamics.data.ψ0 = state_new/norm(state_new)
+    env.dynamics.data.ψ0 = state_new / norm(state_new)
 
     f_out, f_current = objective(env.obj, env.dynamics)
 
-    env.reward = log(f_current/env.f_ini)
+    env.reward = log(f_current / env.f_ini)
     env.total_reward = env.reward
     env.done = true
 
     append!(env.f_list, f_out)
     append!(env.reward_all, env.reward)
     env.episode += 1
-    
+
     set_f!(env.output, f_out)
     set_buffer!(env.output, transpose(env.dynamics.data.ψ0))
     set_io!(env.output, f_out, env.episode)
     show(env.output, env.obj)
-    SaveReward(env.output, env.total_reward) 
+    SaveReward(env.output, env.total_reward)
 end

@@ -454,7 +454,8 @@ function expm(
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t)
         ρt_all[t] = exp_L * ρt_all[t-1]
         for pj = 1:para_num
-            ∂ρt_∂x_all[t][pj] = -im * Δt * dH_L[pj] * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1][pj]
+            ∂ρt_∂x_all[t][pj] =
+                -im * Δt * dH_L[pj] * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1][pj]
         end
     end
     ρt_all |> vec2mat, ∂ρt_∂x_all |> vec2mat
@@ -643,7 +644,7 @@ function evolve(dynamics::Lindblad{noisy,free,ket})
         ρt = exp_L * ρt
         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
     end
-    
+
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
@@ -784,9 +785,9 @@ function propagate(
     H = Htot(H0, Hc, a)
     dH_L = [liouville_commu(dH) for dH in dH]
     exp_L = expL(H, decay_opt, γ, Δt)
-    dρₜ_next = [dρₜ|>vec for dρₜ in dρₜ ]
-    ρₜ_next = exp_L * vec(ρₜ )
-    for i in 1:ctrl_interval
+    dρₜ_next = [dρₜ |> vec for dρₜ in dρₜ]
+    ρₜ_next = exp_L * vec(ρₜ)
+    for i = 1:ctrl_interval
         for para = 1:para_num
             dρₜ_next[para] = -im * Δt * dH_L[para] * ρₜ_next + exp_L * dρₜ_next[para]
         end
@@ -808,9 +809,9 @@ function propagate(
     H = Htot(H0, Hc, a)
     dH_L = [liouville_commu(dH) for dH in dH]
     exp_L = expL(H, Δt)
-    dρₜ_next = [dρₜ|>vec for dρₜ in dρₜ ]
-    ρₜ_next = exp_L * vec(ρₜ )
-    for i in 1:ctrl_interval
+    dρₜ_next = [dρₜ |> vec for dρₜ in dρₜ]
+    ρₜ_next = exp_L * vec(ρₜ)
+    for i = 1:ctrl_interval
         for para = 1:para_num
             dρₜ_next[para] = -im * Δt * dH_L[para] * ρₜ_next + exp_L * dρₜ_next[para]
         end
