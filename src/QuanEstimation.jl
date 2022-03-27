@@ -2,7 +2,6 @@ module QuanEstimation
 using Random
 using LinearAlgebra
 using Zygote
-using Random
 using SparseArrays
 using DelimitedFiles
 using StatsBase
@@ -21,10 +20,12 @@ include("optim/optim.jl")
 include("common/common.jl")
 include("dynamics/dynamics.jl")
 include("objective/objective.jl")
-include("algorithm/algorithm.jl")
+include("common/adaptive.jl")
 include("output.jl")
+include("algorithm/algorithm.jl")
 include("run.jl")
 include("io.jl")
+include("resources/resources.jl")
 
 
 

@@ -39,11 +39,13 @@ abstract type CompOpt <: Opt end
 mutable struct StateControlOpt <: CompOpt
     ψ0::AbstractVector
     ctrl::AbstractVector
+    ctrl_bound::AbstractVector
 end
 
 mutable struct ControlMeasurementOpt <: CompOpt
     ctrl::AbstractVector
     C::AbstractVector
+    ctrl_bound::AbstractVector
 end
 
 mutable struct StateMeasurementOpt <: CompOpt
@@ -55,14 +57,15 @@ mutable struct StateControlMeasurementOpt <: CompOpt
     ctrl::AbstractVector
     ψ0::AbstractVector
     C::AbstractVector
+    ctrl_bound::AbstractVector
 end
 
 MeasurementOpt(M, mtype::Symbol = :Projection) = MeasurementOpt{eval(mtype)}(M)
 opt_target(::ControlOpt) = :Copt
 opt_target(::StateOpt) = :Sopt
-opt_target(::Mopt_Projection) = :Mopt_proj
-opt_target(::Mopt_LinearComb) = :Mopt_lc
-opt_target(::Mopt_Rotation) = :Mopt_rot
+opt_target(::Mopt_Projection) = :Mopt
+opt_target(::Mopt_LinearComb) = :Mopt_input
+opt_target(::Mopt_Rotation) = :Mopt_input
 opt_target(::CompOpt) = :CompOpt
 opt_target(::StateControlOpt) = :SCopt
 opt_target(::ControlMeasurementOpt) = :CMopt
@@ -73,7 +76,7 @@ result(opt::ControlOpt) = [opt.ctrl]
 result(opt::StateOpt) = [opt.ψ0]
 result(opt::Mopt_Projection) = [opt.C]
 result(opt::Mopt_LinearComb) = [opt.B, opt.POVM_basis, opt.M_num]
-result(opt::Mopt_Rotation) = [opt.s, opt.POVM_basis, Lambda]
+result(opt::Mopt_Rotation) = [opt.s]
 result(opt::StateControlOpt) = [opt.ψ0, opt.ctrl]
 result(opt::ControlMeasurementOpt) = [opt.ctrl, opt.C]
 result(opt::StateMeasurementOpt) = [opt.ψ0, opt.C]
@@ -86,6 +89,7 @@ const res_file_name = Dict(
     :Copt => ["controls.csv"],
     :Sopt => ["states.csv"],
     :Mopt => ["measurements.csv"],
+    :Mopt_input => ["measurements.csv"],
     :SCopt => ["states.csv", "controls.csv"],
     :CMopt => ["controls.csv", "measurements.csv"],
     :SMopt => ["states.csv", "measurements.csv"],
