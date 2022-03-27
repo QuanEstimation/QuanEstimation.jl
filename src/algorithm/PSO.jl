@@ -363,6 +363,7 @@ function update!(opt::Mopt_Rotation, alg::PSO, obj, dynamics, output)
     suN = suN_generator(dim)
     append!(Lambda, [Matrix{ComplexF64}(I,dim,dim)])
     append!(Lambda, [suN[i] for i in 1:length(suN)])
+    particles = repeat(s, p_num)
 
     if typeof(max_episode) == Int
         max_episode = [max_episode, max_episode]

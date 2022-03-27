@@ -9,7 +9,7 @@ struct QFIM_Obj{P,D} <: AbstractObj
     eps::Number
 end
 
-mutable struct CFIM_Obj{P} <: AbstractObj
+struct CFIM_Obj{P} <: AbstractObj
     M::AbstractVecOrMat
     W::AbstractMatrix
     eps::Number
@@ -42,16 +42,16 @@ LD_type(::QFIM_Obj{P,SLD}) where {P} = :SLD
 LD_type(::QFIM_Obj{P,RLD}) where {P} = :RLD
 LD_type(::QFIM_Obj{P,LLD}) where {P} = :LLD
 
-QFIM_Obj(opt::CFIM_Obj{P}) where P = QFIM_Obj{P, SLD}(opt.W, opt.eps)
-QFIM_Obj(opt::CFIM_Obj{P}, LDtype::Symbol) where P = QFIM_Obj{P, eval(LDtype)}(opt.W, opt.eps)
+QFIM_Obj(opt::CFIM{P}) where P = QFIM_Obj{P, SLD}(opt.W, opt.eps)
+QFIM_Obj(opt::CFIM{P}, LDtype::Symbol) where P = QFIM_Obj{P, eval(LDtype)}(opt.W, opt.eps)
 
-function set_M(obj::CFIM_Obj{single_para}, M::AbstractVector)
+function set_M(obj::CFIM_Obj{single_para}, M::AbstractMatrix)
     temp = deepcopy(obj)
     temp.M = M
     temp
 end
 
-function set_M(obj::CFIM_Obj{multi_para}, M::AbstractVector)
+function set_M(obj::CFIM_Obj{multi_para}, M::AbstractMatrix)
     temp = deepcopy(obj)
     temp.M = M
     temp
@@ -62,42 +62,6 @@ function objective(obj::QFIM_Obj{single_para,SLD}, dynamics::Lindblad)
     ρ, dρ = evolve(dynamics)
     f = W[1] * QFIM_SLD(ρ, dρ[1]; eps = eps)
     return f, f
-end
-
-function objective(obj::QFIM_Obj{single_para,SLD}, ρ, dρ)
-    (; W, eps) = obj
-    f = W[1] * QFIM_SLD(ρ, dρ[1]; eps = eps)
-    return f, f
-end
-
-function objective(obj::QFIM_Obj{multi_para,SLD}, ρ, dρ)
-    (; W, eps) = obj
-    f = tr(W * pinv(QFIM_SLD(ρ, dρ; eps = eps)))
-    return f, 1.0 / f
-end
-
-function objective(obj::QFIM_Obj{single_para,RLD}, ρ, dρ)
-    (; W, eps) = obj
-    f = W[1] * QFIM_RLD(ρ, dρ[1]; eps = eps)
-    return f, f
-end
-
-function objective(obj::QFIM_Obj{multi_para,RLD}, ρ, dρ)
-    (; W, eps) = obj
-    f = tr(W * pinv(QFIM_RLD(ρ, dρ; eps = eps)))
-    return f, 1.0 / f
-end
-
-function objective(obj::QFIM_Obj{single_para,LLD}, ρ, dρ)
-    (; W, eps) = obj
-    f = W[1] * QFIM_LLD(ρ, dρ[1]; eps = eps)
-    return f, f
-end
-
-function objective(obj::QFIM_Obj{multi_para,LLD}, ρ, dρ)
-    (; W, eps) = obj
-    f = tr(W * pinv(QFIM_LLD(ρ, dρ; eps = eps)))
-    return f, 1.0 / f
 end
 
 function objective(obj::QFIM_Obj{multi_para,SLD}, dynamics::Lindblad)
@@ -177,18 +141,6 @@ function objective(obj::QFIM_Obj{multi_para,LLD}, dynamics::Kraus)
     return f, 1.0 / f
 end
 
-function objective(obj::CFIM_Obj{single_para}, ρ, dρ)
-    (; M, W, eps) = obj
-    f = W[1] * CFIM(ρ, dρ[1], M; eps = eps)
-    return f, f
-end
-
-function objective(obj::CFIM_Obj{multi_para}, ρ, dρ)
-    (; M, W, eps) = obj
-    f = tr(W * pinv(CFIM(ρ, dρ, M; eps = eps)))
-    return f, 1.0 / f
-end
-
 function objective(obj::CFIM_Obj{single_para}, dynamics::Lindblad)
     (; M, W, eps) = obj
     ρ, dρ = evolve(dynamics)
@@ -217,23 +169,17 @@ function objective(obj::CFIM_Obj{multi_para}, dynamics::Kraus)
     return f, 1.0 / f
 end
 
-function objective(obj::HCRB_Obj{multi_para}, ρ, dρ)
-    (; W, eps) = obj
-    f = Holevo_bound_obj(ρ, dρ, W; eps = eps)
-    return f, 1.0 / f
-end
-
 function objective(obj::HCRB_Obj{multi_para}, dynamics::Lindblad)
     (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    f = Holevo_bound_obj(ρ, dρ, W; eps = eps)
+    f = Holevo_bound(ρ, dρ, W; eps = eps)
     return f, 1.0 / f
 end
 
 function objective(obj::HCRB_Obj{multi_para}, dynamics::Kraus)
     (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
-    f = Holevo_bound_obj(ρ, dρ, W; eps = eps)
+    f = Holevo_bound(ρ, dρ, W; eps = eps)
     return f, 1.0 / f
 end
 
@@ -308,16 +254,16 @@ function objective(opt::Mopt_Rotation, obj::CFIM_Obj{multi_para}, dynamics::Krau
 end
 
 #####
-# function objective(::Type{Val{:expm}}, obj, dynamics)
-#     temp = []
-#     (; tspan, ctrl) = dynamics.data
-#     for i = 1:length( ctrl)
-#         dynamics_copy = set_ctrl(dynamics, [ctrl[1:i] for ctrl in ctrl])
-#         dynamics_copy.data.tspan = tspan[1:i+1]
-#         append!(temp, [objective(obj, dynamics_copy)])
-#     end
-#     temp
-# end  # function objective
+function objective(::Type{Val{:expm}}, obj, dynamics)
+    temp = Float64[]
+    (; tspan, ctrl) = dynamics.data
+    for i = 1:length(tspan)-1
+        dynamics_copy = set_ctrl(dynamics, [ctrl[1:i] for ctrl in ctrl])
+        dynamics_copy.data.tspan = tspan[1:i+1]
+        append!(temp, objective(obj, dynamics_copy))
+    end
+    temp
+end  # function objective
 
 include("CramerRao.jl")
 include("Holevo.jl")

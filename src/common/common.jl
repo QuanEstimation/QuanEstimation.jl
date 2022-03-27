@@ -353,3 +353,29 @@ function initial_Rotation!(measurement0, s_all, dim, p_num, rng)
     end
 end
 
+function initial_LinearComb!(measurement0, B_all, basis_num, M_num, p_num, rng)
+    if length(measurement0) > p_num
+        measurement0 = [measurement0[i] for i in 1:p_num]
+    end 
+    for pj in 1:length(measurement0)
+        B_all[pj] = [[measurement0[pj][i,j] for j in 1:dim] for i in 1:M_num]
+    end
+
+    for pj in (length(measurement0)+1):p_num
+        B_all[pj] = [rand(rng, basis_num) for i in 1:M_num]
+        bound_LC_coeff!(B_all[pj])
+    end
+end
+
+function initial_Rotation!(measurement0, s_all, dim, p_num, rng)
+    if length(measurement0) > p_num
+        measurement0 = [measurement0[i] for i in 1:p_num]
+    end 
+    for pj in 1:length(measurement0)
+        s_all[pj] = [measurement0[pj][i] for i in 1:dim*dim]
+    end
+
+    for pj in (length(measurement0)+1):p_num
+        s_all[pj] = rand(rng, dim*dim)
+    end
+end
