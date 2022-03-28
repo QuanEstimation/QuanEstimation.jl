@@ -30,7 +30,7 @@ end
 
 autoGRAPE(max_episode, ϵ, beta1, beta2) = autoGRAPE_Adam(max_episode, ϵ, beta1, beta2)
 
-abstract type AbstractAD <:  AbstractAlgorithm end
+abstract type AbstractAD <: AbstractAlgorithm end
 struct AD <: AbstractAD
     max_episode::Number
     ϵ::Number

@@ -120,7 +120,9 @@ function QFIM_SLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = eps_default) wher
     (
         [0.5 * ρ] .*
         (kron(LD_tp, reshape(LD_tp, 1, p_num)) + kron(reshape(LD_tp, 1, p_num), LD_tp))
-    ) .|> tr .|> real
+    ) .|>
+    tr .|>
+    real
 end
 
 function QFIM_RLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = eps_default) where {T<:Complex}
@@ -143,7 +145,9 @@ function QFIM_liouville(ρ, dρ)
     (
         [0.5 * ρ] .*
         (kron(LD_tp, reshape(LD_tp, 1, p_num)) + kron(reshape(LD_tp, 1, p_num), LD_tp))
-    ) .|> tr .|> real
+    ) .|>
+    tr .|>
+    real
 end
 
 function QFIM_pure(ρ::Matrix{T}, ∂ρ_∂x::Vector{Matrix{T}}) where {T<:Complex}
