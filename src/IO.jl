@@ -56,14 +56,38 @@ const IO_ini = Dict(
         :multi_para,
     ) => "non-controlled value of HCRB is %f\ninitial value of HCRB is %f\n",
     #### state optimization ####
-    (:Sopt, :QFIM, :single_para) => "initial value of QFI is %f\n",
-    (:Sopt, :QFIM, :multi_para) => "initial value of tr(WF^{-1}) is %f\n",
-    (:Sopt, :CFIM, :single_para) => "initial value of CFI is %f\n",
-    (:Sopt, :CFIM, :multi_para) => "initial value of tr(WI^{-1}) is %f\n",
-    (:Sopt, :HCRB, :multi_para) => "initial value of HCRB is %f\n",
+    (
+        :Sopt,
+        :QFIM,
+        :single_para,
+    ) => "initial value of QFI is %f\n",
+    (
+        :Sopt,
+        :QFIM,
+        :multi_para,
+    ) => "initial value of tr(WF^{-1}) is %f\n",
+    (
+        :Sopt,
+        :CFIM,
+        :single_para,
+    ) => "initial value of CFI is %f\n",
+    (
+        :Sopt,
+        :CFIM,
+        :multi_para,
+    ) => "initial value of tr(WI^{-1}) is %f\n",
+    (
+        :Sopt,
+        :HCRB,
+        :multi_para,
+    ) => "initial value of HCRB is %f\n",
 
     #### projective measurement optimization ####
-    (:Mopt, :CFIM, :single_para) => "initial value of CFI is %f\nQFI is %f\n",
+    (
+        :Mopt,
+        :CFIM,
+        :single_para,
+    ) => "initial value of CFI is %f\nQFI is %f\n",
     (
         :Mopt,
         :CFIM,
@@ -109,14 +133,39 @@ const IO_ini = Dict(
         :multi_para,
     ) => "non-controlled value of HCRB is %f\ninitial value of HCRB is %f\n",
     #### state and measurement optimization ####
-    (:SMopt, :CFIM, :single_para) => "initial value of CFI is %f\n",
-    (:SMopt, :CFIM, :multi_para) => "initial value of tr(WI^{-1}) is %f\n",
+    (
+        :SMopt,
+        :CFIM,
+        :single_para,
+    ) => "initial value of CFI is %f\n",
+    (
+        :SMopt,
+        :CFIM,
+        :multi_para,
+    ) => "initial value of tr(WI^{-1}) is %f\n",
     #### control and measurement optimization ####
-    (:CMopt, :CFIM, :single_para) => "initial value of CFI is %f\n",
-    (:CMopt, :CFIM, :multi_para) => "initial value of tr(WI^{-1}) is %f\n",
+    (
+        :CMopt,
+        :CFIM,
+        :single_para,
+    ) => "initial value of CFI is %f\n",
+    (
+        :CMopt,
+        :CFIM,
+        :multi_para,
+    ) => "initial value of tr(WI^{-1}) is %f\n",
     #### state, control and measurement optimization ####
-    (:SCMopt, :CFIM, :single_para) => "initial value of CFI is %f\n",
-    (:SCMopt, :CFIM, :multi_para) => "initial value of tr(WI^{-1}) is %f\n",
+    (
+        :SCMopt,
+        :CFIM,
+        :single_para,
+    ) => "initial value of CFI is %f\n",
+    (
+        :SCMopt,
+        :CFIM,
+        :multi_para,
+    ) => "initial value of tr(WI^{-1}) is %f\n",
+
 )
 
 const IO_current = Dict(
@@ -144,7 +193,10 @@ const IO_final = Dict(
 ## io info
 function show(system::QuanEstSystem)
     (; optim, algorithm, obj) = system
-    println((optim isa ControlOpt ? IO_obj[obj_type(obj)] : "") * IO_opt[opt_target(optim)])
+    println(
+        (optim isa ControlOpt ? IO_obj[obj_type(obj)] : "") *
+        IO_opt[opt_target(optim)],
+    )
     println(IO_para[para_type(obj)])
     println(IO_alg[alg_type(algorithm)])
 end

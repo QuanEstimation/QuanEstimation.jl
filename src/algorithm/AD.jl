@@ -28,27 +28,18 @@ function update!(opt::ControlOpt, alg::AbstractautoGRAPE, obj, dynamics, output)
 end
 
 function update_ctrl!(alg::autoGRAPE_Adam, obj, dynamics, δ)
-    (; ϵ, beta1, beta2) = alg
-    for ci = 1:length(δ)
+    (; epsilon, beta1, beta2) = alg
+    for ci in 1:length(δ)
         mt, vt = 0.0, 0.0
-        for ti = 1:length(δ[1])
-            dynamics.data.ctrl[ci][ti], mt, vt = Adam(
-                δ[ci][ti],
-                ti,
-                dynamics.data.ctrl[ci][ti],
-                mt,
-                vt,
-                ϵ,
-                beta1,
-                beta2,
-                obj.eps,
-            )
+        for ti in 1:length(δ[1])
+            dynamics.data.ctrl[ci][ti], mt, vt = Adam(δ[ci][ti], ti, 
+            dynamics.data.ctrl[ci][ti], mt, vt, epsilon, beta1, beta2, obj.eps)
         end
     end
 end
 
 function update_ctrl!(alg::autoGRAPE, obj, dynamics, δ)
-    dynamics.data.ctrl += alg.ϵ * δ
+    dynamics.data.ctrl += alg.epsilon*δ
 end
 
 #### state optimization ####
@@ -59,10 +50,10 @@ function update!(opt::StateOpt, alg::AbstractAD, obj, dynamics, output)
     set_buffer!(output, transpose(dynamics.data.ψ0))
     set_io!(output, f_ini)
     show(opt, output, obj)
-    for ei = 1:(max_episode-1)
+    for ei in 1:(max_episode-1)
         δ = gradient(() -> objective(obj, dynamics)[2], Flux.Params([dynamics.data.ψ0]))
         update_state!(alg, obj, dynamics, δ[dynamics.data.ψ0])
-        dynamics.data.ψ0 = dynamics.data.ψ0 / norm(dynamics.data.ψ0)
+        dynamics.data.ψ0 = dynamics.data.ψ0/norm(dynamics.data.ψ0)
         f_out, f_now = objective(obj, dynamics)
         set_f!(output, f_out)
         set_buffer!(output, transpose(dynamics.data.ψ0))
@@ -73,16 +64,15 @@ function update!(opt::StateOpt, alg::AbstractAD, obj, dynamics, output)
 end
 
 function update_state!(alg::AD_Adam, obj, dynamics, δ)
-    (; ϵ, beta1, beta2) = alg
+    (; epsilon, beta1, beta2) = alg
     mt, vt = 0.0, 0.0
-    for ti = 1:length(δ)
-        dynamics.data.ψ0[ti], mt, vt =
-            Adam(δ[ti], ti, dynamics.data.ψ0[ti], mt, vt, ϵ, beta1, beta2, obj.eps)
+    for ti in 1:length(δ)
+        dynamics.data.ψ0[ti], mt, vt = Adam(δ[ti], ti, dynamics.data.ψ0[ti], mt, vt, epsilon, beta1, beta2, obj.eps)
     end
 end
 
 function update_state!(alg::AD, obj, dynamics, δ)
-    dynamics.data.ψ0 += alg.ϵ * δ
+    dynamics.data.ψ0 += alg.epsilon*δ
 end
 
 #### find the optimal linear combination of a given set of POVM ####
@@ -92,8 +82,8 @@ function update!(opt::Mopt_LinearComb, alg::AbstractAD, obj, dynamics, output)
     basis_num = length(POVM_basis)
 
     bound_LC_coeff!(opt.B)
-    M = [sum([opt.B[i][j] * POVM_basis[j] for j = 1:basis_num]) for i = 1:M_num]
-    obj_QFIM = QFIM_Obj(obj)
+    M = [sum([opt.B[i][j]*POVM_basis[j] for j in 1:basis_num]) for i in 1:M_num]
+    obj_QFIM = QFIM_obj(obj)
     f_opt, f_comp = objective(obj_QFIM, dynamics)
     obj_POVM = set_M(obj, POVM_basis)
     f_povm, f_comp = objective(obj_POVM, dynamics)
@@ -103,11 +93,11 @@ function update!(opt::Mopt_LinearComb, alg::AbstractAD, obj, dynamics, output)
     set_buffer!(output, M)
     set_io!(output, f_ini, f_povm, f_opt)
     show(opt, output, obj)
-    for ei = 1:(max_episode-1)
+    for ei in 1:(max_episode-1)
         δ = gradient(() -> objective(opt, obj, dynamics)[2], Flux.Params([opt.B]))
         update_M!(opt, alg, obj, δ[opt.B])
         bound_LC_coeff!(opt.B)
-        M = [sum([opt.B[i][j] * POVM_basis[j] for j = 1:basis_num]) for i = 1:M_num]
+        M = [sum([opt.B[i][j]*POVM_basis[j] for j in 1:basis_num]) for i in 1:M_num]
         obj_copy = set_M(obj, M)
         f_out, f_now = objective(obj_copy, dynamics)
         set_f!(output, f_out)
@@ -119,18 +109,17 @@ function update!(opt::Mopt_LinearComb, alg::AbstractAD, obj, dynamics, output)
 end
 
 function update_M!(opt::Mopt_LinearComb, alg::AD_Adam, obj, δ)
-    (; ϵ, beta1, beta2) = alg
-    for ci = 1:length(δ)
+    (; epsilon, beta1, beta2) = alg
+    for ci in 1:length(δ)
         mt, vt = 0.0, 0.0
-        for ti = 1:length(δ[1])
-            opt.B[ci][ti], mt, vt =
-                Adam(δ[ci][ti], ti, opt.B[ci][ti], mt, vt, ϵ, beta1, beta2, obj.eps)
+        for ti in 1:length(δ[1])
+            opt.B[ci][ti], mt, vt = Adam(δ[ci][ti], ti, opt.B[ci][ti], mt, vt, epsilon, beta1, beta2, obj.eps)
         end
     end
 end
 
 function update_M!(opt::Mopt_LinearComb, alg::AD, obj, δ)
-    opt.B += alg.ϵ * δ
+    opt.B += alg.epsilon*δ
 end
 
 #### find the optimal rotated measurement of a given set of POVM ####
@@ -140,12 +129,19 @@ function update!(opt::Mopt_Rotation, alg::AbstractAD, obj, dynamics, output)
     dim = size(dynamics.data.ρ0)[1]
     M_num = length(POVM_basis)
     suN = suN_generator(dim)
-    append!(opt.Lambda, [Matrix{ComplexF64}(I, dim, dim)])
-    append!(opt.Lambda, [suN[i] for i = 1:length(suN)])
+    opt.Lambda = Matrix{ComplexF64}[]
+    append!(opt.Lambda, [Matrix{ComplexF64}(I,dim,dim)])
+    append!(opt.Lambda, [suN[i] for i in 1:length(suN)])
 
+    # if ismissing(Lambda)
+    #     opt.Lambda = Matrix{ComplexF64}[]
+    #     append!(opt.Lambda, [Matrix{ComplexF64}(I,dim,dim)])
+    #     append!(opt.Lambda, [suN[i] for i in 1:length(suN)])
+    # end
+    
     U = rotation_matrix(opt.s, opt.Lambda)
-    M = [U * POVM_basis[i] * U' for i = 1:M_num]
-    obj_QFIM = QFIM_Obj(obj)
+    M = [U*POVM_basis[i]*U' for i in 1:M_num]
+    obj_QFIM = QFIM_obj(obj)
     f_opt, f_comp = objective(obj_QFIM, dynamics)
     obj_POVM = set_M(obj, POVM_basis)
     f_povm, f_comp = objective(obj_POVM, dynamics)
@@ -155,12 +151,12 @@ function update!(opt::Mopt_Rotation, alg::AbstractAD, obj, dynamics, output)
     set_buffer!(output, M)
     set_io!(output, f_ini, f_povm, f_opt)
     show(opt, output, obj)
-    for ei = 1:(max_episode-1)
+    for ei in 1:(max_episode-1)
         δ = gradient(() -> objective(opt, obj, dynamics)[2], Flux.Params([opt.s]))
         update_M!(opt, alg, obj, δ[opt.s])
         bound_rot_coeff!(opt.s)
         U = rotation_matrix(opt.s, opt.Lambda)
-        M = [U * POVM_basis[i] * U' for i = 1:M_num]
+        M = [U*POVM_basis[i]*U' for i in 1:M_num]
         obj_copy = set_M(obj, M)
         f_out, f_now = objective(obj_copy, dynamics)
         set_f!(output, f_out)
@@ -172,15 +168,15 @@ function update!(opt::Mopt_Rotation, alg::AbstractAD, obj, dynamics, output)
 end
 
 function update_M!(opt::Mopt_Rotation, alg::AD_Adam, obj, δ)
-    (; ϵ, beta1, beta2) = alg
+    (; epsilon, beta1, beta2) = alg
     mt, vt = 0.0, 0.0
-    for ti = 1:length(δ)
-        opt.s[ti], mt, vt = Adam(δ[ti], ti, opt.s[ti], mt, vt, ϵ, beta1, beta2, obj.eps)
+    for ti in 1:length(δ)
+        opt.s[ti], mt, vt = Adam(δ[ti], ti, opt.s[ti], mt, vt, epsilon, beta1, beta2, obj.eps)
     end
 end
 
 function update_M!(opt::Mopt_Rotation, alg::AD, obj, δ)
-    opt.s += alg.ϵ * δ
+    opt.s += alg.epsilon*δ
 end
 
 #### state abd control optimization ####
@@ -199,14 +195,11 @@ function update!(opt::StateControlOpt, alg::AbstractAD, obj, dynamics, output)
     show(opt, output, obj)
 
     for ei = 1:(max_episode-1)
-        δ = gradient(
-            () -> objective(obj, dynamics)[2],
-            Flux.Params([dynamics.data.ψ0, dynamics.data.ctrl]),
-        )
+        δ = gradient(() -> objective(obj, dynamics)[2], Flux.Params([dynamics.data.ψ0, dynamics.data.ctrl]))
         update_state!(alg, obj, dynamics, δ[dynamics.data.ψ0])
         update_ctrl!(alg, obj, dynamics, δ[dynamics.data.ctrl])
         bound!(dynamics.data.ctrl, opt.ctrl_bound)
-        dynamics.data.ψ0 = dynamics.data.ψ0 / norm(dynamics.data.ψ0)
+        dynamics.data.ψ0 = dynamics.data.ψ0/norm(dynamics.data.ψ0)
         f_out, f_now = objective(obj, dynamics)
 
         set_f!(output, f_out)
@@ -218,25 +211,16 @@ function update!(opt::StateControlOpt, alg::AbstractAD, obj, dynamics, output)
 end
 
 function update_ctrl!(alg::AD_Adam, obj, dynamics, δ)
-    (; ϵ, beta1, beta2) = alg
-    for ci = 1:length(δ)
+    (; epsilon, beta1, beta2) = alg
+    for ci in 1:length(δ)
         mt, vt = 0.0, 0.0
-        for ti = 1:length(δ[1])
-            dynamics.data.ctrl[ci][ti], mt, vt = Adam(
-                δ[ci][ti],
-                ti,
-                dynamics.data.ctrl[ci][ti],
-                mt,
-                vt,
-                ϵ,
-                beta1,
-                beta2,
-                obj.eps,
-            )
+        for ti in 1:length(δ[1])
+            dynamics.data.ctrl[ci][ti], mt, vt = Adam(δ[ci][ti], ti, 
+            dynamics.data.ctrl[ci][ti], mt, vt, epsilon, beta1, beta2, obj.eps)
         end
     end
 end
 
 function update_ctrl!(alg::AD, obj, dynamics, δ)
-    dynamics.data.ctrl += alg.ϵ * δ
+    dynamics.data.ctrl += alg.epsilon*δ
 end
