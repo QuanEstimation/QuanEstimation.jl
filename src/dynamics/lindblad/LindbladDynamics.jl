@@ -51,7 +51,7 @@ function liouville_dissip_py(A::Array{T}) where {T<:Complex}
 end
 
 function dissipation(
-    Γ::Vector{Matrix{T}},
+    Γ::AbstractVector,
     γ::Vector{R},
     t::Int = 0,
 ) where {T<:Complex,R<:Real}
@@ -59,7 +59,7 @@ function dissipation(
 end
 
 function dissipation(
-    Γ::Vector{Matrix{T}},
+    Γ::AbstractVector,
     γ::Vector{Vector{R}},
     t::Int = 0,
 ) where {T<:Complex,R<:Real}
@@ -72,7 +72,7 @@ end
 
 function liouvillian(
     H::Matrix{T},
-    decay_opt::Vector{Matrix{T}},
+    decay_opt::AbstractVector,
     γ,
     t = 1,
 ) where {T<:Complex}
@@ -109,14 +109,154 @@ function expL(H, dt)
 end
 
 function expm(
+    tspan::AbstractVector,
+    ρ0::AbstractMatrix,
+    H0::AbstractMatrix,
+    dH::AbstractMatrix,
+    decay::Union{AbstractVector, Missing}=missing,
+    Hc::Union{AbstractVector, Missing}=missing,
+    ctrl::Union{AbstractVector, Missing}=missing,
+)
+    dim = size(ρ0, 1)
+    tnum = length(tspan)
+    if ismissing(decay)
+        decay_opt = [zeros(ComplexF64, dim, dim)]
+        γ = [0.0]
+    else
+        decay_opt = [decay[1] for decay in decay]
+        γ = [decay[2] for decay in decay]
+    end
+
+    if ismissing(Hc)
+        Hc = [zeros(ComplexF64, dim, dim)]
+        ctrl = [zeros(tnum-1)]
+    elseif ismissing(ctrl)
+        ctrl = [zeros(tnum-1)]
+    else
+        ctrl_num = length(Hc)
+        ctrl_length = length(ctrl)
+        if ctrl_num < ctrl_length
+            throw(ArgumentError(
+            "There are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences: too many coefficients sequences"
+            ))
+        elseif ctrl_num < ctrl_length
+            throw(ArgumentError(
+            "Not enough coefficients sequences: there are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences. The rest of the control sequences are set to be 0."
+            ))
+        end
+        
+        ratio_num = ceil((length(tspan)-1) / length(ctrl[1]))
+        if length(tspan) - 1 % length(ctrl[1])  != 0
+            tnum = ratio_num * length(ctrl[1]) |> Int
+            tspan = range(tspan[1], tspan[end], length=tnum+1)
+        end
+    end
+    ctrl_num = length(Hc)
+    ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
+    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
+
+    H = Htot(H0, Hc, ctrl)
+    dH_L = liouville_commu(dH)
+
+    Δt = tspan[2] - tspan[1]
+
+    ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i = 1:length(tspan)]
+    ∂ρt_∂x_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i = 1:length(tspan)]
+    ρt_all[1] = ρ0 |> vec
+    ∂ρt_∂x_all[1] = ρt_all[1] |> zero
+
+    decay_opt, γ = decay
+    for t = 2:length(tspan)
+        exp_L = expL(H[t-1], decay_opt, γ, Δt, t)
+        ρt_all[t] = exp_L * ρt_all[t-1]
+        ∂ρt_∂x_all[t] = -im * Δt * dH_L * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1]
+    end
+    ρt_all |> vec2mat, ∂ρt_∂x_all |> vec2mat
+end
+
+function expm(
+    tspan::AbstractVector,
+    ρ0::AbstractMatrix,
+    H0::AbstractMatrix,
+    dH::AbstractVector,
+    decay::Union{AbstractVector, Missing}=missing,
+    Hc::Union{AbstractVector, Missing}=missing,
+    ctrl::Union{AbstractVector, Missing}=missing
+)
+    dim = size(ρ0, 1)
+    tnum = length(tspan)
+    if ismissing(decay)
+        decay_opt = [zeros(ComplexF64, dim, dim)]
+        γ = [0.0]
+    else
+        decay_opt = [decay[1] for decay in decay]
+        γ = [decay[2] for decay in decay]
+    end
+
+    if ismissing(Hc)
+        Hc = [zeros(ComplexF64, dim, dim)]
+        ctrl0 = [zeros(tnum-1)]
+    elseif ismissing(ctrl)
+        ctrl0 = [zeros(tnum-1)]
+    else
+        ctrl_num = length(Hc)
+        ctrl_length = length(ctrl)
+        if ctrl_num < ctrl_length
+            throw(ArgumentError(
+            "There are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences: too many coefficients sequences"
+            ))
+        elseif ctrl_num < ctrl_length
+            throw(ArgumentError(
+            "Not enough coefficients sequences: there are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences. The rest of the control sequences are set to be 0."
+            ))
+        end
+        
+        ratio_num = ceil((length(tspan)-1) / length(ctrl[1]))
+        if length(tspan) - 1 % length(ctrl[1])  != 0
+            tnum = ratio_num * length(ctrl[1]) |> Int
+            tspan = range(tspan[1], tspan[end], length=tnum+1)
+        end
+        ctrl0 = ctrl
+    end
+    para_num = length(dH)
+    ctrl_num = length(Hc)
+    ctrl_interval = ((length(tspan) - 1) / length(ctrl0[1])) |> Int
+    ctrl = [repeat(ctrl0[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
+
+    H = Htot(H0, Hc, ctrl)
+    dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
+
+    Δt = tspan[2] - tspan[1]
+
+    ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i = 1:length(tspan)]
+    ∂ρt_∂x_all = [
+        [Vector{ComplexF64}(undef, (length(H0))^2) for j = 1:para_num] for
+        i = 1:length(tspan)
+    ]
+    ρt_all[1] = ρ0 |> vec
+    for pj = 1:para_num
+        ∂ρt_∂x_all[1][pj] = ρt_all[1] |> zero
+    end
+
+    for t = 2:length(tspan)
+        exp_L = expL(H[t-1], decay_opt, γ, Δt, t)
+        ρt_all[t] = exp_L * ρt_all[t-1]
+        for pj = 1:para_num
+            ∂ρt_∂x_all[t][pj] = -im * Δt * dH_L[pj] * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1][pj]
+        end
+    end
+    ρt_all |> vec2mat, ∂ρt_∂x_all |> vec2mat
+end
+
+function expm_py(
+    tspan,
+    ρ0::AbstractMatrix,
     H0::AbstractMatrix,
     dH::AbstractMatrix,
     Hc::AbstractVector,
-    ctrl::AbstractVector,
-    ρ0::AbstractMatrix,
-    tspan,
     decay_opt::AbstractVector,
     γ,
+    ctrl::AbstractVector,
 ) where {T<:Complex,R<:Real}
 
     ctrl_num = length(Hc)
@@ -141,15 +281,15 @@ function expm(
     ρt_all |> vec2mat, ∂ρt_∂x_all |> vec2mat
 end
 
-function expm(
+function expm_py(
+    tspan,
+    ρ0::AbstractMatrix,
     H0::AbstractMatrix,
     dH::AbstractVector,
-    Hc::AbstractVector,
-    ctrl::AbstractVector,
-    ρ0::AbstractMatrix,
-    tspan,
     decay_opt::AbstractVector,
     γ,
+    Hc::AbstractVector,
+    ctrl::AbstractVector,
 )
 
     para_num = length(dH)
