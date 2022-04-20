@@ -29,7 +29,7 @@ function HCRB(
         println(
             "In the single-parameter scenario, the HCRB is equivalent to the QFI. This function will return the value of the QFI",
         )
-        f = QFIM_SLD(ρ, dρ[1]; eps=eps)
+        f = QFIM_SLD(ρ, dρ[1]; eps = eps)
         return f
     else
         Holevo_bound(ρ, dρ, C; eps = eps)
@@ -81,7 +81,7 @@ function Holevo_bound(
         end
     end
     problem = minimize(tr(C * V), constraints)
-    Convex.solve!(problem, SCS.Optimizer, silent_solver=true)
+    Convex.solve!(problem, SCS.Optimizer, silent_solver = true)
     return evaluate(tr(C * V))
 end
 

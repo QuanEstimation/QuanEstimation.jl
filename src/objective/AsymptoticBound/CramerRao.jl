@@ -17,8 +17,13 @@ Calculate the symmetric logarrithmic derivatives (SLDs).The SLD operator $L_a$ i
 	- "eigen" -- The SLD matrix will be written in terms of the eigenbasis of the input ρ.
 - `eps`: Machine epsilon
 """
-function SLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep = "original", eps = GLOBAL_EPS) where {T<:Complex}
-    (x -> SLD(ρ, x; rep=rep, eps = eps)).(dρ)
+function SLD(
+    ρ::Matrix{T},
+    dρ::Vector{Matrix{T}};
+    rep = "original",
+    eps = GLOBAL_EPS,
+) where {T<:Complex}
+    (x -> SLD(ρ, x; rep = rep, eps = eps)).(dρ)
 end
 
 """
@@ -42,7 +47,7 @@ function SLD(
     SLD_eig = zeros(T, dim, dim)
     for fi = 1:dim
         for fj = 1:dim
-             if abs(val[fi] + val[fj]) > eps
+            if abs(val[fi] + val[fj]) > eps
                 SLD_eig[fi, fj] = 2 * (vec[:, fi]' * dρ * vec[:, fj]) / (val[fi] + val[fj])
             end
         end
@@ -53,8 +58,8 @@ function SLD(
         SLD = vec * (SLD_eig * vec')
     elseif rep == "eigen"
         SLD = SLD_eig
-	else
-		throw(ArgumentError("the rep should be chosen between"))
+    else
+        throw(ArgumentError("the rep should be chosen between"))
     end
     SLD
 end
@@ -106,8 +111,13 @@ Calculate the right logarrithmic derivatives (RLDs). The RLD operator is defined
 - `eps`: Machine epsilon
 
 """
-function RLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep = "original", eps = GLOBAL_EPS) where {T<:Complex}
-(x -> RLD(ρ, x; rep=rep, eps = eps)).(dρ)
+function RLD(
+    ρ::Matrix{T},
+    dρ::Vector{Matrix{T}};
+    rep = "original",
+    eps = GLOBAL_EPS,
+) where {T<:Complex}
+    (x -> RLD(ρ, x; rep = rep, eps = eps)).(dρ)
 end
 
 """
@@ -117,13 +127,13 @@ end
 When applied to the case of single parameter.
 """
 function RLD(
-	ρ::Matrix{T},
-	dρ::Matrix{T};
-	rep = "original",
-	eps = GLOBAL_EPS,
+    ρ::Matrix{T},
+    dρ::Matrix{T};
+    rep = "original",
+    eps = GLOBAL_EPS,
 ) where {T<:Complex}
 
-dim = size(ρ)[1]
+    dim = size(ρ)[1]
     RLD = Matrix{ComplexF64}(undef, dim, dim)
 
     val, vec = eigen(ρ)
@@ -167,8 +177,13 @@ Calculate the left logarrithmic derivatives (LLDs). The LLD operator is defined 
 - `eps`: Machine epsilon
 
 """
-function LLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep = "original", eps = GLOBAL_EPS) where {T<:Complex}
-    (x -> LLD(ρ, x; rep=rep, eps = eps)).(dρ)
+function LLD(
+    ρ::Matrix{T},
+    dρ::Vector{Matrix{T}};
+    rep = "original",
+    eps = GLOBAL_EPS,
+) where {T<:Complex}
+    (x -> LLD(ρ, x; rep = rep, eps = eps)).(dρ)
 end
 
 """
@@ -251,7 +266,9 @@ function QFIM_SLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = GLOBAL_EPS) where
     (
         [0.5 * ρ] .*
         (kron(LD_tp, reshape(LD_tp, 1, p_num)) + kron(reshape(LD_tp, 1, p_num), LD_tp))
-    ) .|> tr .|> real
+    ) .|>
+    tr .|>
+    real
 end
 
 function QFIM_RLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = GLOBAL_EPS) where {T<:Complex}
@@ -274,7 +291,9 @@ function QFIM_liouville(ρ, dρ)
     (
         [0.5 * ρ] .*
         (kron(LD_tp, reshape(LD_tp, 1, p_num)) + kron(reshape(LD_tp, 1, p_num), LD_tp))
-    ) .|> tr .|> real
+    ) .|>
+    tr .|>
+    real
 end
 
 function QFIM_pure(ρ::Matrix{T}, ∂ρ_∂x::Vector{Matrix{T}}) where {T<:Complex}
@@ -333,7 +352,7 @@ function CFIM(ρ::Matrix{T}, dρ::Matrix{T}, M; eps = GLOBAL_EPS) where {T<:Comp
         F += cadd
     end
     real(F)
-end 
+end
 
 """
 

@@ -50,11 +50,7 @@ function liouville_dissip_py(A::Array{T}) where {T<:Complex}
     result
 end
 
-function dissipation(
-    Γ::AbstractVector,
-    γ::Vector{R},
-    t::Int = 0,
-) where {T<:Complex,R<:Real}
+function dissipation(Γ::AbstractVector, γ::Vector{R}, t::Int = 0) where {T<:Complex,R<:Real}
     [γ[i] * liouville_dissip(Γ[i]) for i = 1:length(Γ)] |> sum
 end
 
@@ -70,12 +66,7 @@ function free_evolution(H0)
     -1.0im * liouville_commu(H0)
 end
 
-function liouvillian(
-    H::Matrix{T},
-    decay_opt::AbstractVector,
-    γ,
-    t = 1,
-) where {T<:Complex}
+function liouvillian(H::Matrix{T}, decay_opt::AbstractVector, γ, t = 1) where {T<:Complex}
     freepart = liouville_commu(H)
     dissp = norm(γ) + 1 ≈ 1 ? freepart |> zero : dissipation(decay_opt, γ, t)
     -1.0im * freepart + dissp
@@ -113,9 +104,9 @@ function expm(
     ρ0::AbstractMatrix,
     H0::AbstractMatrix,
     dH::AbstractMatrix,
-    decay::Union{AbstractVector, Missing}=missing,
-    Hc::Union{AbstractVector, Missing}=missing,
-    ctrl::Union{AbstractVector, Missing}=missing,
+    decay::Union{AbstractVector,Missing} = missing,
+    Hc::Union{AbstractVector,Missing} = missing,
+    ctrl::Union{AbstractVector,Missing} = missing,
 )
     dim = size(ρ0, 1)
     tnum = length(tspan)
@@ -129,26 +120,30 @@ function expm(
 
     if ismissing(Hc)
         Hc = [zeros(ComplexF64, dim, dim)]
-        ctrl = [zeros(tnum-1)]
+        ctrl = [zeros(tnum - 1)]
     elseif ismissing(ctrl)
-        ctrl = [zeros(tnum-1)]
+        ctrl = [zeros(tnum - 1)]
     else
         ctrl_num = length(Hc)
         ctrl_length = length(ctrl)
         if ctrl_num < ctrl_length
-            throw(ArgumentError(
-            "There are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences: too many coefficients sequences"
-            ))
+            throw(
+                ArgumentError(
+                    "There are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences: too many coefficients sequences",
+                ),
+            )
         elseif ctrl_num < ctrl_length
-            throw(ArgumentError(
-            "Not enough coefficients sequences: there are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences. The rest of the control sequences are set to be 0."
-            ))
+            throw(
+                ArgumentError(
+                    "Not enough coefficients sequences: there are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences. The rest of the control sequences are set to be 0.",
+                ),
+            )
         end
-        
-        ratio_num = ceil((length(tspan)-1) / length(ctrl[1]))
-        if length(tspan) - 1 % length(ctrl[1])  != 0
+
+        ratio_num = ceil((length(tspan) - 1) / length(ctrl[1]))
+        if length(tspan) - 1 % length(ctrl[1]) != 0
             tnum = ratio_num * length(ctrl[1]) |> Int
-            tspan = range(tspan[1], tspan[end], length=tnum+1)
+            tspan = range(tspan[1], tspan[end], length = tnum + 1)
         end
     end
     ctrl_num = length(Hc)
@@ -179,9 +174,9 @@ function expm(
     ρ0::AbstractMatrix,
     H0::AbstractMatrix,
     dH::AbstractVector,
-    decay::Union{AbstractVector, Missing}=missing,
-    Hc::Union{AbstractVector, Missing}=missing,
-    ctrl::Union{AbstractVector, Missing}=missing
+    decay::Union{AbstractVector,Missing} = missing,
+    Hc::Union{AbstractVector,Missing} = missing,
+    ctrl::Union{AbstractVector,Missing} = missing,
 )
     dim = size(ρ0, 1)
     tnum = length(tspan)
@@ -195,26 +190,30 @@ function expm(
 
     if ismissing(Hc)
         Hc = [zeros(ComplexF64, dim, dim)]
-        ctrl0 = [zeros(tnum-1)]
+        ctrl0 = [zeros(tnum - 1)]
     elseif ismissing(ctrl)
-        ctrl0 = [zeros(tnum-1)]
+        ctrl0 = [zeros(tnum - 1)]
     else
         ctrl_num = length(Hc)
         ctrl_length = length(ctrl)
         if ctrl_num < ctrl_length
-            throw(ArgumentError(
-            "There are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences: too many coefficients sequences"
-            ))
+            throw(
+                ArgumentError(
+                    "There are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences: too many coefficients sequences",
+                ),
+            )
         elseif ctrl_num < ctrl_length
-            throw(ArgumentError(
-            "Not enough coefficients sequences: there are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences. The rest of the control sequences are set to be 0."
-            ))
+            throw(
+                ArgumentError(
+                    "Not enough coefficients sequences: there are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences. The rest of the control sequences are set to be 0.",
+                ),
+            )
         end
-        
-        ratio_num = ceil((length(tspan)-1) / length(ctrl[1]))
-        if length(tspan) - 1 % length(ctrl[1])  != 0
+
+        ratio_num = ceil((length(tspan) - 1) / length(ctrl[1]))
+        if length(tspan) - 1 % length(ctrl[1]) != 0
             tnum = ratio_num * length(ctrl[1]) |> Int
-            tspan = range(tspan[1], tspan[end], length=tnum+1)
+            tspan = range(tspan[1], tspan[end], length = tnum + 1)
         end
         ctrl0 = ctrl
     end
@@ -242,7 +241,8 @@ function expm(
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t)
         ρt_all[t] = exp_L * ρt_all[t-1]
         for pj = 1:para_num
-            ∂ρt_∂x_all[t][pj] = -im * Δt * dH_L[pj] * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1][pj]
+            ∂ρt_∂x_all[t][pj] =
+                -im * Δt * dH_L[pj] * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1][pj]
         end
     end
     ρt_all |> vec2mat, ∂ρt_∂x_all |> vec2mat
@@ -316,7 +316,8 @@ function expm_py(
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t)
         ρt_all[t] = exp_L * ρt_all[t-1]
         for pj = 1:para_num
-            ∂ρt_∂x_all[t][pj] = -im * Δt * dH_L[pj] * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1][pj]
+            ∂ρt_∂x_all[t][pj] =
+                -im * Δt * dH_L[pj] * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1][pj]
         end
     end
     ρt_all |> vec2mat, ∂ρt_∂x_all |> vec2mat
@@ -505,7 +506,7 @@ function evolve(dynamics::Lindblad{noisy,free,ket})
         ρt = exp_L * ρt
         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
     end
-    
+
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
@@ -617,7 +618,10 @@ function evolve(dynamics::Lindblad{noisy,controlled,ket})
     para_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    ctrl = [repeat(dynamics.data.ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
+    ctrl = [
+        repeat(dynamics.data.ctrl[i], 1, ctrl_interval) |> transpose |> vec for
+        i = 1:ctrl_num
+    ]
     H = Htot(H0, Hc, ctrl)
     dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
     ρt = (ψ0 * ψ0') |> vec
@@ -646,9 +650,9 @@ function propagate(
     H = Htot(H0, Hc, a)
     dH_L = [liouville_commu(dH) for dH in dH]
     exp_L = expL(H, decay_opt, γ, Δt)
-    dρₜ_next = [dρₜ|>vec for dρₜ in dρₜ ]
-    ρₜ_next = exp_L * vec(ρₜ )
-    for i in 1:ctrl_interval
+    dρₜ_next = [dρₜ |> vec for dρₜ in dρₜ]
+    ρₜ_next = exp_L * vec(ρₜ)
+    for i = 1:ctrl_interval
         for para = 1:para_num
             dρₜ_next[para] = -im * Δt * dH_L[para] * ρₜ_next + exp_L * dρₜ_next[para]
         end
@@ -670,9 +674,9 @@ function propagate(
     H = Htot(H0, Hc, a)
     dH_L = [liouville_commu(dH) for dH in dH]
     exp_L = expL(H, Δt)
-    dρₜ_next = [dρₜ|>vec for dρₜ in dρₜ ]
-    ρₜ_next = exp_L * vec(ρₜ )
-    for i in 1:ctrl_interval
+    dρₜ_next = [dρₜ |> vec for dρₜ in dρₜ]
+    ρₜ_next = exp_L * vec(ρₜ)
+    for i = 1:ctrl_interval
         for para = 1:para_num
             dρₜ_next[para] = -im * Δt * dH_L[para] * ρₜ_next + exp_L * dρₜ_next[para]
         end

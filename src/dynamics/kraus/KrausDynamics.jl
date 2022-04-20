@@ -4,8 +4,11 @@ function evolve(dynamics::Kraus{ket})
     ρ0 = ψ0 * ψ0'
     K_num = length(K)
     para_num = length(dK[1])
-    ρ = [K[i] * ρ0 * K[i]' for i in 1:K_num] |> sum
-    dρ = [[dK[i][j] * ρ0 * K[i]' + K[i] * ρ0 * dK[i][j]' for i in 1:K_num] |> sum for j in 1:para_num]
+    ρ = [K[i] * ρ0 * K[i]' for i = 1:K_num] |> sum
+    dρ = [
+        [dK[i][j] * ρ0 * K[i]' + K[i] * ρ0 * dK[i][j]' for i = 1:K_num] |> sum for
+        j = 1:para_num
+    ]
 
     ρ, dρ
 end
@@ -15,8 +18,11 @@ function evolve(dynamics::Kraus{dm})
     (; K, dK, ρ0) = dynamics.data
     K_num = length(K)
     para_num = length(dK[1])
-    ρ = [K[i] * ρ0 * K[i]' for i in 1:K_num] |> sum
-    dρ = [[dK[i][j] * ρ0 * K[i]' + K[i] * ρ0 * dK[i][j]' for i in 1:K_num] |> sum for j in 1:para_num]
-    
+    ρ = [K[i] * ρ0 * K[i]' for i = 1:K_num] |> sum
+    dρ = [
+        [dK[i][j] * ρ0 * K[i]' + K[i] * ρ0 * dK[i][j]' for i = 1:K_num] |> sum for
+        j = 1:para_num
+    ]
+
     ρ, dρ
 end

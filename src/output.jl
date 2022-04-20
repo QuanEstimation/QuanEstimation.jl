@@ -23,7 +23,7 @@ function set_io!(output::AbstractOutput, buffer...)
 end
 
 Output{T}(opt::AbstractOpt) where {T} = Output{T}([], [], res_file(opt), [])
-Output(opt::AbstractOpt; save::Bool=false) =
+Output(opt::AbstractOpt; save::Bool = false) =
     save ? Output{savefile}(opt) : Output{no_save}(opt)
 
 save_type(::Output{savefile}) = :savefile

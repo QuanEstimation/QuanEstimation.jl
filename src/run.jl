@@ -21,8 +21,14 @@ function run(system::QuanEstSystem)
     show(obj, output) #io4
 end
 
-function run(opt::AbstractOpt, alg::AbstractAlgorithm, obj::AbstractObj,dynamics::AbstractDynamics;savefile::Bool=false)
-    output =  Output(opt;save=savefile)
+function run(
+    opt::AbstractOpt,
+    alg::AbstractAlgorithm,
+    obj::AbstractObj,
+    dynamics::AbstractDynamics;
+    savefile::Bool = false,
+)
+    output = Output(opt; save = savefile)
     obj = Objective(dynamics, obj)
     system = QuanEstSystem(opt, alg, obj, dynamics, output)
     run(system)

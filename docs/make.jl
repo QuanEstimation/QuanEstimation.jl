@@ -19,7 +19,13 @@ DocMeta.setdocmeta!(
 #     render(io, mime, anchor.object, page, doc)
 # end
 
-function render(io::IO, mime::MIME"text/plain", node::Documenter.Documents.DocsNode, page, doc)
+function render(
+    io::IO,
+    mime::MIME"text/plain",
+    node::Documenter.Documents.DocsNode,
+    page,
+    doc,
+)
     # Docstring header based on the name of the binding and it's category.
     anchor = "## "
     header = "**`$(node.object.binding)`** &mdash; *$(Documenter.Utilities.doccat(node.object))*."
@@ -30,10 +36,10 @@ end
 
 makedocs(;
     format = Markdown(),
-    root    = ".",
-    source  = "docs/src",
-    build   = "docs/build",
-    clean   = true,
+    root = ".",
+    source = "docs/src",
+    build = "docs/build",
+    clean = true,
     doctest = true,
     modules = [QuanEstimation],
     authors = "Hauiming Yu <Huaimingyuuu@gmail.com> and contributors",
