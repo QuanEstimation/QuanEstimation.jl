@@ -6,7 +6,7 @@ const σ_z = [1.0 0.0im; 0.0 -1.0]
 ############## logarrithmic derivative ###############
 @doc raw"""
 
-	SLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep = "original", eps = GLOBAL_EPS) Complex}
+	SLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep = "original", eps = GLOBAL_EPS) where {T<:Complex}
 
 Calculate the symmetric logarrithmic derivatives (SLDs).The SLD operator $L_a$ is defined as``\partial_{a}\rho=\frac{1}{2}(\rho L_{a}+L_{a}\rho)``, where ρ is the parameterized density matrix.
 
@@ -94,7 +94,7 @@ end
 
 @doc raw"""
 
-RLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep = "original", eps = GLOBAL_EPS) where {T<:Complex}
+    RLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep = "original", eps = GLOBAL_EPS) where {T<:Complex}
 
 Calculate the right logarrithmic derivatives (RLDs). The RLD operator is defined as ``\partial_{a}\rho=\rho \mathcal{R}_a``, where ρ is the parameterized density matrix.
 
@@ -156,14 +156,14 @@ end
 
 @doc raw"""
 
-LLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep = "original", eps = GLOBAL_EPS) where {T<:Complex}
+    LLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep = "original", eps = GLOBAL_EPS) where {T<:Complex}
 
 Calculate the left logarrithmic derivatives (LLDs). The LLD operator is defined as ``\partial_{a}\rho=\mathcal{R}_a^{\dagger}\rho``, where ρ is the parameterized density matrix.
 - `ρ`: Density matrix.
 - `dρ`: Derivatives of the density matrix with respect to the unknown parameters to be estimated. For example, drho[1] is the derivative vector with respect to the first parameter.
 - `rep`: Representation of the LLD operator. Options can be:
-	- "original" (default) -- The RLD matrix will be written in terms of the same basis as the input density matrix (ρ).
-	- "eigen" -- The RLD matrix will be written in terms of the eigenbasis of the input ρ.
+	    - "original" (default) -- The RLD matrix will be written in terms of the same basis as the input density matrix (ρ).
+	    - "eigen" -- The RLD matrix will be written in terms of the eigenbasis of the input ρ.
 - `eps`: Machine epsilon
 
 """
@@ -563,14 +563,11 @@ Calculate the SLD based quantum Fisher information matrix (QFIM) with gaussian s
 
 - `R̄` : First-order moment.
 
-- `dR̄`: Derivatives of the first-order moment with respect to the unknown parameters to be 
-estimated. For example, dR[1] is the derivative vector on the first 
-parameter.
+- `dR̄`: Derivatives of the first-order moment with respect to the unknown parameters to be estimated. For example, dR[1] is the derivative vector on the first parameter.
 
 - `D`: Second-order moment.
 
-- `dD`: Derivatives of the second-order moment with respect to the unknown parameters to be 
-estimated. 
+- `dD`: Derivatives of the second-order moment with respect to the unknown parameters to be estimated. 
 
 - `eps`: Machine epsilon
 
