@@ -1,6 +1,6 @@
 name = "QuanEstimation"
 uuid = "088c8dff-a786-4a66-974c-03d3f6773f87"
-authors = ["Hauiming Yu <Huaimingyuuu@gmail.com> and contributors"]
+authors = ["Jing Liu <liujingphys@hust.edu.cn>", "Hauiming Yu <Huaimingyuuu@gmail.com>", "Mao Zhang <zhangmao2018@hust.edu.cn>"]
 version = "0.1.0"
 
 [deps]
@@ -24,7 +24,7 @@ Trapz = "592b5752-818d-11e9-1e9a-2b8ca4a44cd1"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
-julia = "1.6.2"
+julia = "1.7.2"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
