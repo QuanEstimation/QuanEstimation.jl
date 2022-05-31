@@ -180,7 +180,7 @@ function LLD(
         for fj = 1:dim
             term_tp = (vec[:, fi]' * dρ * vec[:, fj])
             if abs(val[fj]) > eps
-                LLD_eig[fj, fi] = (term_tp / val[fj]) |> conj()
+                LLD_eig[fj, fi] = conj(term_tp / val[fj])
             else
                 if abs(term_tp) < eps
                     throw(ErrorException("The LLD does not exist. It only exist when the support of drho is contained in the support of rho."))
