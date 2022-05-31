@@ -25,7 +25,7 @@ jobs:
         run: |
           import CompatHelper
           CompatHelper.main(;
-            subdirs=["", joinpath.("lib", readdir("lib"))...]
+            # subdirs=["", joinpath.("lib", readdir("lib"))...]
           )
         shell: julia --color=yes {0}
         env:
