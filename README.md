@@ -12,7 +12,7 @@ This package is a Julia implementation of [QuanEstimation](https://github.com/Qu
 
 ## Installation
 
-Run the command in the terminal to install QuanEstimation:  
+Run the command in the julia REPL to install QuanEstimation:  
 
 ~~~
 pkg> add QuanEstimation
