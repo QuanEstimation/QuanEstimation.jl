@@ -8,7 +8,7 @@
 <!-- needs to be modified -->
 QuanEstimation is a Python-Julia based open-source toolkit for quantum parameter estimation, which consist in the calculation of the quantum metrological tools and quantum resources, the optimization of the probe state, control and measurement in quantum metrology. Futhermore, QuanEstimation can also perform comprehensive optimization with respect to the probe state, control and measurement to generate not only optimal quantum parameter estimation schemes, but also adaptive measurement schemes.
 
-This package is a fully Julia implementation of [QuanEstimation](https://github.com/QuanEstimation/QuanEstimation).
+This package is a Julia implementation of [QuanEstimation](https://github.com/QuanEstimation/QuanEstimation).
 
 ## Installation
 
