@@ -23,19 +23,19 @@ Trapz = "592b5752-818d-11e9-1e9a-2b8ca4a44cd1"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
-julia = "1.7"
 BoundaryValueDiffEq = "2"
 Convex = "0.15"
 DifferentialEquations = "7"
 Flux = "0.12"
 Interpolations = "0.13"
-IntervalSets = "0.5"
+IntervalSets = "0.5, 0.7"
 ReinforcementLearning = "0.10"
 SCS = "1"
 StableRNGs = "1"
 StatsBase = "0.33"
 Trapz = "2"
 Zygote = "0.6"
+julia = "1.7"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
