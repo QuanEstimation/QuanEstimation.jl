@@ -2,7 +2,7 @@
 
 <!-- needs to be modified -->
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://HuaimingYuuu.github.io/QuanEstimation.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://HuaimingYuuu.github.io/QuanEstimation.jl/dev)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://quanestimation.github.io/QuanEstimation/)
 [![Build Status](https://github.com/HuaimingYuuu/QuanEstimation.jl/workflows/CI/badge.svg)](https://github.com/HuaimingYuuu/QuanEstimation.jl/actions)
 [![Coverage](https://codecov.io/gh/HuaimingYuuu/QuanEstimation.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/HuaimingYuuu/QuanEstimation.jl)
 <!-- needs to be modified -->
@@ -17,3 +17,10 @@ Run the command in the julia REPL to install QuanEstimation:
 ~~~
 import Pkg; Pkg.add("QuanEstimation")
 ~~~
+
+## Citation
+If you use QuanEstimation in your research, please cite the following paper:
+
+[1] M. Zhang, H.-M. Yu, H. Yuan, X. Wang, R. Demkowicz-Dobrzański, and J. Liu, 
+QuanEstimation: an open-source toolkit for quantum parameter estimation, 
+[arXiv:2205.15588](https://doi.org/10.48550/arXiv.2205.15588).
