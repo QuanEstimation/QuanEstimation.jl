@@ -94,3 +94,47 @@ function Holevo_bound_obj(
 )
     return Holevo_bound(ρ, dρ, C; eps = eps)[1]
 end
+
+"""
+
+    NHB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix)
+
+Nagaoka-Hayashi bound (NHB) via the semidefinite program (SDP).
+- `ρ`: Density matrix.
+- `dρ`: Derivatives of the density matrix on the unknown parameters to be estimated. For example, drho[0] is the derivative vector on the first parameter.
+- `W`: Weight matrix.
+"""
+function NHB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix) 
+
+    dim = size(ρ)[1]
+    para_num = length(dρ)
+
+    #=========optimization variables===========#
+    L_tp = [[Variable() for i in 1:para_num] for j in 1:para_num]
+    for para_i in 1:para_num
+        for para_j in para_i:para_num
+            L_tp[para_i][para_j] = ComplexVariable(dim, dim)
+            constraints = [transpose(conj(L_tp[para_i][para_j])) == L_tp[para_i][para_j]]
+            L_tp[para_j][para_i] = L_tp[para_i][para_j]
+        end
+    end
+    L = vcat([hcat(L_tp[i]...) for i in 1:para_num]...)
+    X = [ComplexVariable(dim, dim) for j in 1:para_num]
+
+    #============add constraints===============#
+    constraints += [[L vcat(X...); hcat(X...) Matrix{Float64}(I, dim, dim)] ⪰ 0]         
+    for i = 1:para_num
+        constraints += [tr(X[i] * ρ[i]) == 0]
+        constraints += [transpose(conj(X[i])) == X[i]]  
+        for j = 1:para_num
+            if i == j
+                constraints += [tr(X[i] * dρ[j]) == 1]
+            else
+                constraints += [tr(X[i] * dρ[j]) == 0]
+            end
+        end
+    end
+    problem = minimize(real(tr(kron(W, ρ) * L)), constraints)
+    Convex.solve!(problem, SCS.Optimizer, silent_solver=true)
+    return evaluate(real(tr(kron(W, ρ) * L)))
+end
