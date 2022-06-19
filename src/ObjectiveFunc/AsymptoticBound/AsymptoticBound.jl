@@ -351,5 +351,5 @@ end
 # end  # function objective
 
 include("CramerRao.jl")
-include("analogCramerRao.jl")
+include("AnalogCramerRao.jl")
 include("AsymptoticBoundWrapper.jl")
