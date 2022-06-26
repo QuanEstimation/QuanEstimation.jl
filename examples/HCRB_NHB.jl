@@ -19,22 +19,19 @@ m1 = [1., 0., 0., 0.]
 M1 = 0.85*m1*m1'
 M2 = 0.1*ones(4, 4)
 M = [M1, M2, I(4)-M1-M2]
-# time length for the evolution
-tspan = range(0., 10., length=1000)
-# dynamics
-rho, drho = QuanEstimation.expm(tspan, rho0, H0, dH, decay)
 # weight matrix
 W = one(zeros(2, 2))
+# time length for the evolution
+tspan = range(0., 5., length=200)
+# dynamics
+rho, drho = QuanEstimation.expm(tspan, rho0, H0, dH, decay)
 # calculation of the CFIM, QFIM and HCRB
-Im, F, f = [], [], Float64[]
+f_HCRB, f_NHB = [], []
 for ti in 2:length(tspan)
-    #CFIM
-    I_tp = QuanEstimation.CFIM(rho[ti], drho[ti], M)
-    append!(Im, [I_tp])
-    #QFIM
-    F_tp = QuanEstimation.QFIM(rho[ti], drho[ti])
-    append!(F, [F_tp])
-    #HCRB
-    f_tp = QuanEstimation.HCRB(rho[ti], drho[ti], W)
-    append!(f, f_tp)
+    # HCRB
+    f_tp1 = QuanEstimation.HCRB(rho[ti], drho[ti], W)
+    append!(f_HCRB, f_tp1)
+    # NHB
+    f_tp2 = QuanEstimation.NHB(rho[ti], drho[ti], W)
+    append!(f_NHB, f_tp2)
 end
