@@ -12,6 +12,8 @@ using SCS
 using BoundaryValueDiffEq
 using Trapz
 using Interpolations
+using Distributions
+using QuadGK
 
 const pkgpath = @__DIR__
 

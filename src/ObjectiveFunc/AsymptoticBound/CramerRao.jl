@@ -565,6 +565,49 @@ function FIM(p::Vector{R}, dp::Vector{Vector{R}}; eps=GLOBAL_EPS) where {R<:Real
     
 end
 
+"""
+
+    FI_Expt(y1, y2, dx; ftype=:norm)
+
+Calculate the classical Fisher information (CFI) based on the experiment data.
+- `y1`: Experimental data obtained at the truth value (x).
+- `y1`: Experimental data obtained at x+dx.
+- `dx`: A known small drift of the parameter.
+- `ftype`: The distribution the data follows. Options are: norm, gamma, rayleigh, and poisson.
+"""
+function FI_Expt(y1, y2, dx; ftype=:norm)
+    Fc = 0.0
+    if ftype == :norm
+        p1_norm = fit(Normal, y1)
+        p2_norm = fit(Normal, y2)
+        f_norm(x) = sqrt(pdf(p1_norm, x)*pdf(p2_norm, x))
+        fidelity, err = quadgk(f_norm, -Inf, Inf)
+        Fc = 8*(1-fidelity)/dx^2
+    elseif ftype == :gamma
+        p1_gamma = fit(Gamma, y1)
+        p2_gamma = fit(Gamma, y2)
+        f_gamma(x) = sqrt(pdf(p1_gamma, x)*pdf(p2_gamma, x))
+        fidelity, err = quadgk(f_gamma, 0.0, Inf)
+        Fc = 8*(1-fidelity)/dx^2
+    elseif ftype == :rayleigh
+        p1_rayl = fit(Rayleigh, y1)
+        p2_rayl = fit(Rayleigh, y2)
+        f_rayl(x) = sqrt(pdf(p1_rayl, x)*pdf(p2_rayl, x))
+        fidelity, err = quadgk(f_rayl, 0.0, Inf)
+        Fc = 8*(1-fidelity)/dx^2
+    elseif ftype == :poisson
+        p1_pois = pdf.(fit(Poisson, y1), range(0, maximum(y1), step=1))
+        p2_pois = pdf.(fit(Poisson, y2), range(0, maximum(y2), step=1))
+        p1_pois, p2_pois = p1_pois/sum(p1_pois), p2_pois/sum(p2_pois)
+        fidelity = sum([sqrt(p1_pois[i]*p2_pois[i]) for i in 1:length(p1_pois)])
+        Fc = 8*(1-fidelity)/dx^2
+    else
+        println("supported values for ftype are 'norm', 'poisson', 'gamma' and 'rayleigh'")
+    end
+    return Fc
+end
+
+
 #======================================================#
 ################# Gaussian States QFIM #################
 function Williamson_form(A::AbstractMatrix)
