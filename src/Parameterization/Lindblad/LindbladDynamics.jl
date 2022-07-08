@@ -53,7 +53,7 @@ end
 function dissipation(
     Γ::AbstractVector,
     γ::Vector{R},
-    t::Int = 0,
+    t::Int = 1,
 ) where {T<:Complex,R<:Real}
     [γ[i] * liouville_dissip(Γ[i]) for i = 1:length(Γ)] |> sum
 end
@@ -61,7 +61,7 @@ end
 function dissipation(
     Γ::AbstractVector,
     γ::Vector{Vector{R}},
-    t::Int = 0,
+    t::Int = 1,
 ) where {T<:Complex,R<:Real}
     [γ[i][t] * liouville_dissip(Γ[i]) for i = 1:length(Γ)] |> sum
 end
@@ -497,7 +497,7 @@ function evolve(dynamics::Lindblad{noisy,timedepend,ket})
     ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
     for t = 2:length(tspan)
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
-        exp_L = expL(H0[t-1], decay_opt, γ, Δt, t)
+        exp_L = expL(H0[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
     end
@@ -516,7 +516,7 @@ function evolve(dynamics::Lindblad{noisy,timedepend,dm})
     ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
     for t = 2:length(tspan)
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
-        exp_L = expL(H0[t-1], decay_opt, γ, Δt, t)
+        exp_L = expL(H0[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
     end
