@@ -64,10 +64,12 @@ function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; save
         p_num = length(p)
 
         F = zeros(p_num)
+        rho_all = []
         for hi in 1:p_num
             dynamics = Lindblad(H[hi], dH[hi], Hc, ctrl, rho0, tspan, decay_opt, gamma)
             rho_tp, drho_tp = evolve(dynamics)
             F[hi] = CFIM(rho_tp, drho_tp[1], M; eps=eps)
+            append!(rho_all, [rho_tp])
         end
         idx = findmax(F)[2]
         x_opt = x[1][idx]
@@ -79,11 +81,7 @@ function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; save
             rho = [zeros(ComplexF64, dim, dim) for i in 1:p_num]
             for hj in 1:p_num
                 x_idx = findmin(abs.(x[1] .- (x[1][hj]+u)))[2]
-                H_tp = H[x_idx]
-                dH_tp = dH[x_idx]
-                dynamics = Lindblad(H_tp, dH_tp, Hc, ctrl, rho0, tspan, decay_opt, gamma)
-                rho_tp, drho_tp = evolve(dynamics)
-                rho[hj] = rho_tp
+                rho[hj] = rho_all[x_idx]
             end
 
             println("The tunable parameter is $u")
@@ -139,10 +137,13 @@ function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; save
 
         dynamics_res = [evolve(Lindblad(H_tp, dH_tp, Hc, ctrl, rho0, tspan, decay_opt, gamma)) for (H_tp, dH_tp) in zip(H, dH)]
         F_all = zeros(p_num)
+        rho_all_list = []
         for hi in 1:p_num
             F_tp = CFIM(dynamics_res[hi][1], dynamics_res[hi][2], M; eps=eps)
             F_all[hi] = abs(det(F_tp)) < eps ? eps : 1.0/real(tr(W*inv(F_tp)))
+            append!(rho_all_list, [dynamics_res[hi][1]])
         end
+        rho_all = reshape(rho_all_list, size(p))
         F = reshape(F_all, size(p))
         idx = findmax(F)[2]
         x_opt = [x[i][idx[i]] for i in 1:para_num]
@@ -154,11 +155,7 @@ function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; save
             rho = Array{Matrix{ComplexF64}}(undef, p_num)
             for hj in 1:p_num
                 x_idx = [findmin(abs.(x[k] .- (x_list[hj][k]+u[k])))[2] for k in 1:para_num]
-                H_tp = H[x_idx...]
-                dH_tp = dH[x_idx...]
-                dynamics = Lindblad(H_tp, dH_tp, Hc, ctrl, rho0, tspan, decay_opt, gamma)
-                rho_tp, drho_tp = evolve(dynamics)
-                rho[hj] = rho_tp
+                rho[hj] = rho_all[x_idx...]
             end
 
             println("The tunable parameter are $u")
@@ -252,10 +249,12 @@ function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; savefile=fa
         p_num = length(p)
         
         F = zeros(p_num)
+        rho_all = []
         for hi in 1:p_num
             rho_tp = sum([Ki*rho0*Ki' for Ki in K[hi]]) 
             drho_tp = [sum([dKi*rho0*Ki' + Ki*rho0*dKi' for (Ki,dKi) in zip(K[hi],dKj)]) for dKj in dK[hi]]
             F[hi] = CFIM(rho_tp, drho_tp[1], M; eps=eps)
+            append!(rho_all, [rho_tp])
         end
         indx = findmax(F)[2]
         x_opt = x[1][indx]
@@ -267,7 +266,7 @@ function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; savefile=fa
             rho = [zeros(ComplexF64, dim, dim) for i in 1:p_num]
             for hj in 1:p_num
                 x_idx = findmin(abs.(x[1] .- (x[1][hj]+u)))[2]
-                rho[hj] = sum([Ki*rho0*Ki' for Ki in K[x_idx]])
+                rho[hj] = rho_all[x_idx]
             end
             println("The tunable parameter is $u")
             print("Please enter the experimental result: ")
@@ -331,7 +330,7 @@ function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; savefile=fa
             F_tp = CFIM(rho_tp[hi], drho_tp[hi], M; eps=eps)
             F_all[hi] = abs(det(F_tp)) < eps ? eps : 1.0/real(tr(W*inv(F_tp)))
         end
-
+        rho_all = reshape(rho_tp, size(p))
         F = reshape(F_all, size(p))
         idx = findmax(F)[2]
         x_opt = [x[i][idx[i]] for i in 1:para_num]
@@ -342,9 +341,8 @@ function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; savefile=fa
         for ei in 1:max_episode
             rho = Array{Matrix{ComplexF64}}(undef, length(p|>vec))
             for hj in 1:length(p|>vec)
-                x_indx = [findmin(abs.(x[k] .- (x_list[hj][k]+u[k])))[2] for k in 1:para_num]
-                rho_tp = sum([Ki*rho0*Ki' for Ki in K[x_indx...]]) 
-                 rho[hj] = rho_tp
+                x_idx = [findmin(abs.(x[k] .- (x_list[hj][k]+u[k])))[2] for k in 1:para_num]
+                rho[hj] = rho_all[x_idx...]
             end
 
             println("The tunable parameter are $u")
