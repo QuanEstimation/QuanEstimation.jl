@@ -167,7 +167,7 @@ function expm(
 
     decay_opt, γ = decay
     for t = 2:length(tspan)
-        exp_L = expL(H[t-1], decay_opt, γ, Δt, t)
+        exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         ∂ρt_∂x_all[t] = -im * Δt * dH_L * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1]
     end
@@ -252,7 +252,7 @@ function expm(
     end
 
     for t = 2:length(tspan)
-        exp_L = expL(H[t-1], decay_opt, γ, Δt, t)
+        exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         for pj = 1:para_num
             ∂ρt_∂x_all[t][pj] = -im * Δt * dH_L[pj] * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1][pj]
@@ -287,7 +287,7 @@ function expm_py(
     ∂ρt_∂x_all[1] = ρt_all[1] |> zero
 
     for t = 2:length(tspan)
-        exp_L = expL(H[t-1], decay_opt, γ, Δt, t)
+        exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         ∂ρt_∂x_all[t] = -im * Δt * dH_L * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1]
     end
@@ -326,7 +326,7 @@ function expm_py(
     end
 
     for t = 2:length(tspan)
-        exp_L = expL(H[t-1], decay_opt, γ, Δt, t)
+        exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         for pj = 1:para_num
             ∂ρt_∂x_all[t][pj] = -im * Δt * dH_L[pj] * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1][pj]
@@ -363,7 +363,7 @@ function secondorder_derivative(
     ∂2ρt_∂x = [ρt |> zero for i = 1:para_num]
     for t = 2:length(tspan)
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
-        exp_L = expL(H[t-1], decay_opt, γ, Δt, t)
+        exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
         ∂2ρt_∂x =
@@ -561,7 +561,7 @@ function evolve(dynamics::Lindblad{noisy,controlled,dm})
     ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
     for t = 2:length(tspan)
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
-        exp_L = expL(H[t-1], decay_opt, γ, Δt, t)
+        exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
     end
@@ -583,7 +583,7 @@ function evolve(dynamics::Lindblad{noisy,controlled,ket})
     ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
     for t = 2:length(tspan)
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
-        exp_L = expL(H[t-1], decay_opt, γ, Δt, t)
+        exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
     end
