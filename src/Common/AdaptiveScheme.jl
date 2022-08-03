@@ -1,6 +1,6 @@
 @doc raw"""
 
-    Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; savefile=false, max_episode::Int=1000, eps::Float64=1e-8, Hc=missing, ctrl=missing, decay=missing, M=missing, W=missing)
+    Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, Hc=missing, ctrl=missing, decay=missing, M=missing, W=missing)
 
 In QuanEstimation, the Hamiltonian of the adaptive system should be written as
 ``H(\textbf{x}+\textbf{u})`` with ``\textbf{x}`` the unknown parameters and ``\textbf{u}``
@@ -12,6 +12,7 @@ Hamiltonian work at the optimal point ``\textbf{x}_{\mathrm{opt}}``.
 - `tspan`: The experimental results obtained in practice.
 - `H`: Free Hamiltonian with respect to the values in x.
 - `dH`: Derivatives of the free Hamiltonian with respect to the unknown parameters to be estimated.
+- `method`: Choose the method for updating the tunable parameters (u). Options are: "FOP" and "MI".
 - `savefile`: Whether or not to save all the posterior distributions. 
 - `max_episode`: The number of episodes.
 - `eps`: Machine epsilon.
@@ -21,7 +22,7 @@ Hamiltonian work at the optimal point ``\textbf{x}_{\mathrm{opt}}``.
 - `M`: A set of positive operator-valued measure (POVM). The default measurement is a set of rank-one symmetric informationally complete POVM (SIC-POVM).
 - `W`: Whether or not to save all the posterior distributions. 
 """
-function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; savefile=false, max_episode::Int=1000, eps::Float64=1e-8, 
+function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, 
                   Hc=missing, ctrl=missing, decay=missing, M=missing, W=missing)
     dim = size(rho0)[1]
     para_num = length(x)
@@ -71,63 +72,40 @@ function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; save
             F[hi] = CFIM(rho_tp, drho_tp[1], M; eps=eps)
             append!(rho_all, [rho_tp])
         end
-        idx = findmax(F)[2]
-        x_opt = x[1][idx]
-        println("The optimal parameter is $x_opt")
-
+        
         u = 0.0
-        y, xout, pout = [], [], []
-        for ei in 1:max_episode
-            rho = [zeros(ComplexF64, dim, dim) for i in 1:p_num]
-            for hj in 1:p_num
-                x_idx = findmin(abs.(x[1] .- (x[1][hj]+u)))[2]
-                rho[hj] = rho_all[x_idx]
-            end
-
-            println("The tunable parameter is $u")
-            print("Please enter the experimental result: ")
-            enter = readline()
-            res_exp = parse(Int64, enter)
-            res_exp = Int(res_exp+1)
-
-            pyx = real.(tr.(rho .* [M[res_exp]]))
-
-            py = trapz(x[1], pyx.*p)
-            p_update = pyx.*p/py
-            p = p_update 
-            p_idx = findmax(p)[2]
-            x_out = x[1][p_idx]
-            println("The estimator is $x_out ($ei episodes)")
-            u = x_opt - x_out
-
-            if mod(ei, 50) == 0
-                if (x_out+u) > x[1][end] || (x_out+u) < x[1][1]
-                    throw("please increase the regime of the parameters.")
+        if method == "FOP"
+            idx = findmax(F)[2]
+            x_opt = x[1][idx]
+            println("The optimal parameter is $x_opt")
+            if savefile == false
+                y, xout = [], []
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_FOP_singlepara(p, p_num, x, u, rho_all, M, dim, x_opt, ei)
+                    append!(xout, x_out)
+                    append!(y, Int(res_exp-1))
+                end
+                savefile_false(p, xout, y)
+            else
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_FOP_singlepara(p, p_num, x, u, rho_all, M, dim, x_opt, ei)
+                    savefile_true(p, x_out, Int(res_exp-1))
                 end
             end
-            append!(xout, x_out)
-            append!(y, Int(res_exp-1))
-            append!(pout, [p])
-        end
-        if savefile == false
-            open("pout.csv","w") do f
-                writedlm(f, [p])
-            end
-            open("xout.csv","w") do m
-                writedlm(m, xout)
-            end
-            open("y.csv","w") do n
-                writedlm(n, y)
-            end
-        else
-            open("pout.csv","w") do f
-                writedlm(f, pout)
-            end
-            open("xout.csv","w") do m
-                writedlm(m, xout)
-            end
-            open("y.csv","w") do n
-                writedlm(n, y)
+        elseif method == "MI"
+            if savefile == false
+                y, xout = [], []
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_MI_singlepara(p, p_num, x, u, rho_all, M, dim, ei)
+                    append!(xout, x_out)
+                    append!(y, Int(res_exp-1))
+                end
+                savefile_false(p, xout, y)
+            else
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_MI_singlepara(p, p_num, x, u, rho_all, M, dim, ei)
+                    savefile_true(p, x_out, Int(res_exp-1))
+                end
             end
         end
     else
@@ -144,69 +122,42 @@ function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; save
             append!(rho_all_list, [dynamics_res[hi][1]])
         end
         rho_all = reshape(rho_all_list, size(p))
-        F = reshape(F_all, size(p))
-        idx = findmax(F)[2]
-        x_opt = [x[i][idx[i]] for i in 1:para_num]
-        println("The optimal parameter are $x_opt")
-
+        
         u = [0.0 for i in 1:para_num]
-        y, xout, pout = [], [], []
-        for ei in 1:max_episode
-            rho = Array{Matrix{ComplexF64}}(undef, p_num)
-            for hj in 1:p_num
-                x_idx = [findmin(abs.(x[k] .- (x_list[hj][k]+u[k])))[2] for k in 1:para_num]
-                rho[hj] = rho_all[x_idx...]
-            end
 
-            println("The tunable parameter are $u")
-            print("Please enter the experimental result: ")
-            enter = readline()
-            res_exp = parse(Int64, enter)
-            res_exp = Int(res_exp+1)
-
-            pyx_list = real.(tr.(rho.*[M[res_exp]]))
-            pyx = reshape(pyx_list, size(p))
-
-            arr = p.*pyx
-            py = trapz(tuple(x...), arr)
-            p_update = p.*pyx/py
-            p = p_update
-
-            p_idx = findmax(p)[2]
-            x_out = [x[i][p_idx[i]] for i in 1:para_num]
-            println("The estimator are $x_out ($ei episodes)")
-            u = x_opt .- x_out
-
-            if mod(ei, 50) == 0
-                for un in 1:para_num
-                    if (x_out[un]+u[un]) > x[un][end] || (x_out[un]+u[un]) < x[un][1]
-                        throw("Please increase the regime of the parameters.")
-                    end
+        if method == "FOP"
+            F = reshape(F_all, size(p))
+            idx = findmax(F)[2]
+            x_opt = [x[i][idx[i]] for i in 1:para_num]
+            println("The optimal parameter are $x_opt")
+            if savefile == false
+                y, xout = [], []
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_FOP_multipara(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, ei)
+                    append!(xout, [x_out])
+                    append!(y, Int(res_exp+1))
+                end
+                savefile_false(p, xout, y)
+            else
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_FOP_multipara(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, ei)
+                    savefile_true(p, x_out, Int(res_exp+1))
                 end
             end
-            append!(xout, [x_out])
-            append!(y, Int(res_exp-1))
-            append!(pout, [p])
-        end
-        if savefile == false
-            open("pout.csv","w") do f
-                writedlm(f, [p])
-            end
-            open("xout.csv","w") do m
-                writedlm(m, xout)
-            end
-            open("y.csv","w") do n
-                writedlm(n, y)
-            end
-        else
-            open("pout.csv","w") do f
-                writedlm(f, pout)
-            end
-            open("xout.csv","w") do m
-                writedlm(m, xout)
-            end
-            open("y.csv","w") do n
-                writedlm(n, y)
+        elseif method == "MI"
+            if savefile == false
+                y, xout = [], []
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_MI_multipara(p, p_num, para_num, x, x_list, u, rho_all, M, ei)
+                    append!(xout, [x_out])
+                    append!(y, Int(res_exp+1))
+                end
+                savefile_false(p, xout, y)
+            else
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_MI_multipara(p, p_num, para_num, x, x_list, u, rho_all, M, ei)
+                    savefile_true(p, x_out, Int(res_exp+1))
+                end
             end
         end
     end
@@ -214,7 +165,7 @@ end
 
 @doc raw"""
 
-    Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; savefile=false, max_episode::Int=1000, eps::Float64=1e-8, M=missing, W=missing)
+    Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, M=missing, W=missing)
 
 In QuanEstimation, the Hamiltonian of the adaptive system should be written as
 ``H(\textbf{x}+\textbf{u})`` with ``\textbf{x}`` the unknown parameters and ``\textbf{u}``
@@ -225,13 +176,14 @@ Hamiltonian work at the optimal point ``\textbf{x}_{\mathrm{opt}}``.
 - `rho0`: Density matrix.
 - `K`: Kraus operator(s) with respect to the values in x.
 - `dK`: Derivatives of the Kraus operator(s) with respect to the unknown parameters to be estimated.
+- `method`: Choose the method for updating the tunable parameters (u). Options are: "FOP" and "MI".
 - `savefile`: Whether or not to save all the posterior distributions. 
 - `max_episode`: The number of episodes.
 - `eps`: Machine epsilon.
 - `M`: A set of positive operator-valued measure (POVM). The default measurement is a set of rank-one symmetric informationally complete POVM (SIC-POVM).
 - `W`: Whether or not to save all the posterior distributions. 
 """
-function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; savefile=false, max_episode::Int=1000, 
+function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; method="FOP", savefile=false, max_episode::Int=1000, 
     eps::Float64=1e-8, M=missing, W=missing)
     dim = size(rho0)[1]
     para_num = length(x)
@@ -239,7 +191,6 @@ function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; savefile=fa
     if ismissing(W)
         W = zeros(para_num, para_num)
     end
-
     if ismissing(M)
         M = SIC(size(rho0)[1])
     end
@@ -247,7 +198,6 @@ function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; savefile=fa
     if para_num == 1
         #### singleparameter senario ####
         p_num = length(p)
-        
         F = zeros(p_num)
         rho_all = []
         for hi in 1:p_num
@@ -256,145 +206,345 @@ function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; savefile=fa
             F[hi] = CFIM(rho_tp, drho_tp[1], M; eps=eps)
             append!(rho_all, [rho_tp])
         end
-        indx = findmax(F)[2]
-        x_opt = x[1][indx]
-        println("The optimal parameter is $x_opt")
-
+        
         u = 0.0
-        y, xout, pout = [], [], []
-        for ei in 1:max_episode
-            rho = [zeros(ComplexF64, dim, dim) for i in 1:p_num]
-            for hj in 1:p_num
-                x_idx = findmin(abs.(x[1] .- (x[1][hj]+u)))[2]
-                rho[hj] = rho_all[x_idx]
-            end
-            println("The tunable parameter is $u")
-            print("Please enter the experimental result: ")
-            enter = readline()
-            res_exp = parse(Int64, enter)
-            res_exp = Int(res_exp+1)
-            
-            pyx = real.(tr.(rho .* [M[res_exp]]))
-   
-            py = trapz(x[1], pyx.*p)
-            p_update = pyx.*p/py
-            p = p_update
-            p_idx = findmax(p)[2]
-            x_out = x[1][p_idx]
-            println("The estimator is $x_out ($ei episodes)")
-            u = x_opt - x_out
-                
-            if mod(ei, 50) == 0
-                if (x_out+u) > x[1][end] || (x_out+u) < x[1][1]
-                    throw("please increase the regime of the parameters.")
+        if method == "FOP"
+            indx = findmax(F)[2]
+            x_opt = x[1][indx]
+            println("The optimal parameter is $x_opt")
+            if savefile == false
+                y, xout = [], []
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_FOP_singlepara(p, p_num, x, u, rho_all, M, dim, x_opt, ei)
+                    append!(xout, x_out)
+                    append!(y, Int(res_exp-1))
+                end
+                savefile_false(p, xout, y)
+            else
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_FOP_singlepara(p, p_num, x, u, rho_all, M, dim, x_opt, ei)
+                    savefile_true(p, x_out, Int(res_exp-1))
                 end
             end
-            append!(xout, x_out)
-            append!(y, Int(res_exp-1))
-            append!(pout, [p])
-        end
-        if savefile == false
-            open("pout.csv","w") do f
-                writedlm(f, [p])
-            end
-            open("xout.csv","w") do m
-                writedlm(m, xout)
-            end
-            open("y.csv","w") do n
-                writedlm(n, y)
-            end
-        else
-            open("pout.csv","w") do f
-                writedlm(f, pout)
-            end
-            open("xout.csv","w") do m
-                writedlm(m, xout)
-            end
-            open("y.csv","w") do n
-                writedlm(n, y)
+        elseif method == "MI"
+            if savefile == false
+                y, xout = [], []
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_MI_singlepara(p, p_num, x, u, rho_all, M, dim, ei)
+                    append!(xout, x_out)
+                    append!(y, Int(res_exp-1))
+                end
+                savefile_false(p, xout, y)
+            else
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_MI_singlepara(p, p_num, x, u, rho_all, M, dim, ei)
+                    savefile_true(p, x_out, Int(res_exp-1))
+                end
             end
         end
     else
         #### multiparameter senario ####
         k_num = length(vec(K)[1])
         para_num = length(x)
+        p_num = length(p |> vec)
         x_list = [(Iterators.product(x...))...]
-
         rho_tp = [sum([Ki*rho0*Ki' for Ki in K_tp]) for K_tp in K]
-        
         drho_tp = [[sum([dKi*rho0*Ki' + Ki*rho0*dKi' for (Ki,dKi) in zip(K_tp,dKj)]) for dKj in 
                    [[dK_tp[i][j] for i in 1:k_num] for j in 1:para_num]] for (K_tp,dK_tp) in zip(K,dK)]
 
-        F_all = zeros(length(p |> vec))
-        for hi in 1:length(p |> vec) 
+        F_all = zeros(p_num)
+        for hi in 1:p_num
             F_tp = CFIM(rho_tp[hi], drho_tp[hi], M; eps=eps)
             F_all[hi] = abs(det(F_tp)) < eps ? eps : 1.0/real(tr(W*inv(F_tp)))
         end
         rho_all = reshape(rho_tp, size(p))
-        F = reshape(F_all, size(p))
-        idx = findmax(F)[2]
-        x_opt = [x[i][idx[i]] for i in 1:para_num]
-        println("The optimal parameter are $x_opt")
-
+        
         u = [0.0 for i in 1:para_num]
-        y, xout, pout = [], [], []
-        for ei in 1:max_episode
-            rho = Array{Matrix{ComplexF64}}(undef, length(p|>vec))
-            for hj in 1:length(p|>vec)
-                x_idx = [findmin(abs.(x[k] .- (x_list[hj][k]+u[k])))[2] for k in 1:para_num]
-                rho[hj] = rho_all[x_idx...]
-            end
-
-            println("The tunable parameter are $u")
-            print("Please enter the experimental result: ")
-            enter = readline()
-            res_exp = parse(Int64, enter)
-            res_exp = Int(res_exp+1)
-
-            pyx_list = real.(tr.(rho.*[M[res_exp]]))
-            pyx = reshape(pyx_list, size(p))
-            arr = p.*pyx
-            py = trapz(tuple(x...), arr)
-            p_update = p.*pyx/py
-            p = p_update
-
-            p_idx = findmax(p)[2]
-            x_out = [x[i][p_idx[i]] for i in 1:para_num]
-            println("The estimator are $x_out ($ei episodes)")
-            u = x_opt .- x_out
-                
-            if mod(ei, 50) == 0
-                for un in 1:para_num
-                    if (x_out[un]+u[un]) > x[un][end] || (x_out[un]+u[un]) < x[un][1]
-                        throw("Please increase the regime of the parameters.")
-                    end
+        if method == "FOP"
+            F = reshape(F_all, size(p))
+            idx = findmax(F)[2]
+            x_opt = [x[i][idx[i]] for i in 1:para_num]
+            println("The optimal parameter are $x_opt")
+            if savefile == false
+                y, xout = [], []
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_FOP_multipara(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, ei)
+                    append!(xout, [x_out])
+                    append!(y, Int(res_exp+1))
+                end
+                savefile_false(p, xout, y)
+            else
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_FOP_multipara(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, ei)
+                    savefile_true(p, x_out, Int(res_exp+1))
                 end
             end
-            append!(xout, [x_out])
-            append!(y, Int(res_exp+1))
-            append!(pout, [p])
+        elseif method == "MI"
+            if savefile == false
+                y, xout = [], []
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_MI_multipara(p, p_num, para_num, x, x_list, u, rho_all, M, ei)
+                    append!(xout, [x_out])
+                    append!(y, Int(res_exp+1))
+                end
+                savefile_false(p, xout, y)
+            else
+                for ei in 1:max_episode
+                    p, x_out, res_exp, u = iter_MI_multipara(p, p_num, para_num, x, x_list, u, rho_all, M, ei)
+                    savefile_true(p, x_out, Int(res_exp+1))
+                end
+            end
         end
-        if savefile == false
-            open("pout.csv","w") do f
-                writedlm(f, [p])
-            end
-            open("xout.csv","w") do m
-                writedlm(m, xout)
-            end
-            open("y.csv","w") do n
-                writedlm(n, y)
-            end
+    end
+end
+
+function iter_FOP_singlepara(p, p_num, x, u, rho_all, M, dim, x_opt, ei)
+    rho = [zeros(ComplexF64, dim, dim) for i in 1:p_num]
+    for hj in 1:p_num
+        x_idx = findmin(abs.(x[1] .- (x[1][hj]+u)))[2]
+        rho[hj] = rho_all[x_idx]
+    end
+    println("The tunable parameter is $u")
+    print("Please enter the experimental result: ")
+    enter = readline()
+    res_exp = parse(Int64, enter)
+    res_exp = Int(res_exp+1)
+
+    pyx = real.(tr.(rho .* [M[res_exp]]))
+    py = trapz(x[1], pyx.*p)
+    p_update = pyx.*p/py
+
+    for i in 1:p_num
+        if x[1][1] < x[1][i]+u < x[1][end]
+            p[i] = p_update[i]
         else
-            open("pout.csv","w") do f
-                writedlm(f, pout)
-            end
-            open("xout.csv","w") do m
-                writedlm(m, xout)
-            end
-            open("y.csv","w") do n
-                writedlm(n, y)
+            p[i] = 0.0
+        end
+    end
+
+    p_idx = findmax(p)[2]
+    x_out = x[1][p_idx]
+    println("The estimator is $x_out ($ei episodes)")
+    u = x_opt - x_out
+
+    if mod(ei, 50) == 0
+        if (x_out+u) > x[1][end] || (x_out+u) < x[1][1]
+            throw("please increase the regime of the parameters.")
+        end
+    end
+    return p, x_out, res_exp, u
+end
+
+function iter_FOP_multipara(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, ei)
+    rho = Array{Matrix{ComplexF64}}(undef, p_num)
+    for hj in 1:p_num
+        x_idx = [findmin(abs.(x[k] .- (x_list[hj][k]+u[k])))[2] for k in 1:para_num]
+        rho[hj] = rho_all[x_idx...]
+    end
+
+    println("The tunable parameter are $u")
+    print("Please enter the experimental result: ")
+    enter = readline()
+    res_exp = parse(Int64, enter)
+    res_exp = Int(res_exp+1)
+
+    pyx_list = real.(tr.(rho.*[M[res_exp]]))
+    pyx = reshape(pyx_list, size(p))
+
+    arr = p.*pyx
+    py = trapz(tuple(x...), arr)
+    p_update = (p.*pyx/py) |> vec
+    
+    p_list = p |> vec
+    arr = zeros(p_num)
+    for i in 1:p_num
+        res = [x_list[1][ri] < (x_list[i][ri] + u[ri]) < x_list[end][ri] for ri in 1:para_num]
+        if all(res)
+            p_list[i] = p_update[i]
+        else
+            p_list[i] = 0.0
+        end
+    end
+    p = reshape(p_list, size(p))
+
+    p_idx = findmax(p)[2]
+    x_out = [x[i][p_idx[i]] for i in 1:para_num]
+    println("The estimator are $x_out ($ei episodes)")
+    u = x_opt .- x_out
+
+    if mod(ei, 50) == 0
+        for un in 1:para_num
+            if (x_out[un]+u[un]) > x[un][end] || (x_out[un]+u[un]) < x[un][1]
+                throw("Please increase the regime of the parameters.")
             end
         end
+    end
+    return p, x_out, res_exp, u
+end
+
+function iter_MI_singlepara(p, p_num, x, u, rho_all, M, dim, ei)
+    rho = [zeros(ComplexF64, dim, dim) for i in 1:p_num]
+    for hj in 1:p_num
+        x_idx = findmin(abs.(x[1] .- (x[1][hj]+u)))[2]
+        rho[hj] = rho_all[x_idx]
+    end
+
+    println("The tunable parameter is $u")
+    print("Please enter the experimental result: ")
+    enter = readline()
+    res_exp = parse(Int64, enter)
+    res_exp = Int(res_exp+1)
+
+    pyx = real.(tr.(rho .* [M[res_exp]]))
+
+    py = trapz(x[1], pyx.*p)
+    p_update = pyx.*p/py
+    
+    for i in 1:p_num
+        if x[1][1] < x[1][i]+u < x[1][end]
+            p[i] = p_update[i]
+        else
+            p[i] = 0.0
+        end
+    end
+
+    p_idx = findmax(p)[2]
+    x_out = x[1][p_idx]
+    println("The estimator is $x_out ($ei episodes)")
+
+    MI = zeros(p_num)
+    for ui in 1:p_num
+        rho_u = [zeros(ComplexF64, dim, dim) for i in 1:p_num]
+        for hj in 1:p_num
+            x_idx = findmin(abs.(x[1] .- (x[1][hj]+x[1][ui])))[2]
+            rho_u[hj] = rho_all[x_idx]
+        end
+        value_tp = zeros(p_num)
+        for mi in 1:length(M)
+            pyx_tp = real.(tr.(rho_u .* [M[mi]]))
+            mean_tp = trapz(x[1], pyx_tp.*p)
+            value_tp += pyx_tp.*log.(2, pyx_tp/mean_tp)
+        end
+
+        # arr = [value_tp[i]*p[i] for i in range(p_num)]
+
+        arr = zeros(p_num)
+        for i in 1:p_num
+            if x[1][1] < x[1][i]+x[1][ui] < x[1][end]
+                arr[i] = value_tp[i]*p[i]
+            end
+        end
+        MI[ui] = trapz(x[1], arr)
+    end
+    u = x[1][findmax(MI)[2]]
+
+    if mod(ei, 50) == 0
+        if (x_out+u) > x[1][end] || (x_out+u) < x[1][1]
+            throw("please increase the regime of the parameters.")
+        end
+    end
+    return p, x_out, res_exp, u
+end
+
+function iter_MI_multipara(p, p_num, para_num, x, x_list, u, rho_all, M, ei)
+    rho = Array{Matrix{ComplexF64}}(undef, p_num)
+    for hj in 1:p_num
+        x_idx = [findmin(abs.(x[k] .- (x_list[hj][k]+u[k])))[2] for k in 1:para_num]
+        rho[hj] = rho_all[x_idx...]
+    end
+
+    println("The tunable parameter are $u")
+    print("Please enter the experimental result: ")
+    enter = readline()
+    res_exp = parse(Int64, enter)
+    res_exp = Int(res_exp+1)
+
+    pyx_list = real.(tr.(rho.*[M[res_exp]]))
+    pyx = reshape(pyx_list, size(p))
+
+    arr = p.*pyx
+    py = trapz(tuple(x...), arr)
+    p_update = p.*pyx/py
+    
+    p_list = p |> vec
+    arr = zeros(p_num)
+    for i in 1:p_num
+        res = [x_list[1][ri] < (x_list[i][ri] + u[ri]) < x_list[end][ri] for ri in 1:para_num]
+        if all(res)
+            p_list[i] = p_update[i]
+        else
+            p_list[i] = 0.0
+        end
+    end
+    p = reshape(p_list, size(p))
+
+    p_idx = findmax(p)[2]
+    x_out = [x[i][p_idx[i]] for i in 1:para_num]
+    println("The estimator are $x_out ($ei episodes)")
+    
+    MI = zeros(p_num)
+    for ui in 1:p_num
+        rho_u = Array{Matrix{ComplexF64}}(undef, p_num)
+        for hj in 1:p_num
+            x_idx = [findmin(abs.(x[k] .- (x_list[hj][k]+x_list[ui][k])))[2] for k in 1:para_num]
+            rho_u[hj] = rho_all[x_idx...]
+        end
+
+        value_tp = zeros(size(p))
+        for mi in 1:length(M)
+            pyx_list_tp = real.(tr.(rho_u.*[M[mi]]))
+            pyx_tp = reshape(pyx_list, size(p))
+            mean_tp = trapz(tuple(x...), p.*pyx_tp)
+            value_tp += pyx_tp.*log.(2, pyx_tp/mean_tp)   
+        end
+
+        # value_int = trapz(tuple(x...), p.*value_tp)
+
+        arr = zeros(p_num)
+        for hj in 1:p_num
+            res = [x_list[1][ri] < (x_list[hj][ri] + x_list[ui][ri]) < x_list[end][ri] for ri in 1:para_num]
+            if all(res)
+                arr[hj] = vec(p)[hj]*vec(value_tp)[hj]
+            end
+        end
+        value_int = trapz(tuple(x...), reshape(arr, size(p)))
+
+        MI[ui] = value_int
+    end
+    p_idx = findmax(reshape(MI, size(p)))[2]
+    u = [x[i][p_idx[i]] for i in 1:para_num]
+
+    if mod(ei, 50) == 0
+        for un in 1:para_num
+            if (x_out[un]+u[un]) > x[un][end] || (x_out[un]+u[un]) < x[un][1]
+                throw("Please increase the regime of the parameters.")
+            end
+        end
+    end
+    return p, x_out, res_exp, u
+end
+
+function savefile_true(p, xout, y)
+    open("pout.csv","w") do f
+        writedlm(f, [p])
+    end
+    open("xout.csv","w") do m
+        writedlm(m, [xout])
+    end
+    open("y.csv","w") do n
+        writedlm(n, [y])
+    end
+end
+
+function savefile_false(p, xout, y)
+    open("pout.csv","w") do f
+        writedlm(f, [p])
+    end
+    open("xout.csv","w") do m
+        writedlm(m, xout)
+    end
+    open("y.csv","w") do n
+        writedlm(n, y)
     end
 end
 
@@ -452,6 +602,7 @@ function adaptMZI_online(x, p, rho0, a, output)
 
     phi = 0.0
     a_res = [Matrix{ComplexF64}(I, (N+1)^2, (N+1)^2) for i in 1:length(x)]
+
     xout, y = [], []
     if output == "phi"
         for ei in 1:N-1
@@ -459,7 +610,7 @@ function adaptMZI_online(x, p, rho0, a, output)
             print("Please enter the experimental result: ")
             enter = readline()
             u = parse(Int64, enter)
-            
+
             pyx = zeros(length(x))|>sparse
             for xi in 1:length(x)
                 a_res_tp = a_res[xi]*a_u(a, x[xi], phi, u)
