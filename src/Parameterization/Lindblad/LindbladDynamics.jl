@@ -108,11 +108,25 @@ function expL(H, dt)
     exp(Ld)
 end
 
+##========== matrix exponential (expm) ==========##
+@doc raw"""
+
+    expm(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractMatrix, dH::AbstractVector; decay::Union{AbstractVector, Missing}=missing, Hc::Union{AbstractVector, Missing}=missing, ctrl::Union{AbstractVector, Missing}=missing)
+
+The dynamics of a density matrix is of the form  ``\partial_t\rho=-i[H,\rho]+\sum_i \gamma_i\left(\Gamma_i\rho\Gamma^{\dagger}_i-\frac{1}{2}\left\{\rho,\Gamma^{\dagger}_i \Gamma_i \right\}\right)``, where ``\rho`` is the evolved density matrix, ``H`` is the Hamiltonian of the system, ``\Gamma_i`` and ``\gamma_i`` are the ``i\mathrm{th}`` decay operator and the corresponding decay rate.
+- `tspan`: Time length for the evolution.
+- `ρ0`: Initial state (density matrix).
+- `H0`: Free Hamiltonian.
+- `dH`: Derivatives of the free Hamiltonian with respect to the unknown parameters to be estimated. For example, dH[0] is the derivative vector on the first parameter.
+- `decay`: Decay operators and the corresponding decay rates. Its input rule is decay=[[``\Gamma_1``, ``\gamma_1``], [``\Gamma_2``, ``\gamma_2``],...], where ``\Gamma_1`` ``(\Gamma_2)`` represents the decay operator and ``\gamma_1`` ``(\gamma_2)`` is the corresponding decay rate.
+- `Hc`: Control Hamiltonians.
+- `ctrl`: Control coefficients.
+"""
 function expm(
     tspan::AbstractVector,
     ρ0::AbstractMatrix,
     H0::AbstractMatrix,
-    dH::AbstractMatrix,
+    dH::AbstractMatrix;
     decay::Union{AbstractVector, Missing}=missing,
     Hc::Union{AbstractVector, Missing}=missing,
     ctrl::Union{AbstractVector, Missing}=missing,
@@ -176,22 +190,15 @@ end
 
 @doc raw"""
 
-expm(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractMatrix, dH::AbstractVector, decay::Union{AbstractVector, Missing}=missing, Hc::Union{AbstractVector, Missing}=missing, ctrl::Union{AbstractVector, Missing}=missing)
+    expm(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractMatrix, dH::AbstractVector; decay::Union{AbstractVector, Missing}=missing, Hc::Union{AbstractVector, Missing}=missing, ctrl::Union{AbstractVector, Missing}=missing)
 
-The dynamics of a density matrix is of the form  ``\partial_t\rho=-i[H,\rho]+\sum_i \gamma_i\left(\Gamma_i\rho\Gamma^{\dagger}_i-\frac{1}{2}\left\{\rho,\Gamma^{\dagger}_i \Gamma_i \right\}\right)``, where ``\rho`` is the evolved density matrix, ``H`` is the Hamiltonian of the system, ``\Gamma_i`` and ``\gamma_i`` are the ``i\mathrm{th}`` decay operator and the corresponding decay rate.
-- `tspan`: Time length for the evolution.
-- `ρ0`: Initial state (density matrix).
-- `H0`: Free Hamiltonian.
-- `dH`: Derivatives of the free Hamiltonian with respect to the unknown parameters to be estimated. For example, dH[0] is the derivative vector on the first parameter.
-- `decay`: Decay operators and the corresponding decay rates. Its input rule is decay=[[``\Gamma_1``, ``\gamma_1``], [``\Gamma_2``, ``\gamma_2``],...], where ``\Gamma_1`` ``(\Gamma_2)`` represents the decay operator and ``\gamma_1`` ``(\gamma_2)`` is the corresponding decay rate.
-- `Hc`: Control Hamiltonians.
-- `ctrl`: Control coefficients.
+When applied to the case of single parameter. 
 """
 function expm(
     tspan::AbstractVector,
     ρ0::AbstractMatrix,
     H0::AbstractMatrix,
-    dH::AbstractVector,
+    dH::AbstractVector;
     decay::Union{AbstractVector, Missing}=missing,
     Hc::Union{AbstractVector, Missing}=missing,
     ctrl::Union{AbstractVector, Missing}=missing
@@ -336,6 +343,12 @@ function expm_py(
 end
 
 expm(dynamics::Lindblad) = expm(dynamics.data...)
+expm(tspan, ρ0, H0, dH, decay) = 
+    expm(tspan, ρ0, H0, dH; decay=decay)
+expm(tspan, ρ0, H0, dH, decay, Hc) = 
+    expm(tspan, ρ0, H0, dH; decay=decay, Hc=Hc)
+expm(tspan, ρ0, H0, dH, decay, Hc, ctrl) = 
+    expm(tspan, ρ0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
 
 function secondorder_derivative(
     tspan::AbstractVector,
@@ -375,6 +388,171 @@ function secondorder_derivative(
     # ρt = exp(vec(H[end])' * zero(ρt)) * ρt
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat, ∂2ρt_∂x |> vec2mat
 end
+
+##========== solve ordinary differential equation (ODE) ==========##
+@doc raw"""
+
+    ODE(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractMatrix, dH::AbstractVector; decay::Union{AbstractVector, Missing}=missing, Hc::Union{AbstractVector, Missing}=missing, ctrl::Union{AbstractVector, Missing}=missing)
+
+When applied to the case of single parameter. 
+"""
+function ODE(
+    tspan::AbstractVector,
+    ρ0::AbstractMatrix,
+    H0::AbstractMatrix,
+    dH::AbstractMatrix;
+    decay::Union{AbstractVector, Missing}=missing,
+    Hc::Union{AbstractVector, Missing}=missing,
+    ctrl::Union{AbstractVector, Missing}=missing
+    )
+
+    ##==========initialization==========##
+    dim = size(ρ0, 1)
+    tnum = length(tspan)
+    if ismissing(decay)
+        Γ = [zeros(ComplexF64, dim, dim)]
+        γ = [0.0]
+    else
+        Γ = [decay[1] for decay in decay]
+        γ = [decay[2] for decay in decay]
+    end
+
+    if ismissing(Hc)
+        Hc = [zeros(ComplexF64, dim, dim)]
+        ctrl0 = [zeros(tnum)]
+    elseif ismissing(ctrl)
+        ctrl0 = [zeros(tnum)]
+    else
+        ctrl_num = length(Hc)
+        ctrl_length = length(ctrl)
+        if ctrl_num < ctrl_length
+            throw(ArgumentError(
+            "There are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences: too many coefficients sequences"
+            ))
+        elseif ctrl_num < ctrl_length
+            throw(ArgumentError(
+            "Not enough coefficients sequences: there are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences. The rest of the control sequences are set to be 0."
+            ))
+        end
+        
+        ratio_num = ceil((length(tspan)) / length(ctrl[1]))
+        if length(tspan)  % length(ctrl[1])  != 0
+            tnum = ratio_num * length(ctrl[1]) |> Int
+            tspan = range(tspan[1], tspan[end], length=tnum)
+        end
+        ctrl0 = ctrl
+    end
+    para_num = length(dH)
+    ctrl_num = length(Hc)
+    ctrl_interval = (length(tspan) / length(ctrl0[1])) |> Int
+    ctrl = [repeat(ctrl0[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
+
+    H(ctrl) = QuanEstimation.Htot(H0, Hc, ctrl)
+    dt = tspan[2] - tspan[1] 
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+    ρt(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+    prob_ρ = ODEProblem(ρt, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
+    ρ = solve(prob_ρ).u
+
+    ∂ρt(∂ρ, ctrl, t) = -im * (dH * ρ[t2Num(t)] - ρ[t2Num(t)] * dH) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+
+    prob_∂ρ = ODEProblem(∂ρt, ρ0|>zero, (tspan[1], tspan[end]), ctrl, saveat=dt)
+    ∂ρ = solve(prob_∂ρ).u
+    ρ, ∂ρ
+end
+
+@doc raw"""
+
+    ODE(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractVector, dH::AbstractVector; decay::Union{AbstractVector, Missing}=missing, Hc::Union{AbstractVector, Missing}=missing, ctrl::Union{AbstractVector, Missing}=missing)
+
+The dynamics of a density matrix is of the form  ``\partial_t\rho=-i[H,\rho]+\sum_i \gamma_i\left(\Gamma_i\rho\Gamma^{\dagger}_i-\frac{1}{2}\left\{\rho,\Gamma^{\dagger}_i \Gamma_i \right\}\right)``, where ``\rho`` is the evolved density matrix, ``H`` is the Hamiltonian of the system, ``\Gamma_i`` and ``\gamma_i`` are the ``i\mathrm{th}`` decay operator and the corresponding decay rate.
+- `tspan`: Time length for the evolution.
+- `ρ0`: Initial state (density matrix).
+- `H0`: Free Hamiltonian.
+- `dH`: Derivatives of the free Hamiltonian with respect to the unknown parameters to be estimated. For example, dH[0] is the derivative vector on the first parameter.
+- `decay`: Decay operators and the corresponding decay rates. Its input rule is decay=[[``\Gamma_1``, ``\gamma_1``], [``\Gamma_2``, ``\gamma_2``],...], where ``\Gamma_1`` ``(\Gamma_2)`` represents the decay operator and ``\gamma_1`` ``(\gamma_2)`` is the corresponding decay rate.
+- `Hc`: Control Hamiltonians.
+- `ctrl`: Control coefficients.
+"""
+function ODE(
+    tspan::AbstractVector,
+    ρ0::AbstractMatrix,
+    H0::AbstractMatrix,
+    dH::AbstractVector;
+    decay::Union{AbstractVector, Missing}=missing,
+    Hc::Union{AbstractVector, Missing}=missing,
+    ctrl::Union{AbstractVector, Missing}=missing
+    )
+
+    ##==========initialization==========##
+    dim = size(ρ0, 1)
+    tnum = length(tspan)
+    if ismissing(decay)
+        Γ = [zeros(ComplexF64, dim, dim)]
+        γ = [0.0]
+    else
+        Γ = [decay[1] for decay in decay]
+        γ = [decay[2] for decay in decay]
+    end
+
+    if ismissing(Hc)
+        Hc = [zeros(ComplexF64, dim, dim)]
+        ctrl0 = [zeros(tnum)]
+    elseif ismissing(ctrl)
+        ctrl0 = [zeros(tnum)]
+    else
+        ctrl_num = length(Hc)
+        ctrl_length = length(ctrl)
+        if ctrl_num < ctrl_length
+            throw(ArgumentError(
+            "There are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences: too many coefficients sequences"
+            ))
+        elseif ctrl_num < ctrl_length
+            throw(ArgumentError(
+            "Not enough coefficients sequences: there are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences. The rest of the control sequences are set to be 0."
+            ))
+        end
+        
+        ratio_num = ceil((length(tspan)) / length(ctrl[1]))
+        if length(tspan)  % length(ctrl[1])  != 0
+            tnum = ratio_num * length(ctrl[1]) |> Int
+            tspan = range(tspan[1], tspan[end], length=tnum)
+        end
+        ctrl0 = ctrl
+    end
+    para_num = length(dH)
+    ctrl_num = length(Hc)
+    ctrl_interval = (length(tspan) / length(ctrl0[1])) |> Int
+    ctrl = [repeat(ctrl0[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
+
+    H(ctrl) = QuanEstimation.Htot(H0, Hc, ctrl)
+    dt = tspan[2] - tspan[1] 
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+    ρt(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+    prob_ρ = ODEProblem(ρt, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
+    ρ = solve(prob_ρ).u
+
+    ∂ρt(∂ρ, (pa, ctrl,), t) = -im * (dH[pa] * ρ[t2Num(t)] - ρ[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+
+    ∂ρ_tp = []
+    for pa in 1:length(dH)
+        prob_∂ρ = ODEProblem(∂ρt, ρ0|>zero, (tspan[1], tspan[end]), (pa, ctrl,), saveat=dt)
+        push!(∂ρ_tp, solve(prob_∂ρ).u)
+    end
+    ∂ρ = [[∂ρ_tp[i][j] for i in 1:length(dH)] for j in 1:length(tspan)]
+    ρ, ∂ρ
+end
+
+ODE(tspan, ρ0, H0, dH, decay) = 
+    ODE(tspan, ρ0, H0, dH; decay=decay)
+ODE(tspan, ρ0, H0, dH, decay, Hc) = 
+    ODE(tspan, ρ0, H0, dH; decay=decay, Hc=Hc)
+ODE(tspan, ρ0, H0, dH, decay, Hc, ctrl) = 
+    ODE(tspan, ρ0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
 
 #### evolution of pure states under time-independent Hamiltonian without noise and controls ####
 function evolve(dynamics::Lindblad{noiseless,free,ket})
