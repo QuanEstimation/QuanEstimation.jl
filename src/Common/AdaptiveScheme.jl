@@ -1,6 +1,6 @@
 @doc raw"""
 
-    Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, Hc=missing, ctrl=missing, decay=missing, M=missing, W=missing)
+    Adapt(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, Hc=missing, ctrl=missing, decay=missing, M=missing, W=missing)
 
 In QuanEstimation, the Hamiltonian of the adaptive system should be written as
 ``H(\textbf{x}+\textbf{u})`` with ``\textbf{x}`` the unknown parameters and ``\textbf{u}``
@@ -22,7 +22,7 @@ Hamiltonian work at the optimal point ``\textbf{x}_{\mathrm{opt}}``.
 - `M`: A set of positive operator-valued measure (POVM). The default measurement is a set of rank-one symmetric informationally complete POVM (SIC-POVM).
 - `W`: Whether or not to save all the posterior distributions. 
 """
-function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, 
+function Adapt(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, 
                   Hc=missing, ctrl=missing, decay=missing, M=missing, W=missing)
     dim = size(rho0)[1]
     para_num = length(x)
@@ -165,7 +165,7 @@ end
 
 @doc raw"""
 
-    Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, M=missing, W=missing)
+    Adapt(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, M=missing, W=missing)
 
 In QuanEstimation, the Hamiltonian of the adaptive system should be written as
 ``H(\textbf{x}+\textbf{u})`` with ``\textbf{x}`` the unknown parameters and ``\textbf{u}``
@@ -183,7 +183,7 @@ Hamiltonian work at the optimal point ``\textbf{x}_{\mathrm{opt}}``.
 - `M`: A set of positive operator-valued measure (POVM). The default measurement is a set of rank-one symmetric informationally complete POVM (SIC-POVM).
 - `W`: Whether or not to save all the posterior distributions. 
 """
-function Adaptive(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; method="FOP", savefile=false, max_episode::Int=1000, 
+function Adapt(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; method="FOP", savefile=false, max_episode::Int=1000, 
     eps::Float64=1e-8, M=missing, W=missing)
     dim = size(rho0)[1]
     para_num = length(x)
