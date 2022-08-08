@@ -5,5 +5,5 @@
 /deps/build.log
 /docs/build/
 
-/.history
-/.vscode
+
+*.log
