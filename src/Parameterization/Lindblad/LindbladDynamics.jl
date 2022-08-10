@@ -277,7 +277,7 @@ function expm_py(
     decay_opt::AbstractVector,
     γ,
     ctrl::AbstractVector,
-) where {T<:Complex,R<:Real}
+) 
 
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
@@ -442,7 +442,7 @@ function ODE(
         end
         ctrl0 = ctrl
     end
-    para_num = length(dH)
+
     ctrl_num = length(Hc)
     ctrl_interval = (length(tspan) / length(ctrl0[1])) |> Int
     ctrl = [repeat(ctrl0[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
@@ -553,6 +553,71 @@ ODE(tspan, ρ0, H0, dH, decay, Hc) =
     ODE(tspan, ρ0, H0, dH; decay=decay, Hc=Hc)
 ODE(tspan, ρ0, H0, dH, decay, Hc, ctrl) = 
     ODE(tspan, ρ0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
+
+function ODE_py(
+    tspan,
+    ρ0::AbstractMatrix,
+    H0::AbstractMatrix,
+    dH::AbstractMatrix,
+    Hc::AbstractVector,
+    Γ::AbstractVector,
+    γ,
+    ctrl::AbstractVector,
+    ) 
+    ctrl_num = length(Hc)
+    ctrl_interval = ((length(tspan)-1) / length(ctrl[1])) |> Int
+    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |>Array for i = 1:ctrl_num]
+    push!.(ctrl, [0.0 for i in 1:ctrl_num])
+    H(ctrl) = Htot(H0, Hc, ctrl)
+    dt = tspan[2] - tspan[1] 
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+    ρt_func(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
+    ρt = solve(prob_ρ).u
+
+    ∂ρt_func(∂ρ, ctrl, t) = -im * (dH * ρt[t2Num(t)] - ρt[t2Num(t)] * dH) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+
+    prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), ctrl, saveat=dt)
+    ∂ρt = solve(prob_∂ρ).u
+    ρt, ∂ρt
+end
+
+function ODE_py(
+    tspan,
+    ρ0::AbstractMatrix,
+    H0::AbstractMatrix,
+    dH::AbstractVector,
+    Γ::AbstractVector,
+    γ,
+    Hc::AbstractVector,
+    ctrl::AbstractVector,
+    )
+    para_num = length(dH)
+    ctrl_num = length(Hc)
+    ctrl_interval = ((length(tspan)-1) / length(ctrl[1])) |> Int
+    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |>Array for i = 1:ctrl_num]
+    push!.(ctrl, [0.0 for i in 1:ctrl_num])
+    H(ctrl) = Htot(H0, Hc, ctrl)
+    dt = tspan[2] - tspan[1] 
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+    ρt_func(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
+    ρt = solve(prob_ρ).u
+
+    ∂ρt_func(∂ρ, (pa, ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+
+    ∂ρt_tp = []
+    for pa in 1:para_num
+        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), (pa, ctrl,), saveat=dt)
+        push!(∂ρt_tp, solve(prob_∂ρ).u)
+    end
+    ∂ρt = [[∂ρt_tp[i][j] for i in 1:para_num] for j in 1:length(tspan)]
+    ρt, ∂ρt
+end
 
 evolve(dynamics) = _evolve(dynamics.data)
 
