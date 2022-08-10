@@ -1,5 +1,6 @@
 abstract type LindbladDynamicsData <: AbstractDynamicsData end
 
+## TODO: reconstruct dynamicsdata structs
 
 mutable struct Lindblad_noiseless_free{DynMethod} <: LindbladDynamicsData
     H0::AbstractMatrix
