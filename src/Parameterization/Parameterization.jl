@@ -14,6 +14,10 @@ abstract type free <: AbstractCtrlType end
 abstract type controlled <: AbstractCtrlType end
 abstract type timedepend <: AbstractCtrlType end
 
+abstract type AbstractDynamicsProblemType end
+abstract type Expm <: AbstractDynamicsProblemType end
+abstract type Ode <: AbstractDynamicsProblemType end
+
 # check if the dynamics are with noise
 isNoisy(::noiseless) = false
 isNoisy(::noisy) = true
