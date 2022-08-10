@@ -2,16 +2,16 @@ abstract type AbstractAlgorithm end
 
 abstract type AbstractGRAPE <: AbstractAlgorithm end
 
-struct GRAPE <: AbstractGRAPE
+struct GRAPE{T<:Number} <: AbstractGRAPE
     max_episode::Int 
-    epsilon::Number
+    epsilon::T
 end
 
-struct GRAPE_Adam <: AbstractGRAPE
+struct GRAPE_Adam{T<:Number, N<:Number} <: AbstractGRAPE
     max_episode::Int
-    epsilon::Number
-    beta1::Number
-    beta2::Number
+    epsilon::T
+    beta1::N
+    beta2::N
 end
 
 
@@ -31,16 +31,16 @@ Control optimization algorithm: GRAPE.
 GRAPE(;max_episode=300, epsilon=0.01, beta1=0.90, beta2=0.99, Adam::Bool=true) = Adam ? GRAPE_Adam(max_episode, epsilon, beta1, beta2) : GRAPE(max_episode, epsilon)
 
 abstract type AbstractautoGRAPE <: AbstractAlgorithm end
-struct autoGRAPE <: AbstractautoGRAPE
+struct autoGRAPE{T<:Number} <: AbstractautoGRAPE
     max_episode::Int
-    epsilon::Number
+    epsilon::T
 end
 
-struct autoGRAPE_Adam <: AbstractautoGRAPE
+struct autoGRAPE_Adam{T<:Number, N<:Number} <: AbstractautoGRAPE
     max_episode::Int
-    epsilon::Number
-    beta1::Number
-    beta2::Number
+    epsilon::T
+    beta1::N
+    beta2::N
 end
 
 autoGRAPE(max_episode, epsilon, beta1, beta2) = autoGRAPE_Adam(max_episode, epsilon, beta1, beta2)
@@ -59,16 +59,16 @@ Control optimization algorithm: auto-GRAPE.
 autoGRAPE(;max_episode=300, epsilon=0.01, beta1=0.90, beta2=0.99, Adam::Bool=true) = Adam ? autoGRAPE_Adam(max_episode, epsilon, beta1, beta2) : autoGRAPE(max_episode, epsilon)
 
 abstract type AbstractAD <:  AbstractAlgorithm end
-struct AD <: AbstractAD
+struct AD{T<:Number} <: AbstractAD
     max_episode::Number
-    epsilon::Number
+    epsilon::T
 end
 
-struct AD_Adam <: AbstractAD
+struct AD_Adam{T<:Number, N<:Number} <: AbstractAD
     max_episode::Number
-    epsilon::Number
-    beta1::Number
-    beta2::Number
+    epsilon::T
+    beta1::N
+    beta2::N
 end
 
 AD(max_episode, epsilon, beta1, beta2) = AD_Adam(max_episode, epsilon, beta1, beta2)
@@ -85,13 +85,15 @@ Optimization algorithm: AD.
 """
 AD(;max_episode=300, epsilon=0.01, beta1=0.90, beta2=0.99, Adam::Bool=true) = Adam ? AD_Adam(max_episode, epsilon, beta1, beta2) : AD(max_episode, epsilon)
 
-mutable struct PSO <: AbstractAlgorithm
-    max_episode::Union{T,Vector{T}} where {T<:Int} 
+## TODO: try using immutable struct here. Consider [Accesors.jl](https://github.com/JuliaObjects/Accessors.jl) or Setfield.jl for update. 
+
+mutable struct PSO{T<:Number} <: AbstractAlgorithm
+    max_episode::Union{Int,Vector{Int}} 
     p_num::Int
     ini_particle::Union{Tuple, Missing}
-    c0::Number 
-    c1::Number
-    c2::Number
+    c0::T
+    c1::T
+    c2::T
 end
 
 """
@@ -109,12 +111,12 @@ Optimization algorithm: PSO.
 PSO(;max_episode::Union{T,Vector{T}} where {T<:Int}=[1000, 100], p_num::Number=10, ini_particle=missing, c0::Number=1.0, c1::Number=2.0, c2::Number=2.0) =
     PSO(max_episode, p_num, ini_particle, c0, c1, c2)
 
-mutable struct DE <: AbstractAlgorithm
-    max_episode::Number
-    p_num::Number
+mutable struct DE{T<:Number} <: AbstractAlgorithm
+    max_episode::Int
+    p_num::Int
     ini_population::Union{Tuple, Missing}
-    c::Number
-    cr::Number
+    c::T
+    cr::T
 end
 
 """
@@ -130,11 +132,11 @@ Optimization algorithm: DE.
 """
 DE(;max_episode::Number=1000, p_num::Number=10, ini_population=missing, c::Number=1.0,cr::Number=0.5) = DE(max_episode, p_num, ini_population, c, cr)
 
-struct DDPG <: AbstractAlgorithm
+struct DDPG{R<:AbstractRNG} <: AbstractAlgorithm
     max_episode::Int
     layer_num::Int
     layer_dim::Int
-    rng::AbstractRNG
+    rng::R
 end
 
 DDPG(max_episode, layer_num, layer_dim) =
@@ -154,14 +156,14 @@ Optimization algorithm: DE.
 DDPG(;max_episode::Int=500, layer_num::Int=3, layer_dim::Int=200, seed::Number=1234) =
     DDPG(max_episode, layer_num, layer_dim, StableRNG(seed))
 
-struct NM <: AbstractAlgorithm
+struct NM{T<:AbstractVector,N<:Number} <: AbstractAlgorithm
     max_episode::Int
     p_num::Int
-    ini_state::Union{AbstractVector, Missing}
-    ar::Number
-    ae::Number
-    ac::Number
-    as0::Number
+    ini_state::Union{T, Missing}
+    ar::N
+    ae::N
+    ac::N
+    as0::N
 end
 
 """
