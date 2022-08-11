@@ -555,26 +555,129 @@ mutable struct Adapt_MZI
     rho0
 end
 
-function online(apt::Adapt_MZI; output::String = "phi")
+abstract type MIZtargetType end
+abstract type sharpness <: MIZtargetType end
+abstract type MI <: MIZtargetType end
+
+struct calculate_online{P} end
+struct calculate_offline{P} end
+
+##========== online ==========##
+function online(apt::Adapt_MZI; target::Symbol=:sharpness, output::String="phi")
     (;x, p, rho0) = apt
+    adaptMZI_online(x, p, rho0, Symbol(output), target)
+end
+
+function adaptMZI_online(x, p, rho0, output, target::Symbol)
     N = Int(sqrt(size(rho0,1))) - 1
     a = destroy(N+1) |> sparse
-    adaptMZI_online(x, p, rho0, a, output)
-end
+    exp_ix = [exp(1.0im*xi) for xi in x]
+    phi_span = range(-pi, stop=pi, length=length(x)) |> collect
 
-function brgd(n)
-    if n == 1
-        return ["0", "1"]
+    phi = 0.0
+    a_res = [Matrix{ComplexF64}(I, (N+1)^2, (N+1)^2) for i in 1:length(x)]
+
+    xout, y = [], []
+
+    if output == :phi
+        for ei in 1:N-1
+            println("The tunable phase is $phi ($ei episodes)")
+            print("Please enter the experimental result: ")
+            enter = readline()
+            u = parse(Int64, enter)
+            pyx = zeros(length(x)) |> sparse
+            for xi in 1:length(x)
+                a_res_tp = a_res[xi]*a_u(a, x[xi], phi, u)
+                pyx[xi] = real(tr(rho0*a_res_tp'*a_res_tp))*(factorial(N-ei)/factorial(N))
+                a_res[xi] = a_res_tp
+            end
+            phi_update = calculate_online{eval(target)}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix)
+                
+            append!(xout, phi)
+            append!(y, u)
+            phi = phi_update
+        end
+        println("The estimator of the unknown phase is $phi ")
+        append!(xout, phi)
+        savefile_online(xout, y)
+    else
+        println("The initial tunable phase is $phi")
+        for ei in 1:N-1
+            print("Please enter the experimental result: ")
+            enter = readline()
+            u = parse(Int64, enter)
+
+            pyx = zeros(length(x)) |> sparse
+            for xi in 1:length(x)
+                a_res_tp = a_res[xi]*a_u(a, x[xi], phi, u)
+                pyx[xi] = real(tr(rho0*a_res_tp'*a_res_tp))*(factorial(N-ei)/factorial(N))
+                a_res[xi] = a_res_tp
+            end
+
+            phi_update = calculate_online{eval(target)}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix)
+                
+            println("The adjustments of the feedback phase is $(abs(phi_update-phi)) ($ei episodes)")
+            append!(xout, abs(phi_update-phi))
+            append!(y, u)
+            phi = phi_update
+        end
+        savefile_online(xout, y)
     end
-    L0 = brgd(n-1)
-    L1 = deepcopy(L0)
-    reverse!(L1)
-    L0 = ["0"*l for l in L0]
-    L1 = ["1"*l for l in L1]
-    return deepcopy(vcat(L0,L1))
 end
 
-function offline(apt::Adapt_MZI, alg; eps = GLOBAL_EPS, seed=1234)
+adaptMZI_online(x, p, rho0, output::String, target::String) = adaptMZI_online(x, p, rho0, Symbol(output), Symbol(target))
+
+function calculate_online{sharpness}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix)
+    
+    M_res = zeros(length(phi_span))
+    for mj in 1:length(phi_span)
+        M1_res = trapz(x, pyx.*p)
+        pyx0, pyx1 = zeros(length(x)), zeros(length(x))
+        M2_res = 0.0
+        for xj in 1:length(x)
+            a_res0 = a_res[xj]*a_u(a, x[xj], phi_span[mj], 0)
+            a_res1 = a_res[xj]*a_u(a, x[xj], phi_span[mj], 1)
+            pyx0[xj] = real(tr(rho0*a_res0'*a_res0))*(factorial(N-(ei+1))/factorial(N))
+            pyx1[xj] = real(tr(rho0*a_res1'*a_res1))*(factorial(N-(ei+1))/factorial(N))
+            M2_res = abs(trapz(x, pyx0.*p.*exp_ix))+abs(trapz(x, pyx1.*p.*exp_ix))
+        end
+        M_res[mj] = M2_res/M1_res
+    end
+    indx_m = findmax(M_res)[2]
+    phi_span[indx_m]
+end
+
+function calculate_online{MI}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix)
+    
+    M_res = zeros(length(phi_span))
+    for mj in 1:length(phi_span)
+        M1_res = trapz(x, pyx.*p)
+        pyx0, pyx1 = zeros(length(x)), zeros(length(x))
+        M2_res = 0.0
+        for xj in 1:length(x)
+            a_res0 = a_res[xj]*a_u(a, x[xj], phi_span[mj], 0)
+            a_res1 = a_res[xj]*a_u(a, x[xj], phi_span[mj], 1)
+            pyx0[xj] = real(tr(rho0*a_res0'*a_res0))*(factorial(N-(ei+1))/factorial(N))
+            pyx1[xj] = real(tr(rho0*a_res1'*a_res1))*(factorial(N-(ei+1))/factorial(N))
+            M2_res = trapz(x, pyx0.*p.*log.(2, pyx0./trapz(x, pyx0.*p)))+trapz(x, pyx1.*p.*log.(2, pyx1./trapz(x, pyx1.*p)))
+        end
+        M_res[mj] = M2_res/M1_res
+    end
+    indx_m = findmax(M_res)[2]
+    phi_span[indx_m]
+end
+
+function savefile_online(xout, y)
+    open("xout.csv","w") do m
+        writedlm(m, xout)
+    end
+    open("y.csv","w") do n
+        writedlm(n, y)
+    end
+end
+
+##========== offline ==========##
+function offline(apt::Adapt_MZI, alg; target::Symbol=:sharpness, eps = GLOBAL_EPS, seed=1234)
     rng = MersenneTwister(seed)
     (;x,p,rho0) = apt
     N = Int(sqrt(size(rho0,1))) - 1
@@ -585,161 +688,19 @@ function offline(apt::Adapt_MZI, alg; eps = GLOBAL_EPS, seed=1234)
         if ismissing(ini_population)
             ini_population = ([apt.rho0],)
         end
-        DE_deltaphiOpt(x,p,rho0,a,comb,p_num,ini_population[1],c,cr,rng,max_episode,eps)
+        DE_deltaphiOpt(x,p,rho0,comb,p_num,ini_population[1],c,cr,rng,max_episode,target,eps)
     elseif alg isa PSO
         (;p_num,ini_particle,c0,c1,c2,max_episode) = alg
         if ismissing(ini_particle)
             ini_particle = ([apt.rho0],)
         end
-        PSO_deltaphiOpt(x,p,rho0,a,comb,p_num,ini_particle[1],c0,c1,c2,rng,max_episode,eps)
+        PSO_deltaphiOpt(x,p,rho0,comb,p_num,ini_particle[1],c0,c1,c2,rng,max_episode,target,eps)
     end
 end
 
-function adaptMZI_online(x, p, rho0, a, output)
-    
-    N = size(a)[1] -1
-    exp_ix = [exp(1.0im*xi) for xi in x]
-    phi_span = range(-pi, stop=pi, length=length(x)) |> collect
-
-    phi = 0.0
-    a_res = [Matrix{ComplexF64}(I, (N+1)^2, (N+1)^2) for i in 1:length(x)]
-
-    xout, y = [], []
-    if output == "phi"
-        for ei in 1:N-1
-            println("The tunable phase is $phi ($ei episodes)")
-            print("Please enter the experimental result: ")
-            enter = readline()
-            u = parse(Int64, enter)
-
-            pyx = zeros(length(x))|>sparse
-            for xi in 1:length(x)
-                a_res_tp = a_res[xi]*a_u(a, x[xi], phi, u)
-                pyx[xi] = real(tr(rho0*a_res_tp'*a_res_tp))*(factorial(N-ei)/factorial(N))
-                a_res[xi] = a_res_tp
-            end
-            
-            M_res = zeros(length(phi_span))
-            for mj in 1:length(phi_span)
-                M1_res = trapz(x, pyx.*p)
-                pyx0, pyx1 = zeros(length(x)), zeros(length(x))
-                M2_res = 0.0
-                for xj in 1:length(x)
-                    a_res0 = a_res[xj]*a_u(a, x[xj], phi_span[mj], 0)
-                    a_res1 = a_res[xj]*a_u(a, x[xj], phi_span[mj], 1)
-                    pyx0[xj] = real(tr(rho0*a_res0'*a_res0))*(factorial(N-(ei+1))/factorial(N))
-                    pyx1[xj] = real(tr(rho0*a_res1'*a_res1))*(factorial(N-(ei+1))/factorial(N))
-                    M2_res = abs(trapz(x, pyx0.*p.*exp_ix))+abs(trapz(x, pyx1.*p.*exp_ix))
-                end
-                M_res[mj] = M2_res/M1_res
-            end
-            indx_m = findmax(M_res)[2]
-            phi_update = phi_span[indx_m]
-            
-            append!(xout, phi)
-            append!(y, u)
-            phi = phi_update
-        end
-        println("The estimator of the unknown phase is $phi ")
-        append!(xout, phi)
-        open("xout.csv","w") do m
-            writedlm(m, xout)
-        end
-        open("y.csv","w") do n
-            writedlm(n, y)
-        end
-    else
-        println("The initial tunable phase is $phi")
-        for ei in 1:N-1
-            print("Please enter the experimental result: ")
-            enter = readline()
-            u = parse(Int64, enter)
-            
-            pyx = zeros(length(x))
-            for xi in 1:length(x)
-                a_res_tp = a_res[xi]*a_u(a, x[xi], phi, u)
-                pyx[xi] = real(tr(rho0*a_res_tp'*a_res_tp))*(factorial(N-ei)/factorial(N))
-                a_res[xi] = a_res_tp
-            end
-            
-            M_res = zeros(length(phi_span))
-            for mj in 1:length(phi_span)
-                M1_res = trapz(x, pyx.*p)
-                pyx0, pyx1 = zeros(length(x)), zeros(length(x))
-                M2_res = 0.0
-                for xj in 1:length(x)
-                    a_res0 = a_res[xj]*a_u(a, x[xj], phi_span[mj], 0)
-                    a_res1 = a_res[xj]*a_u(a, x[xj], phi_span[mj], 1)
-                    pyx0[xj] = real(tr(rho0*a_res0'*a_res0))*(factorial(N-(ei+1))/factorial(N))
-                    pyx1[xj] = real(tr(rho0*a_res1'*a_res1))*(factorial(N-(ei+1))/factorial(N))
-                    M2_res = abs(trapz(x, pyx0.*p.*exp_ix))+abs(trapz(x, pyx1.*p.*exp_ix))
-                end
-                M_res[mj] = M2_res/M1_res
-            end
-            indx_m = findmax(M_res)[2]
-            phi_update = phi_span[indx_m]
-            println("The adjustments of the feedback phase is $(abs(phi_update-phi)) ($ei episodes)")
-            append!(xout, abs(phi_update-phi))
-            append!(y, u)
-    
-            phi = phi_update
-        end
-        open("xout.csv","w") do m
-            writedlm(m, xout)
-        end
-        open("y.csv","w") do n
-            writedlm(n, y)
-        end
-    end
-end
-
-function adaptMZI_offline(delta_phi, x, p, rho0, a, comb, eps)
-    N = size(a)[1] - 1
-    exp_ix = [exp(1.0im*xi) for xi in x]
-    
-    M_res = zeros(length(comb))
-    for ui in 1:length(comb)
-        u = comb[ui]
-        phi = 0.0
-
-        a_res = [Matrix{ComplexF64}(I, (N+1)^2, (N+1)^2) for i in 1:length(x)]
-        for ei in 1:N-1
-            phi = phi - (-1)^u[ei]*delta_phi[ei]
-            for xi in 1:length(x)
-                a_res[xi] = a_res[xi]*a_u(a, x[xi], phi, u[ei])
-            end
-        end
-
-        pyx = zeros(length(x))
-        for xj in 1:length(x)
-            pyx[xj] = real(tr(rho0*a_res[xj]'*a_res[xj]))*(1/factorial(N))
-        end
-        M_res[ui] = abs(trapz(x, pyx.*p.*exp_ix))
-    end
-    return sum(M_res)
-end
-
-function a_u(a, x, phi, u)
-    N = size(a)[1] - 1
-    a_in = kron(a, Matrix(I, N+1, N+1))
-    b_in = kron(Matrix(I, N+1, N+1), a)
-
-    value = 0.5*(x-phi)+0.5*pi*u
-    return a_in*sin(value) + b_in*cos(value)
-end
-
-function logarithmic(number, N)
-    res = zeros(N)
-    res_tp = number
-    for i in 1:N
-        res_tp = res_tp/2
-        res[i] = res_tp
-    end
-    return res
-end
-
-function DE_deltaphiOpt(x, p, rho0, a, comb, p_num, ini_population, c, cr, rng::AbstractRNG, max_episode, eps)
-    N = size(a)[1] - 1
+function DE_deltaphiOpt(x, p, rho0, comb, p_num, ini_population, c, cr, rng::AbstractRNG, max_episode, target::Symbol, eps)
+    N = Int(sqrt(size(rho0,1))) - 1
+    a = destroy(N+1) |> sparse
     deltaphi = [zeros(N) for i in 1:p_num]
     # initialize
     res = logarithmic(2.0*pi, N)
@@ -755,7 +716,7 @@ function DE_deltaphiOpt(x, p, rho0, a, comb, p_num, ini_population, c, cr, rng::
 
     p_fit = [0.0 for i in 1:p_num]
     for pl in 1:N
-        p_fit[pl] = adaptMZI_offline(deltaphi[pl], x, p, rho0, a, comb, eps)
+        p_fit[pl] = calculate_offline{eval(target)}(deltaphi[pl], x, p, rho0, a, comb, eps)
     end
     
     f_ini = maximum(p_fit)
@@ -784,7 +745,7 @@ function DE_deltaphiOpt(x, p, rho0, a, comb, p_num, ini_population, c, cr, rng::
             for cm in 1:N
                 deltaphi_cross[cm] = (x-> x < 0.0 ? 0.0 : x > pi ? pi : x)(deltaphi_cross[cm])
             end
-            f_cross = adaptMZI_offline(deltaphi_cross, x, p, rho0, a, comb, eps)
+            f_cross = calculate_offline{eval(target)}(deltaphi_cross, x, p, rho0, a, comb, eps)
             if f_cross > p_fit[pm]
                 p_fit[pm] = f_cross
                 for ck in 1:N
@@ -794,20 +755,16 @@ function DE_deltaphiOpt(x, p, rho0, a, comb, p_num, ini_population, c, cr, rng::
         end
         append!(f_list, maximum(p_fit))
     end
-    open("deltaphi.csv","w") do m
-        writedlm(m, deltaphi[findmax(p_fit)[2]])
-    end
-    open("f.csv","w") do n
-        writedlm(n, f_list)
-    end
+    savefile_offline(deltaphi[findmax(p_fit)[2]], f_list)
     return deltaphi[findmax(p_fit)[2]]
 end
 
-DE_deltaphiOpt(x, p, rho0, a, comb, p_num, ini_population, c, cr, seed::Number, max_episode, eps) = 
-DE_deltaphiOpt(x, p, rho0, a, comb, p_num, ini_population, c, cr, MersenneTwister(seed), max_episode, eps)
+DE_deltaphiOpt(x, p, rho0, comb, p_num, ini_population, c, cr, seed::Number, max_episode, target::String, eps) = 
+DE_deltaphiOpt(x, p, rho0, comb, p_num, ini_population, c, cr, MersenneTwister(seed), max_episode, Symbol(target), eps)
 
-function PSO_deltaphiOpt(x, p, rho0, a, comb, p_num, ini_particle, c0, c1, c2, rng::AbstractRNG, max_episode, eps)   
-    N = size(a)[1] - 1
+function PSO_deltaphiOpt(x, p, rho0, comb, p_num, ini_particle, c0, c1, c2, rng::AbstractRNG, max_episode, target::Symbol, eps)   
+    N = Int(sqrt(size(rho0,1))) - 1
+    a = destroy(N+1) |> sparse
     n = size(a)[1]
 
     if typeof(max_episode) == Int
@@ -838,7 +795,7 @@ function PSO_deltaphiOpt(x, p, rho0, a, comb, p_num, ini_particle, c0, c1, c2, r
     f_list = []
     for ei in 1:(max_episode[1]-1)
         for pm in 1:p_num
-            f_now = adaptMZI_offline(deltaphi[pm], x, p, rho0, a, comb, eps)
+            f_now = calculate_offline{eval(target)}(deltaphi[pm], x, p, rho0, a, comb, eps)
             if f_now > p_fit[pm]
                 p_fit[pm] = f_now
                 for ci in 1:N
@@ -877,14 +834,101 @@ function PSO_deltaphiOpt(x, p, rho0, a, comb, p_num, ini_particle, c0, c1, c2, r
             end
         end
     end
-    open("deltaphi.csv","w") do m
-        writedlm(m, gbest)
-    end
-    open("f.csv","w") do n
-        writedlm(n, f_list)
-    end
+    savefile_offline(gbest, f_list)
     return gbest
 end
 
-PSO_deltaphiOpt(x, p, rho0, a, comb, p_num, ini_particle, c0, c1, c2, seed::Number, max_episode, eps) = 
-PSO_deltaphiOpt(x, p, rho0, a, comb, p_num, ini_particle, c0, c1, c2, MersenneTwister(seed), max_episode, eps)   
+PSO_deltaphiOpt(x, p, rho0, comb, p_num, ini_particle, c0, c1, c2, seed::Number, max_episode, target::String, eps) = 
+PSO_deltaphiOpt(x, p, rho0, comb, p_num, ini_particle, c0, c1, c2, MersenneTwister(seed), max_episode, Symbol(target), eps)   
+
+function calculate_offline{sharpness}(delta_phi, x, p, rho0, a, comb, eps)
+    N = size(a)[1] - 1
+    exp_ix = [exp(1.0im*xi) for xi in x]
+    
+    M_res = zeros(length(comb))
+    for ui in 1:length(comb)
+        u = comb[ui]
+        phi = 0.0
+
+        a_res = [Matrix{ComplexF64}(I, (N+1)^2, (N+1)^2) for i in 1:length(x)]
+        for ei in 1:N-1
+            phi = phi - (-1)^u[ei]*delta_phi[ei]
+            for xi in 1:length(x)
+                a_res[xi] = a_res[xi]*a_u(a, x[xi], phi, u[ei])
+            end
+        end
+
+        pyx = zeros(length(x))
+        for xj in 1:length(x)
+            pyx[xj] = real(tr(rho0*a_res[xj]'*a_res[xj]))*(1/factorial(N))
+        end
+        M_res[ui] = abs(trapz(x, pyx.*p.*exp_ix))
+    end
+    return sum(M_res)
+end
+
+function calculate_offline{MI}(delta_phi, x, p, rho0, a, comb, eps)
+    N = size(a)[1] - 1
+    exp_ix = [exp(1.0im*xi) for xi in x]
+    
+    M_res = zeros(length(comb))
+    for ui in 1:length(comb)
+        u = comb[ui]
+        phi = 0.0
+
+        a_res = [Matrix{ComplexF64}(I, (N+1)^2, (N+1)^2) for i in 1:length(x)]
+        for ei in 1:N-1
+            phi = phi - (-1)^u[ei]*delta_phi[ei]
+            for xi in 1:length(x)
+                a_res[xi] = a_res[xi]*a_u(a, x[xi], phi, u[ei])
+            end
+        end
+
+        pyx = zeros(length(x))
+        for xj in 1:length(x)
+            pyx[xj] = real(tr(rho0*a_res[xj]'*a_res[xj]))*(1/factorial(N))
+        end
+        M_res[ui] = trapz(x, pyx.*p.*log.(2, pyx./trapz(x, pyx.*p)))
+    end
+    return sum(M_res)
+end
+
+function savefile_offline(deltaphi, flist)
+    open("deltaphi.csv","w") do m
+        writedlm(m, deltaphi)
+    end
+    open("f.csv","w") do n
+        writedlm(n, flist)
+    end
+end
+
+function a_u(a, x, phi, u)
+    N = size(a)[1] - 1
+    a_in = kron(a, Matrix(I, N+1, N+1))
+    b_in = kron(Matrix(I, N+1, N+1), a)
+
+    value = 0.5*(x-phi)+0.5*pi*u
+    return a_in*sin(value) + b_in*cos(value)
+end
+
+function logarithmic(number, N)
+    res = zeros(N)
+    res_tp = number
+    for i in 1:N
+        res_tp = res_tp/2
+        res[i] = res_tp
+    end
+    return res
+end
+
+function brgd(n)
+    if n == 1
+        return ["0", "1"]
+    end
+    L0 = brgd(n-1)
+    L1 = deepcopy(L0)
+    reverse!(L1)
+    L0 = ["0"*l for l in L0]
+    L1 = ["1"*l for l in L1]
+    return deepcopy(vcat(L0,L1))
+end
