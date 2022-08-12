@@ -156,10 +156,10 @@ Optimization algorithm: DE.
 DDPG(;max_episode::Int=500, layer_num::Int=3, layer_dim::Int=200, seed::Number=1234) =
     DDPG(max_episode, layer_num, layer_dim, StableRNG(seed))
 
-struct NM{T<:AbstractVector,N<:Number} <: AbstractAlgorithm
+struct NM{N<:Number} <: AbstractAlgorithm
     max_episode::Int
     p_num::Int
-    ini_state::Union{T, Missing}
+    ini_state::Union{Vector{ComplexF64}, Missing} 
     ar::N
     ae::N
     ac::N
