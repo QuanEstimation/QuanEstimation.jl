@@ -25,6 +25,7 @@ Hamiltonian work at the optimal point ``\textbf{x}_{\mathrm{opt}}``.
 function Adapt(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; DynMethod=:Expm, method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, 
                   Hc=missing, ctrl=missing, decay=missing, M=missing, W=missing)
     dim = size(rho0)[1]
+    rho0 = complex.(rho0)
     para_num = length(x)
     if ismissing(M)
         M = SIC(size(rho0)[1])

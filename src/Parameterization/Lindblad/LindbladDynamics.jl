@@ -392,11 +392,11 @@ end
 ##========== solve ordinary differential equation (ODE) ==========##
 @doc raw"""
 
-    ODE(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractMatrix, dH::AbstractMatrix; decay::Union{AbstractVector, Missing}=missing, Hc::Union{AbstractVector, Missing}=missing, ctrl::Union{AbstractVector, Missing}=missing)
+    ode(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractMatrix, dH::AbstractMatrix; decay::Union{AbstractVector, Missing}=missing, Hc::Union{AbstractVector, Missing}=missing, ctrl::Union{AbstractVector, Missing}=missing)
 
 When applied to the case of single parameter. 
 """
-function ODE(
+function ode(
     tspan::AbstractVector,
     ρ0::AbstractMatrix,
     H0::AbstractMatrix,
@@ -408,6 +408,7 @@ function ODE(
 
     ##==========initialization==========##
     dim = size(ρ0, 1)
+    ρ0 = complex.(ρ0)
     tnum = length(tspan)
     if ismissing(decay)
         Γ = [zeros(ComplexF64, dim, dim)]
@@ -465,7 +466,7 @@ end
 
 @doc raw"""
 
-    ODE(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractVector, dH::AbstractVector; decay::Union{AbstractVector, Missing}=missing, Hc::Union{AbstractVector, Missing}=missing, ctrl::Union{AbstractVector, Missing}=missing)
+    ode(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractVector, dH::AbstractVector; decay::Union{AbstractVector, Missing}=missing, Hc::Union{AbstractVector, Missing}=missing, ctrl::Union{AbstractVector, Missing}=missing)
 
 The dynamics of a density matrix is of the form  ``\partial_t\rho=-i[H,\rho]+\sum_i \gamma_i\left(\Gamma_i\rho\Gamma^{\dagger}_i-\frac{1}{2}\left\{\rho,\Gamma^{\dagger}_i \Gamma_i \right\}\right)``, where ``\rho`` is the evolved density matrix, ``H`` is the Hamiltonian of the system, ``\Gamma_i`` and ``\gamma_i`` are the ``i\mathrm{th}`` decay operator and the corresponding decay rate.
 - `tspan`: Time length for the evolution.
@@ -476,7 +477,7 @@ The dynamics of a density matrix is of the form  ``\partial_t\rho=-i[H,\rho]+\su
 - `Hc`: Control Hamiltonians.
 - `ctrl`: Control coefficients.
 """
-function ODE(
+function ode(
     tspan::AbstractVector,
     ρ0::AbstractMatrix,
     H0::AbstractMatrix,
@@ -488,6 +489,7 @@ function ODE(
 
     ##==========initialization==========##
     dim = size(ρ0, 1)
+    ρ0 = complex.(ρ0)
     tnum = length(tspan)
     if ismissing(decay)
         Γ = [zeros(ComplexF64, dim, dim)]
@@ -547,14 +549,14 @@ function ODE(
     ρt, ∂ρt
 end
 
-ODE(tspan, ρ0, H0, dH, decay) = 
-    ODE(tspan, ρ0, H0, dH; decay=decay)
-ODE(tspan, ρ0, H0, dH, decay, Hc) = 
-    ODE(tspan, ρ0, H0, dH; decay=decay, Hc=Hc)
-ODE(tspan, ρ0, H0, dH, decay, Hc, ctrl) = 
-    ODE(tspan, ρ0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
+ode(tspan, ρ0, H0, dH, decay) = 
+    ode(tspan, ρ0, H0, dH; decay=decay)
+ode(tspan, ρ0, H0, dH, decay, Hc) = 
+    ode(tspan, ρ0, H0, dH; decay=decay, Hc=Hc)
+ode(tspan, ρ0, H0, dH, decay, Hc, ctrl) = 
+    ode(tspan, ρ0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
 
-function ODE_py(
+function ode_py(
     tspan,
     ρ0::AbstractMatrix,
     H0::AbstractMatrix,
@@ -584,7 +586,7 @@ function ODE_py(
     ρt, ∂ρt
 end
 
-function ODE_py(
+function ode_py(
     tspan,
     ρ0::AbstractMatrix,
     H0::AbstractMatrix,
@@ -639,6 +641,27 @@ function _evolve(data::Lindblad_noiseless_free_pure{Expm})
     ρt, ∂ρt_∂x
 end
 
+function _evolve(data::Lindblad_noiseless_free_pure{Ode})
+    (; H0, dH, ψ0, tspan) = data
+    para_num = length(dH)
+    dt = tspan[2] - tspan[1] 
+
+    ψt_func(ψ, p, t) = -im*H0*ψ
+    prob_ψ = ODEProblem(ψt_func, ψ0, (tspan[1], tspan[end]), saveat=dt)
+    ψt = solve(prob_ψ).u
+
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+    ∂ψt_func(∂ψ, pa, t) = -im * dH[pa] * ψt[t2Num(t)] - im * H0 * ∂ψ
+    ∂ψ∂x = typeof(ψ0)[]
+    for pa in 1:para_num
+        prob_∂ψ = ODEProblem(∂ψt_func, ψ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
+        push!(∂ψ∂x, solve(prob_∂ψ).u[end])
+    end
+    ρt = ψt[end]*ψt[end]'
+    ∂ρt_∂x = [(∂ψ∂x[i] * ψt[end]' + ψt[end] * ∂ψ∂x[i]') for i = 1:para_num]
+    ρt, ∂ρt_∂x
+end
+
 #### evolution of pure states under time-dependent Hamiltonian without noise and controls ####
 function _evolve(data::Lindblad_noiseless_timedepend_pure{Expm})
     (; H0, dH, ψ0, tspan) = data
@@ -655,6 +678,27 @@ function _evolve(data::Lindblad_noiseless_timedepend_pure{Expm})
     end
     # ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
+end
+
+function _evolve(data::Lindblad_noiseless_timedepend_pure{Ode})
+    (; H0, dH, ψ0, tspan) = data 
+    para_num = length(dH)
+    dt = tspan[2] - tspan[1] 
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+
+    ψt_func(ψ, p, t) = -im*H0[t2Num(t)]*ψ
+    prob_ψ = ODEProblem(ψt_func, ψ0, (tspan[1], tspan[end]), saveat=dt)
+    ψt = solve(prob_ψ).u
+
+    ∂ψt_func(∂ψ, pa, t) = -im * dH[pa] * ψt[t2Num(t)] - im * H0[t2Num(t)] * ∂ψ
+    ∂ψ∂x = typeof(ψ0)[]
+    for pa in 1:para_num
+        prob_∂ψ = ODEProblem(∂ψt_func, ψ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
+        push!(∂ψ∂x, solve(prob_∂ψ).u[end])
+    end
+    ρt = ψt[end]*ψt[end]'
+    ∂ρt_∂x = [(∂ψ∂x[i] * ψt[end]' + ψt[end] * ∂ψ∂x[i]') for i = 1:para_num]
+    ρt, ∂ρt_∂x 
 end
 
 #### evolution of density matrix under time-independent Hamiltonian without noise and controls ####
@@ -675,6 +719,24 @@ function _evolve(data::Lindblad_noiseless_free{Expm})
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
+function _evolve(data::Lindblad_noiseless_free{Ode})
+    (; H0, dH, ρ0, tspan) = data
+    para_num = length(dH)
+    dt = tspan[2] - tspan[1] 
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+
+    ρt_func(ρ, p, t) = -im*H0*ρ+im*ρ*H0
+    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), saveat=dt)
+    ρt = solve(prob_ρ).u
+
+    ∂ρt_func(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0 * ∂ρ - ∂ρ * H0)
+    ∂ρt_∂x = typeof(ρ0)[]
+    for pa in 1:para_num
+        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
+        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+    end
+    ρt[end], ∂ρt_∂x
+end
 
 #### evolution of density matrix under time-dependent Hamiltonian without noise and controls ####
 function _evolve(data::Lindblad_noiseless_timedepend{Expm})
@@ -692,6 +754,25 @@ function _evolve(data::Lindblad_noiseless_timedepend{Expm})
     end
     # ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
+end
+
+function _evolve(data::Lindblad_noiseless_timedepend{Ode})
+    (; H0, dH, ρ0, tspan) = data
+    para_num = length(dH)
+    dt = tspan[2] - tspan[1] 
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+
+    ρt_func(ρ, p, t) = -im*H0[t2Num(t)]*ρ+im*ρ*H0[t2Num(t)]
+    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), saveat=dt)
+    ρt = solve(prob_ρ).u
+
+    ∂ρt_func(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)])
+    ∂ρt_∂x = typeof(ρ0)[]
+    for pa in 1:para_num
+        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
+        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+    end
+    ρt[end], ∂ρt_∂x
 end
 
 #### evolution of pure states under time-independent Hamiltonian  
@@ -713,6 +794,29 @@ function _evolve(data::Lindblad_noisy_free_pure{Expm})
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
+function _evolve(data::Lindblad_noisy_free_pure{Ode})
+    (; H0, dH, ψ0, tspan, decay_opt, γ) = data
+    Γ = decay_opt
+    para_num = length(dH)
+    ρ0 = (ψ0 * ψ0')
+    dt = tspan[2] - tspan[1] 
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+    ρt_func(ρ, p, t) = -im * (H0 * ρ - ρ * H0) + 
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), saveat=dt)
+    ρt = solve(prob_ρ).u
+
+    ∂ρt_func(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0 * ∂ρ - ∂ρ * H0) + 
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+
+    ∂ρt_∂x = typeof(ρ0)[]
+    for pa in 1:para_num
+        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
+        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+    end
+    ρt[end], ∂ρt_∂x
+end
+
 #### evolution of density matrix under time-independent Hamiltonian  
 #### with noise but without controls
 function _evolve(data::Lindblad_noisy_free{Expm})
@@ -729,6 +833,28 @@ function _evolve(data::Lindblad_noisy_free{Expm})
         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
     end
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
+end
+
+function _evolve(data::Lindblad_noisy_free{Ode})
+    (; H0, dH, ρ0, tspan, decay_opt, γ) = data
+    Γ = decay_opt
+    para_num = length(dH)
+    dt = tspan[2] - tspan[1] 
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+    ρt_func(ρ, p, t) = -im * (H0 * ρ - ρ * H0) + 
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), saveat=dt)
+    ρt = solve(prob_ρ).u
+
+    ∂ρt_func(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0 * ∂ρ - ∂ρ * H0) + 
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+
+    ∂ρt_∂x = typeof(ρ0)[]
+    for pa in 1:para_num
+        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
+        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+    end
+    ρt[end], ∂ρt_∂x
 end
 
 #### evolution of pure states under time-dependent Hamiltonian  
@@ -750,6 +876,29 @@ function _evolve(data::Lindblad_noisy_timedepend_pure{Expm})
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
+function _evolve(data::Lindblad_noisy_timedepend_pure{Ode})
+    (; H0, dH, ψ0, tspan, decay_opt, γ) = data
+    Γ = decay_opt
+    para_num = length(dH)
+    ρ0 = (ψ0 * ψ0')
+    dt = tspan[2] - tspan[1] 
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+    ρt_func(ρ, p, t) = -im * (H0[t2Num(t)] * ρ - ρ * H0[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), saveat=dt)
+    ρt = solve(prob_ρ).u
+
+    ∂ρt_func(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+
+    ∂ρt_∂x = typeof(ρ0)[]
+    for pa in 1:para_num
+        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
+        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+    end
+    ρt[end], ∂ρt_∂x
+end
+
 #### evolution of density matrix under time-dependent Hamiltonian  
 #### with noise but without controls
 function _evolve(data::Lindblad_noisy_timedepend{Expm})
@@ -767,6 +916,28 @@ function _evolve(data::Lindblad_noisy_timedepend{Expm})
     end
     # ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
+end
+
+function _evolve(data::Lindblad_noisy_timedepend{Ode})
+    (; H0, dH, ρ0, tspan, decay_opt, γ) = data
+    Γ = decay_opt
+    para_num = length(dH)
+    dt = tspan[2] - tspan[1] 
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+    ρt_func(ρ, p, t) = -im * (H0[t2Num(t)] * ρ - ρ * H0[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), saveat=dt)
+    ρt = solve(prob_ρ).u
+
+    ∂ρt_func(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+
+    ∂ρt_∂x = typeof(ρ0)[]
+    for pa in 1:para_num
+        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
+        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+    end
+    ρt[end], ∂ρt_∂x
 end
 
 #### evolution of density matrix under time-independent Hamiltonian 
@@ -792,6 +963,29 @@ function _evolve(data::Lindblad_noiseless_controlled{Expm})
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
+function _evolve(data::Lindblad_noiseless_controlled{Ode})
+    (; H0, dH, ρ0, tspan, Hc, ctrl) = data
+    para_num = length(dH)
+    dt = tspan[2] - tspan[1] 
+    ctrl_num = length(Hc)
+    ctrl_interval = ((length(tspan)-1) / length(ctrl[1])) |> Int
+    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |>Array for i = 1:ctrl_num]
+    push!.(ctrl, [0.0 for i in 1:ctrl_num])
+    H(ctrl) = Htot(H0, Hc, ctrl)
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+    ρt_func(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) 
+    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
+    ρt = solve(prob_ρ).u
+
+    ∂ρt_func(∂ρ, (pa,ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)])
+    ∂ρt_∂x = typeof(ρ0)[]
+    for pa in 1:para_num
+        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), (pa,ctrl,), saveat=dt)
+        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+    end
+    ρt[end], ∂ρt_∂x
+end
+
 #### evolution of density matrix under time-independent Hamiltonian with noise and controls #### 
 function _evolve(data::Lindblad_noisy_controlled{Expm})
     (; H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl) = data
@@ -814,6 +1008,34 @@ function _evolve(data::Lindblad_noisy_controlled{Expm})
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
+function _evolve(data::Lindblad_noisy_controlled{Ode})
+    (; H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl) = data
+    Γ = decay_opt
+    para_num = length(dH)
+    dt = tspan[2] - tspan[1] 
+    ctrl_num = length(Hc)
+    ctrl_interval = ((length(tspan)-1) / length(ctrl[1])) |> Int
+    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |>Array for i = 1:ctrl_num]
+    push!.(ctrl, [0.0 for i in 1:ctrl_num])
+    H(ctrl) = Htot(H0, Hc, ctrl)
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+    
+    ρt_func(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
+    ρt = solve(prob_ρ).u
+
+    ∂ρt_func(∂ρ, (pa, ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+
+    ∂ρt_∂x = typeof(ρ0)[]
+    for pa in 1:para_num
+        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), (pa,ctrl,), saveat=dt)
+        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+    end
+    ρt[end], ∂ρt_∂x
+end
+
 #### evolution of state under time-independent Hamiltonian with noise and controls #### 
 function _evolve(data::Lindblad_noisy_controlled_pure{Expm})
     (; H0, dH, ψ0, tspan, decay_opt, γ, ctrl, Hc) = data
@@ -834,6 +1056,34 @@ function _evolve(data::Lindblad_noisy_controlled_pure{Expm})
     end
     # ρt = exp(vec(H[end])' * zero(ρt)) * ρt
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
+end
+
+function _evolve(data::Lindblad_noisy_controlled_pure{Ode})
+    (; H0, dH, ψ0, tspan, decay_opt, γ, ctrl, Hc) = data
+    ρ0 = (ψ0 * ψ0')
+    Γ = decay_opt
+    para_num = length(dH)
+    dt = tspan[2] - tspan[1] 
+    ctrl_num = length(Hc)
+    ctrl_interval = ((length(tspan)-1) / length(ctrl[1])) |> Int
+    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |>Array for i = 1:ctrl_num]
+    push!.(ctrl, [0.0 for i in 1:ctrl_num])
+    H(ctrl) = Htot(H0, Hc, ctrl)
+    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+    ρt_func(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
+    ρt = solve(prob_ρ).u
+
+    ∂ρt_func(∂ρ, (pa,ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+
+    ∂ρt_∂x = typeof(ρ0)[]
+    for pa in 1:para_num
+        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), (pa,ctrl,), saveat=dt)
+        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+    end
+    ρt[end], ∂ρt_∂x
 end
 
 function propagate(
