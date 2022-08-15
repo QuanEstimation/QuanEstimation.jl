@@ -1,11 +1,11 @@
 # wrapper for Lindblad dynamics with ControlOpt
 """
 
-	Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, DynMethod=:Expm, eps=GLOBAL_EPS)
+	Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the control optimization.
 """
-function Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, DynMethod=:Expm, eps=GLOBAL_EPS)
+function Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
 	(;ctrl) = opt
 	dim = size(ρ₀, 1)
 	if ismissing(dH)
@@ -50,19 +50,19 @@ function Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, DynM
 	dH = complex.(dH)
 	ρ₀ = complex(ρ₀)
 	
-	Lindblad(H0, dH, Hc, ctrl, ρ₀, tspan, decay_opt, γ, DynMethod=DynMethod)
+	Lindblad(H0, dH, Hc, ctrl, ρ₀, tspan, decay_opt, γ, dyn_method=dyn_method)
 end
 
-Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc, decay; DynMethod=:Expm, eps=GLOBAL_EPS) = 
-	Lindblad(opt, tspan, ρ₀, H0, dH, Hc; decay=decay, DynMethod=DynMethod, eps=eps)
+Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc, decay; dyn_method=:Expm, eps=GLOBAL_EPS) = 
+	Lindblad(opt, tspan, ρ₀, H0, dH, Hc; decay=decay, dyn_method=dyn_method, eps=eps)
 	
 """
 
-	Lindblad(opt::StateOpt, tspan, H0, dH; Hc=missing, ctrl=missing, decay=missing, DynMethod=:Expm, eps=GLOBAL_EPS)
+	Lindblad(opt::StateOpt, tspan, H0, dH; Hc=missing, ctrl=missing, decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the state optimization.
 """
-function Lindblad(opt::StateOpt, tspan, H0, dH; Hc=missing, ctrl=missing, decay=missing, DynMethod=:Expm, eps=GLOBAL_EPS)
+function Lindblad(opt::StateOpt, tspan, H0, dH; Hc=missing, ctrl=missing, decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
 	(;psi) = opt
 	dim = H0 isa AbstractVector ? size(H0[1], 1) : size(H0, 1)
 	if ismissing(psi) 
@@ -134,14 +134,14 @@ function Lindblad(opt::StateOpt, tspan, H0, dH; Hc=missing, ctrl=missing, decay=
 	psi = complex(psi)
 
 	if all(iszero.(γ)) #  if any non-zero decay rate
-		return Lindblad(H0, dH, psi, tspan, DynMethod=DynMethod)
+		return Lindblad(H0, dH, psi, tspan, dyn_method=dyn_method)
 	else
-		return Lindblad(H0, dH, psi, tspan, decay_opt, γ, DynMethod=DynMethod)
+		return Lindblad(H0, dH, psi, tspan, decay_opt, γ, dyn_method=dyn_method)
 	end
 end
 
-Lindblad(opt::StateOpt, tspan, H0, dH, Hc, ctrl, decay; DynMethod=:Expm, eps=GLOBAL_EPS) =
-	Lindblad(opt, tspan, H0, dH; Hc=Hc, ctrl=ctrl, decay=decay, DynMethod=DynMethod, eps=eps)
+Lindblad(opt::StateOpt, tspan, H0, dH, Hc, ctrl, decay; dyn_method=:Expm, eps=GLOBAL_EPS) =
+	Lindblad(opt, tspan, H0, dH; Hc=Hc, ctrl=ctrl, decay=decay, dyn_method=dyn_method, eps=eps)
 
 function _ini_measurement!(opt::Mopt_Projection, dim::Int; eps=GLOBAL_EPS)
 	(; M) = opt
@@ -202,11 +202,11 @@ end
 
 """
 
-	Lindblad(opt::AbstractMopt, tspan, ρ₀, H0, dH; Hc=missing, ctrl=missing, decay=missing, DynMethod=:Expm, eps=GLOBAL_EPS)
+	Lindblad(opt::AbstractMopt, tspan, ρ₀, H0, dH; Hc=missing, ctrl=missing, decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the measurement optimization.
 """
-function Lindblad(opt::AbstractMopt, tspan, ρ₀, H0, dH; Hc=missing, ctrl=missing, decay=missing, DynMethod=:Expm, eps=GLOBAL_EPS)
+function Lindblad(opt::AbstractMopt, tspan, ρ₀, H0, dH; Hc=missing, ctrl=missing, decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
 	dim = size(ρ₀, 1)
 	_ini_measurement!(opt, dim; eps=eps)
 	
@@ -271,14 +271,14 @@ function Lindblad(opt::AbstractMopt, tspan, ρ₀, H0, dH; Hc=missing, ctrl=miss
 	ρ₀ = complex(ρ₀)
 
 	if all(iszero.(γ)) #  if any non-zero decay rate
-		return Lindblad(H0, dH, ρ₀, tspan, DynMethod=DynMethod)
+		return Lindblad(H0, dH, ρ₀, tspan, dyn_method=dyn_method)
 	else
-		return Lindblad(H0, dH, ρ₀, tspan, decay_opt, γ, DynMethod=DynMethod)
+		return Lindblad(H0, dH, ρ₀, tspan, decay_opt, γ, dyn_method=dyn_method)
 	end
 end
 
-Lindblad(opt::AbstractMopt, tspan, ρ₀, H0, dH, Hc, ctrl, decay; DynMethod=:Expm, eps=GLOBAL_EPS) =
-	Lindblad(opt, tspan, ρ₀, H0, dH; Hc=Hc, ctrl=ctrl, decay=decay, DynMethod=DynMethod, eps=eps)
+Lindblad(opt::AbstractMopt, tspan, ρ₀, H0, dH, Hc, ctrl, decay; dyn_method=:Expm, eps=GLOBAL_EPS) =
+	Lindblad(opt, tspan, ρ₀, H0, dH; Hc=Hc, ctrl=ctrl, decay=decay, dyn_method=dyn_method, eps=eps)
 
 function _ini_measurement!(opt::CompOpt, dim::Int; eps=GLOBAL_EPS)
 	(; M) = opt
@@ -297,11 +297,11 @@ end
 
 """
 
-	Lindblad(opt::StateControlOpt, tspan, H0, dH, Hc; decay=missing, DynMethod=:Expm, eps=GLOBAL_EPS)
+	Lindblad(opt::StateControlOpt, tspan, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the comprehensive optimization on state and control.
 """
-function Lindblad(opt::StateControlOpt, tspan, H0, dH, Hc; decay=missing, DynMethod=:Expm, eps=GLOBAL_EPS)
+function Lindblad(opt::StateControlOpt, tspan, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
 	(;psi, ctrl) = opt
 	dim = H0 isa AbstractVector ? size(H0[1], 1) : size(H0, 1)
 	if ismissing(psi) 
@@ -352,19 +352,19 @@ function Lindblad(opt::StateControlOpt, tspan, H0, dH, Hc; decay=missing, DynMet
 	H0 = complex(H0)
 	dH = complex.(dH)
 	psi = complex(psi)
-	Lindblad(H0, dH, Hc, ctrl, psi, tspan, decay_opt, γ, DynMethod=DynMethod)
+	Lindblad(H0, dH, Hc, ctrl, psi, tspan, decay_opt, γ, dyn_method=dyn_method)
 end
 
-Lindblad(opt::StateControlOpt, tspan, H0, dH, Hc, decay; DynMethod=:Expm, eps=GLOBAL_EPS) = 
-	Lindblad(opt, tspan, H0, dH, Hc; decay=decay, DynMethod=DynMethod, eps=eps)
+Lindblad(opt::StateControlOpt, tspan, H0, dH, Hc, decay; dyn_method=:Expm, eps=GLOBAL_EPS) = 
+	Lindblad(opt, tspan, H0, dH, Hc; decay=decay, dyn_method=dyn_method, eps=eps)
 	
 """
 
-	Lindblad(opt::ControlMeasurementOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, DynMethod=:Expm, eps=GLOBAL_EPS)
+	Lindblad(opt::ControlMeasurementOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the comprehensive optimization on control and measurement.
 """
-function Lindblad(opt::ControlMeasurementOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, DynMethod=:Expm, eps=GLOBAL_EPS)
+function Lindblad(opt::ControlMeasurementOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
 	(;ctrl) = opt
 	dim = size(ρ₀, 1)
 	_ini_measurement!(opt, dim; eps=eps)
@@ -410,19 +410,19 @@ function Lindblad(opt::ControlMeasurementOpt, tspan, ρ₀, H0, dH, Hc; decay=mi
 	dH = complex.(dH)
 	ρ₀ = complex(ρ₀)
 	
-	Lindblad(H0, dH, Hc, ctrl, ρ₀, tspan, decay_opt, γ, DynMethod=DynMethod)
+	Lindblad(H0, dH, Hc, ctrl, ρ₀, tspan, decay_opt, γ, dyn_method=dyn_method)
 end
 
-Lindblad(opt::ControlMeasurementOpt, tspan, ρ₀, H0, dH, Hc, decay; DynMethod=:Expm, eps=GLOBAL_EPS) = 
-	Lindblad(opt, tspan, ρ₀, H0, dH, Hc; decay=decay, DynMethod=DynMethod, eps=eps)
+Lindblad(opt::ControlMeasurementOpt, tspan, ρ₀, H0, dH, Hc, decay; dyn_method=:Expm, eps=GLOBAL_EPS) = 
+	Lindblad(opt, tspan, ρ₀, H0, dH, Hc; decay=decay, dyn_method=dyn_method, eps=eps)
 	
 """
 
-	Lindblad(opt::StateMeasurementOpt, tspan, H0, dH; Hc=missing, ctrl=missing, decay=missing, DynMethod=:Expm)
+	Lindblad(opt::StateMeasurementOpt, tspan, H0, dH; Hc=missing, ctrl=missing, decay=missing, dyn_method=:Expm)
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the comprehensive optimization on state and measurement.
 """
-function Lindblad(opt::StateMeasurementOpt, tspan, H0, dH; Hc=missing, ctrl=missing, decay=missing, DynMethod=:Expm)
+function Lindblad(opt::StateMeasurementOpt, tspan, H0, dH; Hc=missing, ctrl=missing, decay=missing, dyn_method=:Expm)
 	(;psi) = opt
 	dim = H0 isa AbstractVector ? size(H0[1], 1) : size(H0, 1)
 	_ini_measurement!(opt, dim; eps=eps)
@@ -495,22 +495,22 @@ function Lindblad(opt::StateMeasurementOpt, tspan, H0, dH; Hc=missing, ctrl=miss
 	psi = complex(psi)
 
 	if all(iszero.(γ)) #  if any non-zero decay rate
-		return Lindblad(H0, dH, psi, tspan, DynMethod=DynMethod)
+		return Lindblad(H0, dH, psi, tspan, dyn_method=dyn_method)
 	else
-		return Lindblad(H0, dH, psi, tspan, decay_opt, γ, DynMethod=DynMethod)
+		return Lindblad(H0, dH, psi, tspan, decay_opt, γ, dyn_method=dyn_method)
 	end
 end
 
-Lindblad(opt::StateMeasurementOpt, tspan, H0, dH, Hc, ctrl, decay; DynMethod=:Expm, eps=GLOBAL_EPS) = 
-	Lindblad(opt, tspan, H0, dH; Hc=Hc, ctrl=ctrl, decay=decay, DynMethod=DynMethod, eps=eps)
+Lindblad(opt::StateMeasurementOpt, tspan, H0, dH, Hc, ctrl, decay; dyn_method=:Expm, eps=GLOBAL_EPS) = 
+	Lindblad(opt, tspan, H0, dH; Hc=Hc, ctrl=ctrl, decay=decay, dyn_method=dyn_method, eps=eps)
 
 """
 
-	Lindblad(opt::StateControlMeasurementOpt, tspan, H0, dH, Hc; decay=missing, DynMethod=:xpm, eps=GLOBAL_EPS)
+	Lindblad(opt::StateControlMeasurementOpt, tspan, H0, dH, Hc; decay=missing, dyn_method=:xpm, eps=GLOBAL_EPS)
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the comprehensive optimization on state, control and measurement.
 """
-function Lindblad(opt::StateControlMeasurementOpt, tspan, H0, dH, Hc; decay=missing, DynMethod=:Expm, eps=GLOBAL_EPS)
+function Lindblad(opt::StateControlMeasurementOpt, tspan, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
 	(;ctrl, psi) = opt
 	dim = H0 isa AbstractVector ? size(H0[1], 1) : size(H0, 1)
 	_ini_measurement!(opt, dim; eps=eps)
@@ -565,8 +565,8 @@ function Lindblad(opt::StateControlMeasurementOpt, tspan, H0, dH, Hc; decay=miss
 	dH = complex.(dH)
 	psi = complex(psi)
 	
-	Lindblad(H0, dH, Hc, ctrl, psi, tspan, decay_opt, γ, DynMethod=DynMethod)
+	Lindblad(H0, dH, Hc, ctrl, psi, tspan, decay_opt, γ, dyn_method=dyn_method)
 end
 
-Lindblad(opt::StateControlMeasurementOpt, tspan, H0, dH, Hc, decay; DynMethod=:Expm, eps=GLOBAL_EPS) = 
-	Lindblad(opt, tspan, H0, dH, Hc; decay=decay, DynMethod=DynMethod, eps=eps)
+Lindblad(opt::StateControlMeasurementOpt, tspan, H0, dH, Hc, decay; dyn_method=:Expm, eps=GLOBAL_EPS) = 
+	Lindblad(opt, tspan, H0, dH, Hc; decay=decay, dyn_method=dyn_method, eps=eps)

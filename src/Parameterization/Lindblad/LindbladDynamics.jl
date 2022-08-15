@@ -451,16 +451,16 @@ function ode(
     H(ctrl) = Htot(H0, Hc, ctrl)
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
+    ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
-    ρt = solve(prob_ρ).u
+    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
-    ∂ρt_func(∂ρ, ctrl, t) = -im * (dH * ρt[t2Num(t)] - ρt[t2Num(t)] * dH) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
+    ∂ρt_func!(∂ρ, ctrl, t) = -im * (dH * ρt[t2Num(t)] - ρt[t2Num(t)] * dH) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
-    prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), ctrl, saveat=dt)
-    ∂ρt = solve(prob_∂ρ).u
+    prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), ctrl)
+    ∂ρt = solve(prob_∂ρ, Tsit5(), saveat=dt).u
     ρt, ∂ρt
 end
 
@@ -532,18 +532,18 @@ function ode(
     H(ctrl) = Htot(H0, Hc, ctrl)
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
+    ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
-    ρt = solve(prob_ρ).u
+    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
-    ∂ρt_func(∂ρ, (pa, ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
+    ∂ρt_func!(∂ρ, (pa, ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_tp = []
     for pa in 1:para_num
-        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), (pa, ctrl,), saveat=dt)
-        push!(∂ρt_tp, solve(prob_∂ρ).u)
+        prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), (pa, ctrl,))
+        push!(∂ρt_tp, solve(prob_∂ρ, Tsit5(), saveat=dt).u)
     end
     ∂ρt = [[∂ρt_tp[i][j] for i in 1:para_num] for j in 1:length(tspan)]
     ρt, ∂ρt
@@ -573,16 +573,16 @@ function ode_py(
     H(ctrl) = Htot(H0, Hc, ctrl)
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
+    ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
-    ρt = solve(prob_ρ).u
+    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
-    ∂ρt_func(∂ρ, ctrl, t) = -im * (dH * ρt[t2Num(t)] - ρt[t2Num(t)] * dH) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
+    ∂ρt_func!(∂ρ, ctrl, t) = -im * (dH * ρt[t2Num(t)] - ρt[t2Num(t)] * dH) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
-    prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), ctrl, saveat=dt)
-    ∂ρt = solve(prob_∂ρ).u
+    prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), ctrl)
+    ∂ρt = solve(prob_∂ρ, Tsit5(), saveat=dt).u
     ρt, ∂ρt
 end
 
@@ -604,18 +604,18 @@ function ode_py(
     H(ctrl) = Htot(H0, Hc, ctrl)
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
+    ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
-    ρt = solve(prob_ρ).u
+    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
-    ∂ρt_func(∂ρ, (pa, ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
+    ∂ρt_func!(∂ρ, (pa, ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_tp = []
     for pa in 1:para_num
-        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), (pa, ctrl,), saveat=dt)
-        push!(∂ρt_tp, solve(prob_∂ρ).u)
+        prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), (pa, ctrl,))
+        push!(∂ρt_tp, solve(prob_∂ρ, Tsit5(), saveat=dt).u)
     end
     ∂ρt = [[∂ρt_tp[i][j] for i in 1:para_num] for j in 1:length(tspan)]
     ρt, ∂ρt
@@ -646,16 +646,16 @@ function _evolve(data::Lindblad_noiseless_free_pure{Ode})
     para_num = length(dH)
     dt = tspan[2] - tspan[1] 
 
-    ψt_func(ψ, p, t) = -im*H0*ψ
-    prob_ψ = ODEProblem(ψt_func, ψ0, (tspan[1], tspan[end]), saveat=dt)
-    ψt = solve(prob_ψ).u
+    ψt_func!(ψ, p, t) = -im*H0*ψ
+    prob_ψ = ODEProblem(ψt_func!, ψ0, (tspan[1], tspan[end]))
+    ψt = solve(prob_ψ, Tsit5(), saveat=dt).u
 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ∂ψt_func(∂ψ, pa, t) = -im * dH[pa] * ψt[t2Num(t)] - im * H0 * ∂ψ
+    ∂ψt_func!(∂ψ, pa, t) = -im * dH[pa] * ψt[t2Num(t)] - im * H0 * ∂ψ
     ∂ψ∂x = typeof(ψ0)[]
     for pa in 1:para_num
-        prob_∂ψ = ODEProblem(∂ψt_func, ψ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
-        push!(∂ψ∂x, solve(prob_∂ψ).u[end])
+        prob_∂ψ = ODEProblem(∂ψt_func!, ψ0|>zero, (tspan[1], tspan[end]), pa)
+        push!(∂ψ∂x, solve(prob_∂ψ, Tsit5(), saveat=dt).u[end])
     end
     ρt = ψt[end]*ψt[end]'
     ∂ρt_∂x = [(∂ψ∂x[i] * ψt[end]' + ψt[end] * ∂ψ∂x[i]') for i = 1:para_num]
@@ -686,15 +686,15 @@ function _evolve(data::Lindblad_noiseless_timedepend_pure{Ode})
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
 
-    ψt_func(ψ, p, t) = -im*H0[t2Num(t)]*ψ
-    prob_ψ = ODEProblem(ψt_func, ψ0, (tspan[1], tspan[end]), saveat=dt)
-    ψt = solve(prob_ψ).u
+    ψt_func!(ψ, p, t) = -im*H0[t2Num(t)]*ψ
+    prob_ψ = ODEProblem(ψt_func!, ψ0, (tspan[1], tspan[end]))
+    ψt = solve(prob_ψ, Tsit5(), saveat=dt).u
 
-    ∂ψt_func(∂ψ, pa, t) = -im * dH[pa] * ψt[t2Num(t)] - im * H0[t2Num(t)] * ∂ψ
+    ∂ψt_func!(∂ψ, pa, t) = -im * dH[pa] * ψt[t2Num(t)] - im * H0[t2Num(t)] * ∂ψ
     ∂ψ∂x = typeof(ψ0)[]
     for pa in 1:para_num
-        prob_∂ψ = ODEProblem(∂ψt_func, ψ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
-        push!(∂ψ∂x, solve(prob_∂ψ).u[end])
+        prob_∂ψ = ODEProblem(∂ψt_func!, ψ0|>zero, (tspan[1], tspan[end]), pa)
+        push!(∂ψ∂x, solve(prob_∂ψ, Tsit5(), saveat=dt).u[end])
     end
     ρt = ψt[end]*ψt[end]'
     ∂ρt_∂x = [(∂ψ∂x[i] * ψt[end]' + ψt[end] * ∂ψ∂x[i]') for i = 1:para_num]
@@ -725,15 +725,15 @@ function _evolve(data::Lindblad_noiseless_free{Ode})
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
 
-    ρt_func(ρ, p, t) = -im*H0*ρ+im*ρ*H0
-    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), saveat=dt)
-    ρt = solve(prob_ρ).u
+    ρt_func!(ρ, p, t) = -im*H0*ρ+im*ρ*H0
+    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
-    ∂ρt_func(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0 * ∂ρ - ∂ρ * H0)
+    ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0 * ∂ρ - ∂ρ * H0)
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:para_num
-        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
-        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+        prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
+        push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
     ρt[end], ∂ρt_∂x
 end
@@ -762,15 +762,15 @@ function _evolve(data::Lindblad_noiseless_timedepend{Ode})
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
 
-    ρt_func(ρ, p, t) = -im*H0[t2Num(t)]*ρ+im*ρ*H0[t2Num(t)]
-    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), saveat=dt)
-    ρt = solve(prob_ρ).u
+    ρt_func!(ρ, p, t) = -im*H0[t2Num(t)]*ρ+im*ρ*H0[t2Num(t)]
+    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
-    ∂ρt_func(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)])
+    ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)])
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:para_num
-        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
-        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+        prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
+        push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
     ρt[end], ∂ρt_∂x
 end
@@ -801,18 +801,18 @@ function _evolve(data::Lindblad_noisy_free_pure{Ode})
     ρ0 = (ψ0 * ψ0')
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func(ρ, p, t) = -im * (H0 * ρ - ρ * H0) + 
+    ρt_func!(ρ, p, t) = -im * (H0 * ρ - ρ * H0) + 
                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), saveat=dt)
-    ρt = solve(prob_ρ).u
+    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
-    ∂ρt_func(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0 * ∂ρ - ∂ρ * H0) + 
+    ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0 * ∂ρ - ∂ρ * H0) + 
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:para_num
-        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
-        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+        prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
+        push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
     ρt[end], ∂ρt_∂x
 end
@@ -841,18 +841,18 @@ function _evolve(data::Lindblad_noisy_free{Ode})
     para_num = length(dH)
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func(ρ, p, t) = -im * (H0 * ρ - ρ * H0) + 
+    ρt_func!(ρ, p, t) = -im * (H0 * ρ - ρ * H0) + 
                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), saveat=dt)
-    ρt = solve(prob_ρ).u
+    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
-    ∂ρt_func(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0 * ∂ρ - ∂ρ * H0) + 
+    ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0 * ∂ρ - ∂ρ * H0) + 
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:para_num
-        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
-        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+        prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
+        push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
     ρt[end], ∂ρt_∂x
 end
@@ -883,18 +883,18 @@ function _evolve(data::Lindblad_noisy_timedepend_pure{Ode})
     ρ0 = (ψ0 * ψ0')
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func(ρ, p, t) = -im * (H0[t2Num(t)] * ρ - ρ * H0[t2Num(t)]) + 
+    ρt_func!(ρ, p, t) = -im * (H0[t2Num(t)] * ρ - ρ * H0[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), saveat=dt)
-    ρt = solve(prob_ρ).u
+    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
-    ∂ρt_func(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)]) + 
+    ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:para_num
-        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
-        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+        prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
+        push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
     ρt[end], ∂ρt_∂x
 end
@@ -924,18 +924,18 @@ function _evolve(data::Lindblad_noisy_timedepend{Ode})
     para_num = length(dH)
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func(ρ, p, t) = -im * (H0[t2Num(t)] * ρ - ρ * H0[t2Num(t)]) + 
+    ρt_func!(ρ, p, t) = -im * (H0[t2Num(t)] * ρ - ρ * H0[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), saveat=dt)
-    ρt = solve(prob_ρ).u
+    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
-    ∂ρt_func(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)]) + 
+    ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:para_num
-        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), pa, saveat=dt)
-        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+        prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
+        push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
     ρt[end], ∂ρt_∂x
 end
@@ -973,15 +973,15 @@ function _evolve(data::Lindblad_noiseless_controlled{Ode})
     push!.(ctrl, [0.0 for i in 1:ctrl_num])
     H(ctrl) = Htot(H0, Hc, ctrl)
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) 
-    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
-    ρt = solve(prob_ρ).u
+    ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) 
+    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
-    ∂ρt_func(∂ρ, (pa,ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)])
+    ∂ρt_func!(∂ρ, (pa,ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)])
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:para_num
-        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), (pa,ctrl,), saveat=dt)
-        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+        prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), (pa,ctrl,))
+        push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
     ρt[end], ∂ρt_∂x
 end
@@ -1020,18 +1020,18 @@ function _evolve(data::Lindblad_noisy_controlled{Ode})
     H(ctrl) = Htot(H0, Hc, ctrl)
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
     
-    ρt_func(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
+    ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
-    ρt = solve(prob_ρ).u
+    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
-    ∂ρt_func(∂ρ, (pa, ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
+    ∂ρt_func!(∂ρ, (pa, ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:para_num
-        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), (pa,ctrl,), saveat=dt)
-        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+        prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), (pa,ctrl,))
+        push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
     ρt[end], ∂ρt_∂x
 end
@@ -1070,18 +1070,18 @@ function _evolve(data::Lindblad_noisy_controlled_pure{Ode})
     push!.(ctrl, [0.0 for i in 1:ctrl_num])
     H(ctrl) = Htot(H0, Hc, ctrl)
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
+    ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-    prob_ρ = ODEProblem(ρt_func, ρ0, (tspan[1], tspan[end]), ctrl, saveat=dt)
-    ρt = solve(prob_ρ).u
+    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
-    ∂ρt_func(∂ρ, (pa,ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
+    ∂ρt_func!(∂ρ, (pa,ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:para_num
-        prob_∂ρ = ODEProblem(∂ρt_func, ρ0|>zero, (tspan[1], tspan[end]), (pa,ctrl,), saveat=dt)
-        push!(∂ρt_∂x, solve(prob_∂ρ).u[end])
+        prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), (pa,ctrl,))
+        push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
     ρt[end], ∂ρt_∂x
 end
