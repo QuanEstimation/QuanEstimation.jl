@@ -22,7 +22,7 @@ Hamiltonian work at the optimal point ``\textbf{x}_{\mathrm{opt}}``.
 - `M`: A set of positive operator-valued measure (POVM). The default measurement is a set of rank-one symmetric informationally complete POVM (SIC-POVM).
 - `W`: Whether or not to save all the posterior distributions. 
 """
-function Adapt(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; DynMethod=:Expm, method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, 
+function Adapt(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; dyn_method=:Expm, method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, 
                   Hc=missing, ctrl=missing, decay=missing, M=missing, W=missing)
     dim = size(rho0)[1]
     rho0 = complex.(rho0)
@@ -68,8 +68,8 @@ function Adapt(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; DynMeth
         F = zeros(p_num)
         rho_all = []
         for hi in 1:p_num
-            # dynamics = Lindblad_noisy_controlled{DynMethod}(H[hi], dH[hi], rho0, tspan, decay_opt, gamma, Hc, ctrl)
-            dynamics = Lindblad(H[hi], dH[hi], Hc, ctrl, rho0, tspan, decay_opt, gamma, DynMethod=DynMethod)
+            # dynamics = Lindblad_noisy_controlled{dyn_method}(H[hi], dH[hi], rho0, tspan, decay_opt, gamma, Hc, ctrl)
+            dynamics = Lindblad(H[hi], dH[hi], Hc, ctrl, rho0, tspan, decay_opt, gamma, dyn_method=dyn_method)
             rho_tp, drho_tp = evolve(dynamics)
             F[hi] = CFIM(rho_tp, drho_tp[1], M; eps=eps)
             append!(rho_all, [rho_tp])
@@ -114,8 +114,8 @@ function Adapt(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; DynMeth
         #### multiparameter senario ####
         p_num = length(p|>vec)
         x_list = [(Iterators.product(x...))...]
-        # dynamics_res = [evolve(Lindblad_noisy_controlled{DynMethod}(H_tp, dH_tp, rho0, tspan, decay_opt, gamma, Hc, ctrl)) for (H_tp, dH_tp) in zip(H, dH)]
-        dynamics_res = [evolve(Lindblad(H_tp, dH_tp, Hc, ctrl, rho0, tspan, decay_opt, gamma, DynMethod=DynMethod)) for (H_tp, dH_tp) in zip(H, dH)]
+        # dynamics_res = [evolve(Lindblad_noisy_controlled{dyn_method}(H_tp, dH_tp, rho0, tspan, decay_opt, gamma, Hc, ctrl)) for (H_tp, dH_tp) in zip(H, dH)]
+        dynamics_res = [evolve(Lindblad(H_tp, dH_tp, Hc, ctrl, rho0, tspan, decay_opt, gamma, dyn_method=dyn_method)) for (H_tp, dH_tp) in zip(H, dH)]
         F_all = zeros(p_num)
         rho_all_list = []
         for hi in 1:p_num
