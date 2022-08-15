@@ -113,8 +113,8 @@ Lindblad(
     dH::AbstractVector,
     ρ0::AbstractMatrix,
     tspan::AbstractVector;
-    dyn_method::Symbol=:Expm,
-) = Lindblad(Lindblad_noiseless_free{eval(dyn_method)}(H0, dH, ρ0, tspan), :noiseless, :free)
+    dyn_method::Union{Symbol, String}=:Expm,
+) = Lindblad(Lindblad_noiseless_free{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan), :noiseless, :free)
 
 Lindblad(
     H0::AbstractMatrix,
@@ -123,16 +123,16 @@ Lindblad(
     tspan::AbstractVector,
     decay_opt::AbstractVector,
     γ::AbstractVector;
-    dyn_method::Symbol=:Expm,
-) = Lindblad(Lindblad_noisy_free{eval(dyn_method)}(H0, dH, ρ0, tspan, decay_opt, γ), :noisy, :free)
+    dyn_method::Union{Symbol, String}=:Expm,
+) = Lindblad(Lindblad_noisy_free{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan, decay_opt, γ), :noisy, :free)
 
 Lindblad(
     H0::AbstractVector,
     dH::AbstractVector,
     ρ0::AbstractMatrix,
     tspan::AbstractVector;
-    dyn_method::Symbol=:Expm,
-) = Lindblad(Lindblad_noiseless_timedepend{eval(dyn_method)}(H0, dH, ρ0, tspan), :noiseless, :timedepend)
+    dyn_method::Union{Symbol, String}=:Expm,
+) = Lindblad(Lindblad_noiseless_timedepend{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan), :noiseless, :timedepend)
 
 Lindblad(
     H0::AbstractVector,
@@ -141,9 +141,9 @@ Lindblad(
     tspan::AbstractVector,
     decay_opt::AbstractVector,
     γ::AbstractVector;
-    dyn_method::Symbol=:Expm,
+    dyn_method::Union{Symbol, String}=:Expm,
 ) = Lindblad(
-    Lindblad_noisy_timedepend{eval(dyn_method)}(H0, dH, ρ0, tspan, decay_opt, γ),
+    Lindblad_noisy_timedepend{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan, decay_opt, γ),
     :noisy,
     :timedepend,
 )
@@ -155,9 +155,9 @@ Lindblad(
     ctrl::AbstractVector,
     ρ0::AbstractMatrix,
     tspan::AbstractVector;
-    dyn_method::Symbol=:Expm,
+    dyn_method::Union{Symbol, String}=:Expm,
 ) = Lindblad(
-    Lindblad_noiseless_controlled{eval(dyn_method)}(H0, dH, ρ0, tspan, Hc, ctrl),
+    Lindblad_noiseless_controlled{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan, Hc, ctrl),
     :noiseless,
     :controlled,
 )
@@ -170,9 +170,9 @@ Lindblad(
     tspan::AbstractVector,
     decay_opt::AbstractVector,
     γ::AbstractVector;
-    dyn_method::Symbol=:Expm,
+    dyn_method::Union{Symbol, String}=:Expm,
 ) = Lindblad(
-    Lindblad_noisy_controlled{eval(dyn_method)}(H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl),
+    Lindblad_noisy_controlled{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl),
     :noisy,
     :controlled,
 )
@@ -182,8 +182,8 @@ Lindblad(
     dH::AbstractVector,
     ψ0::AbstractVector,
     tspan::AbstractVector;
-    dyn_method::Symbol=:Expm,
-) = Lindblad(Lindblad_noiseless_free_pure{eval(dyn_method)}(H0, dH, ψ0, tspan), :noiseless, :free, :ket)
+    dyn_method::Union{Symbol, String}=:Expm,
+) = Lindblad(Lindblad_noiseless_free_pure{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan), :noiseless, :free, :ket)
 
 Lindblad(
     H0::AbstractMatrix,
@@ -192,17 +192,17 @@ Lindblad(
     tspan::AbstractVector,
     decay_opt::AbstractVector,
     γ::AbstractVector;
-    dyn_method::Symbol=:Expm,
-) = Lindblad(Lindblad_noisy_free_pure{eval(dyn_method)}(H0, dH, ψ0, tspan, decay_opt, γ), :noisy, :free, :ket)
+    dyn_method::Union{Symbol, String}=:Expm,
+) = Lindblad(Lindblad_noisy_free_pure{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan, decay_opt, γ), :noisy, :free, :ket)
 
 Lindblad(
     H0::AbstractVector,
     dH::AbstractVector,
     ψ0::AbstractVector,
     tspan::AbstractVector;
-    dyn_method::Symbol=:Expm,
+    dyn_method::Union{Symbol, String}=:Expm,
 ) = Lindblad(
-    Lindblad_noiseless_timedepend{eval(dyn_method)}(H0, dH, ψ0, tspan),
+    Lindblad_noiseless_timedepend{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan),
     :noiseless,
     :timedepend,
     :ket,
@@ -215,9 +215,9 @@ Lindblad(
     tspan::AbstractVector,
     decay_opt::AbstractVector,
     γ::AbstractVector;
-    dyn_method::Symbol=:Expm,
+    dyn_method::Union{Symbol, String}=:Expm,
 ) = Lindblad(
-    Lindblad_noisy_timedepend_pure{eval(dyn_method)}(H0, dH, ψ0, tspan, decay_opt, γ),
+    Lindblad_noisy_timedepend_pure{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan, decay_opt, γ),
     :noisy,
     :timedepend,
     :ket,
@@ -230,9 +230,9 @@ Lindblad(
     ctrl::AbstractVector,
     ψ0::AbstractVector,
     tspan::AbstractVector;
-    dyn_method::Symbol=:Expm,
+    dyn_method::Union{Symbol, String}=:Expm,
 ) = Lindblad(
-    Lindblad_noiseless_controlled{eval(dyn_method)}(H0, dH, ψ0, tspan, Hc, ctrl),
+    Lindblad_noiseless_controlled{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan, Hc, ctrl),
     :noiseless,
     :controlled,
     :ket,
@@ -247,9 +247,9 @@ Lindblad(
     tspan::AbstractVector,
     decay_opt::AbstractVector,
     γ::AbstractVector;
-    dyn_method::Symbol=:Expm,
+    dyn_method::Union{Symbol, String}=:Expm,
 ) = Lindblad(
-    Lindblad_noisy_controlled_pure{eval(dyn_method)}(H0, dH, ψ0, tspan, decay_opt, γ, Hc, ctrl),
+    Lindblad_noisy_controlled_pure{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan, decay_opt, γ, Hc, ctrl),
     :noisy,
     :controlled,
     :ket,
