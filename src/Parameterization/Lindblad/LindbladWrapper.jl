@@ -506,7 +506,7 @@ Lindblad(opt::StateMeasurementOpt, tspan, H0, dH, Hc, ctrl, decay; dyn_method=:E
 
 """
 
-	Lindblad(opt::StateControlMeasurementOpt, tspan, H0, dH, Hc; decay=missing, dyn_method=:xpm, eps=GLOBAL_EPS)
+	Lindblad(opt::StateControlMeasurementOpt, tspan, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the comprehensive optimization on state, control and measurement.
 """
