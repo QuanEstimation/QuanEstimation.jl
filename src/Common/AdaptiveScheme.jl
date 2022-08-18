@@ -1,6 +1,6 @@
 @doc raw"""
 
-    Adapt(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, Hc=missing, ctrl=missing, decay=missing, M=missing, W=missing)
+    Adapt(x::AbstractVector, p, rho0::AbstractMatrix, tspan, H, dH; dyn_method=:Expm, method="FOP", savefile=false, max_episode::Int=1000, eps::Float64=1e-8, Hc=missing, ctrl=missing, decay=missing, M=missing, W=missing)
 
 In QuanEstimation, the Hamiltonian of the adaptive system should be written as
 ``H(\textbf{x}+\textbf{u})`` with ``\textbf{x}`` the unknown parameters and ``\textbf{u}``
@@ -12,6 +12,7 @@ Hamiltonian work at the optimal point ``\textbf{x}_{\mathrm{opt}}``.
 - `tspan`: The experimental results obtained in practice.
 - `H`: Free Hamiltonian with respect to the values in x.
 - `dH`: Derivatives of the free Hamiltonian with respect to the unknown parameters to be estimated.
+- `dyn_method`: Setting the method for solving the Lindblad dynamics. Options are: "expm" and "ode".
 - `method`: Choose the method for updating the tunable parameters (u). Options are: "FOP" and "MI".
 - `savefile`: Whether or not to save all the posterior distributions. 
 - `max_episode`: The number of episodes.
@@ -564,6 +565,15 @@ struct calculate_online{P} end
 struct calculate_offline{P} end
 
 ##========== online ==========##
+@doc raw"""
+
+    online(apt::Adapt_MZI; target::Symbol=:sharpness, output::String="phi")
+
+Online adaptive phase estimation in the MZI.
+- `apt`: Adaptive MZI struct which contains x, p, and rho0.
+- `target`: Setting the target function for calculating the tunable phase. Options are: "sharpness" and "MI".
+- `output`: Choose the output variables. Options are: "phi" and "dphi".
+"""
 function online(apt::Adapt_MZI; target::Symbol=:sharpness, output::String="phi")
     (;x, p, rho0) = apt
     adaptMZI_online(x, p, rho0, Symbol(output), target)
@@ -678,6 +688,17 @@ function savefile_online(xout, y)
 end
 
 ##========== offline ==========##
+@doc raw"""
+
+    offline(apt::Adapt_MZI, alg; target::Symbol=:sharpness, eps = GLOBAL_EPS, seed=1234)
+
+Offline adaptive phase estimation in the MZI.
+- `apt`: Adaptive MZI struct which contains `x`, `p`, and `rho0`.
+- `alg`: The algorithms for searching the optimal tunable phase. Here, DE and PSO are available. 
+- `target`: Setting the target function for calculating the tunable phase. Options are: "sharpness" and "MI".
+- `eps`: Machine epsilon.
+- `seed`: Random seed.
+"""
 function offline(apt::Adapt_MZI, alg; target::Symbol=:sharpness, eps = GLOBAL_EPS, seed=1234)
     rng = MersenneTwister(seed)
     (;x,p,rho0) = apt
