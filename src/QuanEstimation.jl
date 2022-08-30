@@ -14,7 +14,7 @@ using Trapz
 using Interpolations
 using Distributions
 using QuadGK
-using DifferentialEquations
+using OrdinaryDiffEq
 
 const pkgpath = @__DIR__
 
