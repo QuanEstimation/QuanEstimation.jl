@@ -1,8 +1,10 @@
 ## TODO: Need reconstruct !!!
 using Flux: glorot_normal, glorot_uniform
 using StableRNGs
-using Flux.Losses
 using IntervalSets
+
+Base.copyto!(dest::ReinforcementLearning.NeuralNetworkApproximator, src::ReinforcementLearning.NeuralNetworkApproximator) =
+           Flux.loadparams!(dest.model, Flux.params(src))
 
 function Base.rsplit( v, l::Int)
     u = reshape(v,l,length(v)÷l)
