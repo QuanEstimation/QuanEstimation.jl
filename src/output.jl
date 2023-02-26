@@ -29,26 +29,34 @@ Output(opt::AbstractOpt; save::Bool=false) =
 save_type(::Output{savefile}) = :savefile
 save_type(::Output{no_save}) = :no_save
 
-function SaveFile(output::Output{no_save})
+function SaveFile(output::Output{no_save};suffix::AbstractString=".dat")
     open("f.csv", "w") do f
         writedlm(f, output.f_list)
     end
+    @show output.opt_buffer|>typeof ## debug
     for (res, file) in zip(output.opt_buffer, output.res_file)
-        open(file, "w") do g
-            writedlm(g, res)
+        # open(file, "w") do g
+            # writedlm(g, res)
+        # end
+        jldopen(file*suffix, "w") do f
+            f[file] = res
         end
     end
 end
 
 function SaveFile(output::Output{savefile}) end
 
-function SaveCurrent(output::Output{savefile})
+function SaveCurrent(output::Output{savefile};suffix::AbstractString=".dat")
     open("f.csv", "a") do f
         writedlm(f, output.f_list[end])
     end
     for (res, file) in zip(output.opt_buffer, output.res_file)
-        open(file, "a") do g
-            writedlm(g, res)
+        # open(file, "a") do g
+            # writedlm(g, res)
+        # end
+        fs = isfile(file*suffix) ? load(file*suffix)[file] : typeof(res)[]        
+        jldopen(file*suffix, "w") do f
+            f[file] = append!(fs, [res])
         end
     end
 end

@@ -94,7 +94,7 @@ function update!(opt::StateOpt, alg::DE, obj, dynamics, output)
     end
 
     set_f!(output, p_out[1])
-    set_buffer!(output, transpose(dynamics.data.ψ0))
+    set_buffer!(output, dynamics.data.ψ0)
     set_io!(output, p_out[1])
     show(opt, output, obj)
 
@@ -132,7 +132,7 @@ function update!(opt::StateOpt, alg::DE, obj, dynamics, output)
         end
         idx = findmax(p_fit)[2]
         set_f!(output, p_out[idx])
-        set_buffer!(output, transpose(populations[idx].data.ψ0))
+        set_buffer!(output, populations[idx].data.ψ0)
         set_io!(output, p_out[idx], ei)
         show(output, obj)
     end
