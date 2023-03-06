@@ -126,7 +126,7 @@ function update!(opt::StateOpt, alg::PSO, obj, dynamics, output)
 
     f_ini, f_comp = objective(obj, dynamics)
     set_f!(output, f_ini)
-    set_buffer!(output, transpose(dynamics.data.ψ0))
+    set_buffer!(output, dynamics.data.ψ0)
     set_io!(output, f_ini)
     show(opt, output, obj)
 
@@ -170,7 +170,7 @@ function update!(opt::StateOpt, alg::PSO, obj, dynamics, output)
             particles = repeat(dynamics, p_num)
         end
         set_f!(output, fit_out)
-        set_buffer!(output, transpose(gbest))
+        set_buffer!(output, gbest)
         set_io!(output, fit_out, ei)
         show(output, obj)
     end

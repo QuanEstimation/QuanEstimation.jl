@@ -33,7 +33,6 @@ function SaveFile(output::Output{no_save};suffix::AbstractString=".dat")
     open("f.csv", "w") do f
         writedlm(f, output.f_list)
     end
-    @show output.opt_buffer|>typeof ## debug
     for (res, file) in zip(output.opt_buffer, output.res_file)
         # open(file, "w") do g
             # writedlm(g, res)
