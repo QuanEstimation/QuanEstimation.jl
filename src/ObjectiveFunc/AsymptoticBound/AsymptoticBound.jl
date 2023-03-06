@@ -166,17 +166,31 @@ function objective(obj::QFIM_obj{multi_para,LLD}, dynamics::Lindblad)
     return f, 1.0 / f
 end
 
-function objective(obj::QFIM_obj{single_para,SLD}, dynamics::Kraus)
+function objective(obj::QFIM_obj{single_para,SLD}, dynamics::Kraus{dm})
     (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
     f = W[1] * QFIM_SLD(ρ, dρ[1]; eps = eps)
     return f, f
 end
 
-function objective(obj::QFIM_obj{multi_para,SLD}, dynamics::Kraus)
+function objective(obj::QFIM_obj{single_para,SLD}, dynamics::Kraus{ket})
+    (; W, eps) = obj
+    ρ, dρ = evolve(dynamics)
+    f = W[1] * QFIM_pure(ρ, dρ[1])
+    return f, f
+end
+
+function objective(obj::QFIM_obj{multi_para,SLD}, dynamics::Kraus{dm})
     (; W, eps) = obj
     ρ, dρ = evolve(dynamics)
     f = tr(W * pinv(QFIM_SLD(ρ, dρ; eps = eps)))
+    return f, 1.0 / f
+end
+
+function objective(obj::QFIM_obj{multi_para,SLD}, dynamics::Kraus{ket})
+    (; W, eps) = obj
+    ρ, dρ = evolve(dynamics)
+    f = tr(W * pinv(QFIM_pure(ρ, dρ)))
     return f, 1.0 / f
 end
 
