@@ -82,7 +82,7 @@ function Bayes(x, p, rho, y; M=missing, estimator="mean", savefile=false)
                 "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.")
             end
             
-            jldopen("bayes.dat", "w") do f
+            jldopen("bayes.dat", "a") do f
                 f["p"] = [p_out]
                 f["x"] = x_out
             end 
@@ -163,7 +163,7 @@ function Bayes(x, p, rho, y; M=missing, estimator="mean", savefile=false)
                 "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.")
             end
             
-            jldopen("bayes.dat", "w") do f
+            jldopen("bayes.dat", "a") do f
                 f["p"] = p_out
                 f["x"] = x_out
             end
@@ -222,7 +222,7 @@ function MLE(x, rho, y; M=missing, savefile=false)
                 append!(x_out, x[1][indx])
             end
             
-            jldopen("MLE.dat", "w") do f
+            jldopen("MLE.dat", "a") do f
                 f["L"] = L_out
                 f["x"] = x_out
             end
@@ -268,7 +268,7 @@ function MLE(x, rho, y; M=missing, savefile=false)
                 append!(x_out, [[x[i][indx[i]] for i in 1:para_num]])
             end
 
-            jldopen("MLE.dat", "w") do f
+            jldopen("MLE.dat", "a") do f
                 f["L"] = L_out
                 f["x"] = x_out
             end

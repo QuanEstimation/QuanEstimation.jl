@@ -528,7 +528,7 @@ function iter_MI_multipara(p, p_num, para_num, x, x_list, u, rho_all, M, ei)
 end
 
 function savefile_true(p, xout, y)
-    jldopen("adaptive.dat", "w") do f
+    jldopen("adaptive.dat", "a") do f
         f["p"] = [p]
         f["x"] = [xout]
         f["y"] = [y]
