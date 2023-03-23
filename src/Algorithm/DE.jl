@@ -94,7 +94,7 @@ function update!(opt::StateOpt, alg::DE, obj, dynamics, output)
     end
 
     set_f!(output, p_out[1])
-    set_buffer!(output, transpose(dynamics.data.ψ0))
+    set_buffer!(output, dynamics.data.ψ0)
     set_io!(output, p_out[1])
     show(opt, output, obj)
 
@@ -132,7 +132,7 @@ function update!(opt::StateOpt, alg::DE, obj, dynamics, output)
         end
         idx = findmax(p_fit)[2]
         set_f!(output, p_out[idx])
-        set_buffer!(output, transpose(populations[idx].data.ψ0))
+        set_buffer!(output, populations[idx].data.ψ0)
         set_io!(output, p_out[idx], ei)
         show(output, obj)
     end
@@ -423,7 +423,7 @@ function update!(opt::StateControlOpt, alg::DE, obj, dynamics, output)
     f_noctrl, f_comp = objective(obj, dynamics_copy)
 
     set_f!(output, p_out[1])
-    set_buffer!(output, transpose(populations[1].data.ψ0), populations[1].data.ctrl)
+    set_buffer!(output, populations[1].data.ψ0, populations[1].data.ctrl)
     set_io!(output, f_noctrl, p_out[1])
     show(opt, output, obj)
 
@@ -490,7 +490,7 @@ function update!(opt::StateControlOpt, alg::DE, obj, dynamics, output)
         end
         idx = findmax(p_fit)[2]
         set_f!(output, p_out[idx])
-        set_buffer!(output, transpose(populations[idx].data.ψ0), populations[idx].data.ctrl)
+        set_buffer!(output, populations[idx].data.ψ0, populations[idx].data.ctrl)
         set_io!(output, p_out[idx], ei)
         show(output, obj)
     end
@@ -522,7 +522,7 @@ function update!(opt::StateMeasurementOpt, alg::DE, obj, dynamics, output)
 
     M = [C_all[1][i]*(C_all[1][i])' for i in 1:M_num]
     set_f!(output, p_out[1])
-    set_buffer!(output, transpose(populations[1].data.ψ0), M)
+    set_buffer!(output, populations[1].data.ψ0, M)
     set_io!(output, p_out[1])
     show(opt, output, obj)
 
@@ -593,7 +593,7 @@ function update!(opt::StateMeasurementOpt, alg::DE, obj, dynamics, output)
         idx = findmax(p_fit)[2]
         M = [C_all[idx][i]*(C_all[idx][i])' for i in 1:M_num]
         set_f!(output, p_out[idx])
-        set_buffer!(output, transpose(populations[idx].data.ψ0), M)
+        set_buffer!(output, populations[idx].data.ψ0, M)
         set_io!(output, p_out[idx], ei)
         show(output, obj)
     end
@@ -742,7 +742,7 @@ function update!(opt::StateControlMeasurementOpt, alg::DE, obj, dynamics, output
 
     M = [C_all[1][i]*(C_all[1][i])' for i in 1:M_num]
     set_f!(output, p_out[1])
-    set_buffer!(output, transpose(populations[1].data.ψ0), populations[1].data.ctrl, M)
+    set_buffer!(output, populations[1].data.ψ0, populations[1].data.ctrl, M)
     set_io!(output, p_out[1])
     show(opt, output, obj)
 
@@ -839,7 +839,7 @@ function update!(opt::StateControlMeasurementOpt, alg::DE, obj, dynamics, output
         idx = findmax(p_fit)[2]
         M = [C_all[idx][i]*(C_all[idx][i])' for i in 1:M_num]
         set_f!(output, p_out[idx])
-        set_buffer!(output, transpose(populations[idx].data.ψ0), populations[idx].data.ctrl, M)
+        set_buffer!(output, populations[idx].data.ψ0, populations[idx].data.ctrl, M)
         set_io!(output, p_out[idx], ei)
         show(output, obj)
         end

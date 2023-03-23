@@ -528,26 +528,21 @@ function iter_MI_multipara(p, p_num, para_num, x, x_list, u, rho_all, M, ei)
 end
 
 function savefile_true(p, xout, y)
-    open("pout.csv","w") do f
-        writedlm(f, [p])
-    end
-    open("xout.csv","w") do m
-        writedlm(m, [xout])
-    end
-    open("y.csv","w") do n
-        writedlm(n, [y])
+    fp = isfile("adaptive.dat") ? load("adaptive.dat")["p"] : []  
+    fx = isfile("adaptive.dat") ? load("adaptive.dat")["x"] : []  
+    fy = isfile("adaptive.dat") ? load("adaptive.dat")["y"] : []  
+    jldopen("adaptive.dat", "w") do f
+        f["p"] = append!(fp, [p]) 
+        f["x"] = append!(fx, [xout]) 
+        f["y"] = append!(fy, [y]) 
     end
 end
 
 function savefile_false(p, xout, y)
-    open("pout.csv","w") do f
-        writedlm(f, [p])
-    end
-    open("xout.csv","w") do m
-        writedlm(m, xout)
-    end
-    open("y.csv","w") do n
-        writedlm(n, y)
+    jldopen("adaptive.dat", "w") do f
+        f["p"] = [p]
+        f["x"] = xout
+        f["y"] = y
     end
 end
 
@@ -679,11 +674,9 @@ function calculate_online{MI}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix
 end
 
 function savefile_online(xout, y)
-    open("xout.csv","w") do m
-        writedlm(m, xout)
-    end
-    open("y.csv","w") do n
-        writedlm(n, y)
+    jldopen("adaptive.dat", "w") do f
+        f["x"] = xout
+        f["y"] = y
     end
 end
 

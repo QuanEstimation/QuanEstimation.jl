@@ -202,14 +202,14 @@ result(opt::StateControlMeasurementOpt) = [opt.psi, opt.ctrl, opt.M]
 result(opt, ::Type{Val{:save_reward}}) = [result(opt)..., [0.0]]
 
 const res_file_name = Dict(
-    :Copt => ["controls.csv"],
-    :Sopt => ["states.csv"],
-    :Mopt => ["measurements.csv"],
-    :Mopt_input => ["measurements.csv"],
-    :SCopt => ["states.csv", "controls.csv"],
-    :CMopt => ["controls.csv", "measurements.csv"],
-    :SMopt => ["states.csv", "measurements.csv"],
-    :SCMopt => ["states.csv", "controls.csv", "measurements.csv"],
+    :Copt => ["controls"],
+    :Sopt => ["states"],
+    :Mopt => ["measurements"],
+    :Mopt_input => ["measurements"],
+    :SCopt => ["states", "controls"],
+    :CMopt => ["controls", "measurements"],
+    :SMopt => ["states", "measurements"],
+    :SCMopt => ["states", "controls", "measurements"],
 )
 
 res_file(opt::AbstractOpt) = res_file_name[opt_target(opt)]

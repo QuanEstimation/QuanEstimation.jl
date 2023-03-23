@@ -287,7 +287,7 @@ function update!(Sopt::StateOpt, alg::DDPG, obj, dynamics::Lindblad, output)
                   trajectory=CircularArraySARTTrajectory(capacity=400, state=Vector{Float64} => (ns,), action=Vector{Float64} => (na,),),)
                   
     set_f!(output, f_ini)
-    set_buffer!(output, transpose(dynamics.data.ψ0))
+    set_buffer!(output, dynamics.data.ψ0)
     set_io!(output, f_ini)
     show(Sopt, output, obj)
 
@@ -343,7 +343,7 @@ function update!(Sopt::StateOpt, alg::DDPG, obj, dynamics::Kraus, output)
                   trajectory=CircularArraySARTTrajectory(capacity=400, state=Vector{Float64} => (ns,), action=Vector{Float64} => (na,),),)
                   
     set_f!(output, f_ini)
-    set_buffer!(output, transpose(dynamics.data.ψ0))
+    set_buffer!(output, dynamics.data.ψ0)
     set_io!(output, f_ini)
     show(Sopt, output, obj)
 
@@ -383,7 +383,7 @@ function _step!(env::StateEnv, a)
     env.episode += 1
     
     set_f!(env.output, f_out)
-    set_buffer!(env.output, transpose(env.dynamics.data.ψ0))
+    set_buffer!(env.output, env.dynamics.data.ψ0)
     set_io!(env.output, f_out, env.episode)
     show(env.output, env.obj)
     SaveReward(env.output, env.total_reward) 

@@ -46,12 +46,11 @@ function Bayes(x, p, rho, y; M=missing, estimator="mean", savefile=false)
                 "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.")
             end
             
-            open("pout.csv","w") do f
-                writedlm(f, [p])
+            jldopen("bayes.dat", "w") do f
+                f["p"] = [p]
+                f["x"] = x_out
             end
-            open("xout.csv","w") do m
-                writedlm(m, x_out)
-            end
+
             return p, x_out[end]
         else
             p_out, x_out = [], []
@@ -83,12 +82,11 @@ function Bayes(x, p, rho, y; M=missing, estimator="mean", savefile=false)
                 "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.")
             end
             
-            open("pout.csv","w") do f
-                writedlm(f, [p_out])
-            end
-            open("xout.csv","w") do m
-                writedlm(m, x_out)
-            end
+            jldopen("bayes.dat", "w") do f
+                f["p"] = [p_out]
+                f["x"] = x_out
+            end 
+
             return p, x_out[end]
         end
     else 
@@ -127,12 +125,11 @@ function Bayes(x, p, rho, y; M=missing, estimator="mean", savefile=false)
                 "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.")
             end
             
-            open("pout.csv","w") do f
-                writedlm(f, [p])
+            jldopen("bayes.dat", "w") do f
+                f["p"] = [p]
+                f["x"] = x_out
             end
-            open("xout.csv","w") do m
-                writedlm(m, x_out)
-            end
+
             return p, x_out[end]
         else
             p_out, x_out = [], []
@@ -166,12 +163,11 @@ function Bayes(x, p, rho, y; M=missing, estimator="mean", savefile=false)
                 "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.")
             end
             
-            open("pout.csv","w") do f
-                writedlm(f, p_out)
+            jldopen("bayes.dat", "w") do f
+                f["p"] = p_out
+                f["x"] = x_out
             end
-            open("xout.csv","w") do m
-                writedlm(m, x_out)
-            end
+            
             return p, x_out[end]
         end
     end
@@ -207,12 +203,11 @@ function MLE(x, rho, y; M=missing, savefile=false)
                 append!(x_out, x[1][indx])
             end
              
-            open("Lout.csv","w") do f
-                writedlm(f, [L_out])
+            jldopen("MLE.dat", "w") do f
+                f["L"] = [L_out]
+                f["x"] = x_out
             end
-            open("xout.csv","w") do m
-                writedlm(m, x_out)
-            end
+
             return L_out, x_out[end]
         else
             L_out, x_out = [], []
@@ -227,12 +222,11 @@ function MLE(x, rho, y; M=missing, savefile=false)
                 append!(x_out, x[1][indx])
             end
             
-            open("Lout.csv","w") do f
-                writedlm(f, L_out)
+            jldopen("MLE.dat", "w") do f
+                f["L"] = L_out
+                f["x"] = x_out
             end
-            open("xout.csv","w") do m
-                writedlm(m, x_out)
-            end
+            
             return L_tp, x_out[end]
         end
     else
@@ -256,12 +250,11 @@ function MLE(x, rho, y; M=missing, savefile=false)
                 indx = findmax(L_out)[2]
                 append!(x_out, [[x[i][indx[i]] for i in 1:para_num]])
             end
-            open("Lout.csv","w") do f
-                writedlm(f, [L_out])
+            jldopen("MLE.dat", "w") do f
+                f["L"] = [L_out]
+                f["x"] = x_out
             end
-            open("xout.csv","w") do m
-                writedlm(m, x_out)
-            end
+            
             return L_out, x_out[end]
         else
             L_out, x_out = [], []
@@ -275,12 +268,11 @@ function MLE(x, rho, y; M=missing, savefile=false)
                 append!(x_out, [[x[i][indx[i]] for i in 1:para_num]])
             end
 
-            open("Lout.csv","w") do f
-                writedlm(f, L_out)
+            jldopen("MLE.dat", "w") do f
+                f["L"] = L_out
+                f["x"] = x_out
             end
-            open("xout.csv","w") do m
-                writedlm(m, x_out)
-            end
+            
             return L_tp, x_out[end]
         end
     end
