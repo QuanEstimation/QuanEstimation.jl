@@ -503,7 +503,7 @@ function update!(opt::StateControlOpt, alg::PSO, obj, dynamics, output)
     f_ini, f_comp = objective(obj, dynamics)
 
     set_f!(output, f_ini)
-    set_buffer!(output, transpose(particles[1].data.ψ0), particles[1].data.ctrl)
+    set_buffer!(output, particles[1].data.ψ0, particles[1].data.ctrl)
     set_io!(output, f_noctrl, f_ini)
     show(opt, output, obj)
 
@@ -572,7 +572,7 @@ function update!(opt::StateControlOpt, alg::PSO, obj, dynamics, output)
             end
         end
         set_f!(output, fit_out)
-        set_buffer!(output, transpose(gbest_state), gbest_ctrl)
+        set_buffer!(output, gbest_state, gbest_ctrl)
         set_io!(output, fit_out, ei)
         show(output, obj)
     end
@@ -614,7 +614,7 @@ function update!(opt::StateMeasurementOpt, alg::PSO, obj, dynamics, output)
     f_ini, f_comp = objective(obj_copy, dynamics)
 
     set_f!(output, f_ini)
-    set_buffer!(output, transpose(particles[1].data.ψ0), M)
+    set_buffer!(output, particles[1].data.ψ0, M)
     set_io!(output, f_ini)
     show(opt, output, obj)
 
@@ -687,7 +687,7 @@ function update!(opt::StateMeasurementOpt, alg::PSO, obj, dynamics, output)
         end
         M = [gbest_meas[i]*(gbest_meas[i])' for i in 1:M_num]
         set_f!(output, fit_out)
-        set_buffer!(output, transpose(gbest_state), M)
+        set_buffer!(output, gbest_state, M)
         set_io!(output, fit_out, ei)
         show(output, obj)
     end
@@ -858,7 +858,7 @@ function update!(opt::StateControlMeasurementOpt, alg::PSO, obj, dynamics, outpu
     f_ini, f_comp = objective(obj_copy, dynamics)
 
     set_f!(output, f_ini)
-    set_buffer!(output,  transpose(particles[1].data.ψ0), particles[1].data.ctrl, M)
+    set_buffer!(output,  particles[1].data.ψ0, particles[1].data.ctrl, M)
     set_io!(output, f_ini)
     show(opt, output, obj)
     
@@ -956,7 +956,7 @@ function update!(opt::StateControlMeasurementOpt, alg::PSO, obj, dynamics, outpu
         end
         M = [gbest_meas[i]*(gbest_meas[i])' for i in 1:M_num]
         set_f!(output, fit_out)
-        set_buffer!(output, transpose(gbest_state), gbest_ctrl, M)
+        set_buffer!(output, gbest_state, gbest_ctrl, M)
         set_io!(output, fit_out, ei)
         show(output, obj)
     end
