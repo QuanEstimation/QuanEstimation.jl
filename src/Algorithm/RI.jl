@@ -5,7 +5,7 @@ function update!(opt::StateOpt, alg::RI, obj, dynamics, output)
     f = QFIM(rho, drho)
 
     set_f!(output, f[1,1])
-    set_buffer!(output, transpose(dynamics.data.ψ0))
+    set_buffer!(output, dynamics.data.ψ0)
     set_io!(output, f[1,1])
     show(opt, output, obj)
 
@@ -24,7 +24,7 @@ function update!(opt::StateOpt, alg::RI, obj, dynamics, output)
         dynamics.data.ψ0 = psi0
 
         set_f!(output, f[1,1])
-        set_buffer!(output, transpose(dynamics.data.ψ0))
+        set_buffer!(output, dynamics.data.ψ0)
         set_io!(output, f[1,1], ei)
         show(output, obj)
     end
