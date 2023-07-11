@@ -26,8 +26,8 @@ rho0 = 0.5*ones(2, 2)
 # prior distribution
 x = range(-0.5*pi, stop=0.5*pi, length=100) |>Vector
 mu, eta = 0.0, 0.2
-p_tp = [p_func(x[i], mu, eta) for i in 1:length(x)]
-dp_tp = [dp_func(x[i], mu, eta) for i in 1:length(x)]
+p_tp = [p_func(x[i], mu, eta) for i = eachindex(x)]
+dp_tp = [dp_func(x[i], mu, eta) for i = eachindex(x)]
 # normalization of the distribution
 c = trapz(x, p_tp)
 p = p_tp/c
@@ -37,7 +37,7 @@ tspan = range(0., stop=1., length=1000)
 # dynamics
 rho = Vector{Matrix{ComplexF64}}(undef, length(x))
 drho = Vector{Vector{Matrix{ComplexF64}}}(undef, length(x))
-for i = 1:length(x) 
+for i = eachindex(x) 
     H0_tp = H0_func(x[i])
     dH_tp = dH_func(x[i])
     rho_tp, drho_tp = QuanEstimation.expm(tspan, rho0, H0_tp, dH_tp)
