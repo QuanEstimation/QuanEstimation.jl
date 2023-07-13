@@ -2,6 +2,11 @@ using QuanEstimation
 using Test
 using Trapz
 
+
+using StableRNGs
+using LinearAlgebra
+using SparseArrays
+
 # CramerRao_bounds
 @testset "CramerRao_bounds" begin
     # initial state
@@ -105,4 +110,255 @@ end
     @test f_QVTB == 0.03708976078857451
     f_QZZB = QuanEstimation.QZZB([x], p, rho)
     @test f_QZZB == 0.02845560767593649
+end
+
+# CMopt
+
+@testset "CMopt" begin    
+    # initial state
+    rho0 = 0.5*ones(2, 2)
+    # free Hamiltonian
+    omega = 1.0
+    sx = [0. 1.; 1. 0.0im]
+    sy = [0. -im; im 0.]
+    sz = [1. 0.0im; 0. -1.]
+    H0 = 0.5*omega*sz
+    # derivative of the free Hamiltonian on omega
+    dH = [0.5*sz]
+    # control Hamiltonians 
+    Hc = [sx, sy, sz]
+    # dissipation
+    sp = [0. 1.; 0. 0.0im]
+    sm = [0. 0.; 1. 0.0im]
+    decay = [[sp, 0.0], [sm, 0.1]]
+    # measurement
+    M1 = 0.5*[1.0+0.0im  1.; 1.  1.]
+    M2 = 0.5*[1.0+0.0im -1.; -1.  1.]
+    M = [M1, M2]
+    # time length for the evolution
+    tspan = range(0., 10., length=2500)
+    # control and measurement optimization
+    opt = QuanEstimation.CMopt(ctrl_bound=[-2.0,2.0], seed=1234)
+
+    ##==========choose comprehensive optimization algorithm==========##
+    ##-------------algorithm: DE---------------------##
+    alg = QuanEstimation.DE(p_num=10, max_episode=10, c=1.0, cr=0.5)
+    # input the dynamics data
+    dynamics = QuanEstimation.Lindblad(opt, tspan, rho0, H0, dH, Hc, 
+                                    decay=decay, dyn_method=:Expm)   
+    # objective function: CFI
+    obj = QuanEstimation.CFIM_obj() 
+    # run the comprehensive optimization problem
+    @test nothing === QuanEstimation.run(opt, alg, obj, dynamics; savefile=false)
+
+    ##-------------algorithm: PSO---------------------##
+    # alg = QuanEstimation.PSO(p_num=10, max_episode=[1000,100], c0=1.0, 
+    #                          c1=2.0, c2=2.0)
+    # # input the dynamics data
+    # dynamics = QuanEstimation.Lindblad(opt, tspan, rho0, H0, dH, Hc, 
+    #                                    decay=decay, dyn_method=:Expm)   
+    # # objective function: CFI
+    # obj = QuanEstimation.CFIM_obj() 
+    # # run the comprehensive optimization problem
+    # QuanEstimation.run(opt, alg, obj, dynamics; savefile=false)
+end
+
+# SCMopt
+@testset "SCMopt" begin
+    # initial state
+    rho0 = 0.5*ones(2, 2)
+    # free Hamiltonian
+    omega = 1.0
+    sx = [0. 1.; 1. 0.0im]
+    sy = [0. -im; im 0.]
+    sz = [1. 0.0im; 0. -1.]
+    H0 = 0.5*omega*sz
+    # derivative of the free Hamiltonian on omega
+    dH = [0.5*sz]
+    # control Hamiltonians 
+    Hc = [sx, sy, sz]
+    # dissipation
+    sp = [0. 1.; 0. 0.0im]
+    sm = [0. 0.; 1. 0.0im]
+    decay = [[sp, 0.0], [sm, 0.1]]
+    # measurement
+    M1 = 0.5*[1.0+0.0im  1.; 1.  1.]
+    M2 = 0.5*[1.0+0.0im -1.; -1.  1.]
+    M = [M1, M2]
+    # time length for the evolution
+    tspan = range(0., 10., length=2500)
+    # choose the optimization type
+    opt = QuanEstimation.SCMopt(ctrl_bound=[-2.0,2.0], seed=1234)
+
+    ##==========choose comprehensive optimization algorithm==========##
+    ##-------------algorithm: DE---------------------##
+    alg = QuanEstimation.DE(p_num=10, max_episode=20, c=1.0, cr=0.5)
+    # input the dynamics data
+    dynamics = QuanEstimation.Lindblad(opt, tspan, H0, dH, Hc, decay=decay, dyn_method=:Expm)   
+    # objective function: CFI
+    obj = QuanEstimation.CFIM_obj() 
+    # run the comprehensive optimization problem
+    @test nothing === QuanEstimation.run(opt, alg, obj, dynamics; savefile=false)
+end
+
+@testset "SCopt" begin    
+    # initial state
+    rho0 = 0.5*ones(2, 2)
+    # free Hamiltonian
+    omega = 1.0
+    sx = [0. 1.; 1. 0.0im]
+    sy = [0. -im; im 0.]
+    sz = [1. 0.0im; 0. -1.]
+    H0 = 0.5*omega*sz
+    # derivative of the free Hamiltonian on omega
+    dH = [0.5*sz]
+    # control Hamiltonians 
+    Hc = [sx, sy, sz]
+    # dissipation
+    sp = [0. 1.; 0. 0.0im]
+    sm = [0. 0.; 1. 0.0im]
+    decay = [[sp, 0.0], [sm, 0.1]]
+    # measurement
+    M1 = 0.5*[1.0+0.0im  1.; 1.  1.]
+    M2 = 0.5*[1.0+0.0im -1.; -1.  1.]
+    M = [M1, M2]
+    # time length for the evolution
+    tspan = range(0., 10., length=2500)
+    # choose the optimization type
+    opt = QuanEstimation.SCopt(ctrl_bound=[-2.0,2.0], seed=1234)
+
+    ##==========choose comprehensive optimization algorithm==========##
+    ##-------------algorithm: DE---------------------##
+    alg = QuanEstimation.DE(p_num=10, max_episode=10, c=1.0, cr=0.5)
+    # input the dynamics data
+    dynamics = QuanEstimation.Lindblad(opt, tspan, H0, dH, Hc, decay=decay, dyn_method=:Expm) 
+
+    ##-------------algorithm: PSO---------------------##
+    # alg = QuanEstimation.PSO(p_num=10, max_episode=[1000,100], c0=1.0, 
+    #                          c1=2.0, c2=2.0)
+    # # input the dynamics data
+    # dynamics = QuanEstimation.Lindblad(opt, tspan, H0, dH, Hc, decay=decay, dyn_method=:Expm) 
+
+    ##-------------algorithm: AD---------------------##
+    # alg = QuanEstimation.AD(Adam=true, max_episode=300, epsilon=0.01, 
+    #                         beta1=0.90, beta2=0.99)
+    # # input the dynamics data
+    # dynamics = QuanEstimation.Lindblad(opt, tspan, H0, dH, Hc, decay=decay, dyn_method=:Expm) 
+
+    ##===================choose objective function===================##
+    ##-------------objective function: QFI---------------------##
+    obj = QuanEstimation.QFIM_obj()
+    # run the comprehensive optimization problem
+    @test nothing === QuanEstimation.run(opt, alg, obj, dynamics; savefile=false)
+end
+
+# SMopt
+@testset "SMopt" begin
+    # initial state
+    rho0 = 0.5*ones(2, 2)
+    # free Hamiltonian
+    omega = 1.0
+    sx = [0. 1.; 1. 0.0im]
+    sy = [0. -im; im 0.]
+    sz = [1. 0.0im; 0. -1.]
+    H0 = 0.5*omega*sz
+    # derivative of the free Hamiltonian on omega
+    dH = [0.5*sz]
+    # control Hamiltonians 
+    Hc = [sx, sy, sz]
+    # dissipation
+    sp = [0. 1.; 0. 0.0im]
+    sm = [0. 0.; 1. 0.0im]
+    decay = [[sp, 0.0], [sm, 0.1]]
+    # measurement
+    M1 = 0.5*[1.0+0.0im  1.; 1.  1.]
+    M2 = 0.5*[1.0+0.0im -1.; -1.  1.]
+    M = [M1, M2]
+    # time length for the evolution
+    tspan = range(0., 10., length=2500)
+    # choose the optimization type
+    opt = QuanEstimation.SMopt(seed=1234)
+
+    ##==========choose comprehensive optimization algorithm==========##
+    ##-------------algorithm: DE---------------------##
+    alg = QuanEstimation.DE(p_num=10, max_episode=10, c=1.0, cr=0.5)
+    # input the dynamics data
+    dynamics = QuanEstimation.Lindblad(opt, tspan, H0, dH, decay=decay, dyn_method=:Expm)   
+    # objective function: CFI
+    obj = QuanEstimation.CFIM_obj() 
+    # run the comprehensive optimization problem
+    @test nothing === QuanEstimation.run(opt, alg, obj, dynamics; savefile=false)
+
+    ##-------------algorithm: PSO---------------------##
+    # alg = QuanEstimation.PSO(p_num=10, max_episode=[1000,100], c0=1.0, 
+    #                          c1=2.0, c2=2.0)
+    # # input the dynamics data
+    # dynamics = QuanEstimation.Lindblad(opt, tspan, H0, dH, decay=decay, dyn_method=:Expm)   
+    # # objective function: CFI
+    # obj = QuanEstimation.CFIM_obj() 
+    # # run the comprehensive optimization problem
+    # QuanEstimation.run(opt, alg, obj, dynamics; savefile=false)
+end
+
+# state_optimization_LMG
+@testset "state_optimization_LMG" begin
+    # dimensions of the system
+    N = 8
+    # generation of the coherent spin state
+    j, theta, phi = N÷2, 0.5pi, 0.5pi
+    Jp = Matrix(spdiagm(1=>[sqrt(j*(j+1)-m*(m+1)) for m in j:-1:-j][2:end]))
+    Jm = Jp'
+    psi0 = exp(0.5*theta*exp(im*phi)*Jm - 0.5*theta*exp(-im*phi)*Jp)*
+        QuanEstimation.basis(Int(2*j+1), 1)
+    dim = length(psi0)
+    # free Hamiltonian
+    lambda, g, h = 1.0, 0.5, 0.1
+    Jx = 0.5*(Jp + Jm)
+    Jy = -0.5im*(Jp - Jm)
+    Jz = spdiagm(j:-1:-j)
+    H0 = -lambda*(Jx*Jx + g*Jy*Jy) / N - h*Jz
+    # derivative of the free Hamiltonian on g
+    dH = [-lambda*Jy*Jy/N]
+    # dissipation
+    decay = [[Jz, 0.1]]
+    # time length for the evolution
+    tspan = range(0., 10., length=2500)
+    # set the optimization type
+    opt = QuanEstimation.StateOpt(psi=psi0, seed=1234) 
+
+    ##================choose the state optimization algorithm===============##
+    # state optimization algorithm: AD
+    alg = QuanEstimation.AD(Adam=false, max_episode=300, epsilon=0.01, 
+                            beta1=0.90, beta2=0.99)
+
+    # # state optimization algorithm: PSO
+    # alg = QuanEstimation.PSO(p_num=10, max_episode=[1000,100], c0=1.0, 
+    #                          c1=2.0, c2=2.0)
+
+    # # state optimization algorithm: DE
+    # alg = QuanEstimation.DE(p_num=10, max_episode=1000, c=1.0, cr=0.5)
+
+    # # state optimization algorithm: NM
+    # alg = QuanEstimation.NM(p_num=10, max_episode=1000, ar=1.0, 
+    #                         ae=2.0, ac=0.5, as0=0.5)
+
+    # # state optimization algorithm: DDPG
+    # alg = QuanEstimation.DDPG(max_episode=500, layer_num=3, layer_dim=200)
+
+    ##====================choose the objective function==================##
+    ##-------------objective function: QFI---------------------##
+    # objective function: QFI
+    obj = QuanEstimation.QFIM_obj()
+    # input the dynamics data
+    dynamics = QuanEstimation.Lindblad(opt, tspan, H0, dH, decay=decay, dyn_method=:Expm) 
+    # run the state optimization problem
+    QuanEstimation.run(opt, alg, obj, dynamics; savefile=false)
+
+    ##-------------objective function: CFI---------------------##
+    # # objective function: CFI
+    # obj = QuanEstimation.CFIM_obj()
+    # # input the dynamics data
+    # dynamics = QuanEstimation.Lindblad(opt, tspan, H0, dH, decay=decay, dyn_method=:Expm) 
+    # # run the state optimization problem
+    # QuanEstimation.run(opt, alg, obj, dynamics; savefile=false)
 end
