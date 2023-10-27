@@ -51,18 +51,18 @@ function liouville_dissip_py(A::Array{T}) where {T<:Complex}
 end
 
 function dissipation(
-    Γ::AbstractVector,
+    Γ::V,
     γ::Vector{R},
     t::Int = 1,
-) where {T<:Complex,R<:Real}
+) where {V<:AbstractVector,R<:Real}
     [γ[i] * liouville_dissip(Γ[i]) for i = 1:length(Γ)] |> sum
 end
 
 function dissipation(
-    Γ::AbstractVector,
+    Γ::V,
     γ::Vector{Vector{R}},
     t::Int = 1,
-) where {T<:Complex,R<:Real}
+) where {V<:AbstractVector,R<:Real}
     [γ[i][t] * liouville_dissip(Γ[i]) for i = 1:length(Γ)] |> sum
 end
 
@@ -81,19 +81,20 @@ function liouvillian(
     -1.0im * freepart + dissp
 end
 
-function Htot(H0::Matrix{T}, Hc::Vector{Matrix{T}}, ctrl) where {T<:Complex,R}
+function Htot(H0::T, Hc::V, ctrl) where {T<:AbstractArray, V<:AbstractVector}
     [H0] .+ ([ctrl[i] .* [Hc[i]] for i = 1:length(ctrl)] |> sum)
 end
 
 function Htot(
-    H0::Matrix{T},
-    Hc::Vector{Matrix{T}},
+    H0::T,
+    Hc::V,
     ctrl::Vector{R},
-) where {T<:Complex,R<:Real}
+) where {T<:AbstractArray,V<:AbstractVector, R<:Real}
     H0 + ([ctrl[i] * Hc[i] for i = 1:length(ctrl)] |> sum)
 end
 
-function Htot(H0::Vector{Matrix{T}}, Hc::Vector{Matrix{T}}, ctrl) where {T<:Complex}
+
+function Htot(H0::V1, Hc::V2, ctrl) where {V1,V2<:AbstractVector}
     H0 + ([ctrl[i] .* [Hc[i]] for i = 1:length(ctrl)] |> sum)
 end
 

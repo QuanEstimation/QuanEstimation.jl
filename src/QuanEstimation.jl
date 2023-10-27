@@ -1,4 +1,11 @@
 module QuanEstimation
+export ControlOpt, ControlMeasurementOpt, CMopt, StateMeasurementOpt, SMopt, StateControlMeasurementOpt, SCMopt, opt_target, Htot
+export Lindblad
+export Output
+export autoGRAPE
+export QFIM_obj
+export QuanEstSystem
+export solve
 using Random
 using LinearAlgebra
 using Zygote
@@ -7,7 +14,6 @@ using DelimitedFiles
 using StatsBase
 using Flux
 using ReinforcementLearning
-using Convex
 using SCS
 using BoundaryValueDiffEq
 using Trapz
