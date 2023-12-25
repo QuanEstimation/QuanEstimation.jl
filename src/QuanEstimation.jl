@@ -1,5 +1,6 @@
 module QuanEstimation
 export ControlOpt, ControlMeasurementOpt, CMopt, StateMeasurementOpt, SMopt, StateControlMeasurementOpt, SCMopt, opt_target, Htot
+export isCtrl, isNoisy
 export Lindblad
 export Output
 export autoGRAPE

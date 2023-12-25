@@ -175,7 +175,7 @@ function _ini_measurement!(opt::Mopt_LinearComb, dim::Int; eps=GLOBAL_EPS)
 	end
 
 	if ismissing(B)
-		opt.B = [rand(opt.rng, length(POVM_basis)) for _ in 1:M_num]
+		opt.B = [rand(opt.rng, length(opt.POVM_basis)) for _ in 1:M_num]
 	end
 end
 

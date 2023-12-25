@@ -1,3 +1,4 @@
+using Convex
 function decomposition(A)
     C = bunchkaufman(A; check = false)
     R = sqrt(Array(C.D)) * C.U'C.P
@@ -82,7 +83,7 @@ function Holevo_bound(
         end
     end
     problem = minimize(tr(C * V), constraints)
-    # Convex.solve!(problem, SCS.Optimizer, silent_solver=true)
+    Convex.solve!(problem, SCS.Optimizer, silent_solver=true)
     return evaluate(tr(C * V))
 end
 
@@ -135,6 +136,6 @@ function NHB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix)
         end
     end
     problem = minimize(real(tr(kron(W, ρ) * L)), constraints)
-    # Convex.solve!(problem, SCS.Optimizer, silent_solver=true)
+    Convex.solve!(problem, SCS.Optimizer, silent_solver=true)
     return evaluate(real(tr(kron(W, ρ) * L)))
 end
