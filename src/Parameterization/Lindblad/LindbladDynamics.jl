@@ -51,18 +51,18 @@ function liouville_dissip_py(A::Array{T}) where {T<:Complex}
 end
 
 function dissipation(
-    Γ::AbstractVector,
+    Γ::V,
     γ::Vector{R},
     t::Int = 1,
-) where {T<:Complex,R<:Real}
+) where {V<:AbstractVector,R<:Real}
     [γ[i] * liouville_dissip(Γ[i]) for i = 1:length(Γ)] |> sum
 end
 
 function dissipation(
-    Γ::AbstractVector,
+    Γ::V,
     γ::Vector{Vector{R}},
     t::Int = 1,
-) where {T<:Complex,R<:Real}
+) where {V<:AbstractVector,R<:Real}
     [γ[i][t] * liouville_dissip(Γ[i]) for i = 1:length(Γ)] |> sum
 end
 
@@ -81,20 +81,21 @@ function liouvillian(
     -1.0im * freepart + dissp
 end
 
-function Htot(H0::Matrix{T}, Hc::Vector{Matrix{T}}, ctrl) where {T<:Complex,R}
+function Htot(H0::T, Hc::V, ctrl) where {T<:AbstractArray, V<:AbstractVector}
     [H0] .+ ([ctrl[i] .* [Hc[i]] for i = 1:length(ctrl)] |> sum)
 end
 
 function Htot(
-    H0::Matrix{T},
-    Hc::Vector{Matrix{T}},
+    H0::T,
+    Hc::V,
     ctrl::Vector{R},
-) where {T<:Complex,R<:Real}
-    H0 + ([ctrl[i] * Hc[i] for i = 1:length(ctrl)] |> sum)
+) where {T<:AbstractArray,V<:AbstractVector, R<:Real}
+    H0 + ([ctrl[i] .* [Hc[i]] for i = 1:length(ctrl)] |> sum)
 end
 
-function Htot(H0::Vector{Matrix{T}}, Hc::Vector{Matrix{T}}, ctrl) where {T<:Complex}
-    H0 + ([ctrl[i] .* [Hc[i]] for i = 1:length(ctrl)] |> sum)
+
+function Htot(H0::V1, Hc::V2, ctrl) where {V1,V2<:AbstractVector}
+    H0 + ([ctrl[i] * Hc[i] for i = 1:length(ctrl)] |> sum)
 end
 
 function expL(H, decay_opt, γ, dt, tj = 1)
@@ -118,7 +119,7 @@ When applied to the case of single parameter.
 function expm(
     tspan::AbstractVector,
     ρ0::AbstractMatrix,
-    H0::AbstractMatrix,
+    H0::AbstractVecOrMat,
     dH::AbstractMatrix;
     decay::Union{AbstractVector, Missing}=missing,
     Hc::Union{AbstractVector, Missing}=missing,
@@ -197,7 +198,7 @@ The dynamics of a density matrix is of the form  ``\partial_t\rho=-i[H,\rho]+\su
 function expm(
     tspan::AbstractVector,
     ρ0::AbstractMatrix,
-    H0::AbstractMatrix,
+    H0::AbstractVecOrMat,
     dH::AbstractVector;
     decay::Union{AbstractVector, Missing}=missing,
     Hc::Union{AbstractVector, Missing}=missing,
@@ -241,7 +242,8 @@ function expm(
     para_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl0[1])) |> Int
-    ctrl = [repeat(ctrl0[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
+    ## TODO reconstruct repeat feature
+    ctrl = [repeat(ctrl0[i], outer=ctrl_interval) for i = 1:ctrl_num]
 
     H = Htot(H0, Hc, ctrl)
     dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
@@ -271,7 +273,7 @@ end
 function expm_py(
     tspan,
     ρ0::AbstractMatrix,
-    H0::AbstractMatrix,
+    H0::AbstractVecOrMat,
     dH::AbstractMatrix,
     Hc::AbstractVector,
     decay_opt::AbstractVector,
@@ -304,7 +306,7 @@ end
 function expm_py(
     tspan,
     ρ0::AbstractMatrix,
-    H0::AbstractMatrix,
+    H0::AbstractVecOrMat,
     dH::AbstractVector,
     decay_opt::AbstractVector,
     γ,
@@ -353,7 +355,7 @@ expm(tspan, ρ0, H0, dH, decay, Hc, ctrl) =
 function secondorder_derivative(
     tspan::AbstractVector,
     ρ0::AbstractMatrix,
-    H0::AbstractMatrix,
+    H0::AbstractVecOrMat,
     dH::AbstractVector,
     dH_∂x::AbstractVector,
     decay_opt::Vector{Matrix{T}},
@@ -399,7 +401,7 @@ When applied to the case of single parameter.
 function ode(
     tspan::AbstractVector,
     ρ0::AbstractMatrix,
-    H0::AbstractMatrix,
+    H0::AbstractVecOrMat,
     dH::AbstractMatrix;
     decay::Union{AbstractVector, Missing}=missing,
     Hc::Union{AbstractVector, Missing}=missing,
@@ -480,7 +482,7 @@ The dynamics of a density matrix is of the form  ``\partial_t\rho=-i[H,\rho]+\su
 function ode(
     tspan::AbstractVector,
     ρ0::AbstractMatrix,
-    H0::AbstractMatrix,
+    H0::AbstractVecOrMat,
     dH::AbstractVector;
     decay::Union{AbstractVector, Missing}=missing,
     Hc::Union{AbstractVector, Missing}=missing,
@@ -559,7 +561,7 @@ ode(tspan, ρ0, H0, dH, decay, Hc, ctrl) =
 function ode_py(
     tspan,
     ρ0::AbstractMatrix,
-    H0::AbstractMatrix,
+    H0::AbstractVecOrMat,
     dH::AbstractMatrix,
     Hc::AbstractVector,
     Γ::AbstractVector,
@@ -589,7 +591,7 @@ end
 function ode_py(
     tspan,
     ρ0::AbstractMatrix,
-    H0::AbstractMatrix,
+    H0::AbstractVecOrMat,
     dH::AbstractVector,
     Γ::AbstractVector,
     γ,

@@ -1,3 +1,4 @@
+using Convex
 function decomposition(A)
     C = bunchkaufman(A; check = false)
     R = sqrt(Array(C.D)) * C.U'C.P

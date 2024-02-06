@@ -21,12 +21,12 @@ abstract type Ode <: AbstractDynamicsProblemType end
 # check if the dynamics are with noise
 isNoisy(::noiseless) = false
 isNoisy(::noisy) = true
-isNoisy(dynamics::AbstractDynamics) = dynamics.noise_type |> eval |> isNoisy
+isNoisy(dynamics::AbstractDynamics) = dynamics.noise_type |> isNoisy
 
 # check if the dynamics are in control
 isCtrl(::free) = false
 isCtrl(::controlled) = true
-isCtrl(dynamics::AbstractDynamics) = dynamics.ctrl_type |> eval |> isCtrl
+isCtrl(dynamics::AbstractDynamics) = dynamics.ctrl_type |> isCtrl
 
 include("Lindblad/Lindblad.jl")
 include("Kraus/Kraus.jl")
