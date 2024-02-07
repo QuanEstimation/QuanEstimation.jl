@@ -34,6 +34,7 @@ QuanEstimationPyExt = "PythonCall"
 
 [compat]
 BoundaryValueDiffEq = "2"
+Convex = "0.15"
 Distributions = "0.25"
 Flux = "0.12, 0.13, 0.14"
 Interpolations = "0.13, 0.14"
