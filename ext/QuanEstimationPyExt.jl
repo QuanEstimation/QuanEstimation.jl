@@ -70,6 +70,24 @@ QuanEstimation.Lindblad(
 QuanEstimation.Lindblad(
 	H0::PyArray,
 	dH::PyList,
+	ρ0::PyArray,
+	tspan::PyArray,
+	decay_opt::PyList,
+	γ::PyList;
+	kwargs...,
+) = QuanEstimation.Lindblad(
+    pyconvert(Matrix{ComplexF64}, H0),
+	pyconvert(Vector{Matrix}, dH),
+	pyconvert(Matrix{ComplexF64}, ρ0),
+	pyconvert(Vector, tspan),
+	pyconvert(Vector{Matrix}, decay_opt),
+	pyconvert(Vector, γ);
+	kwargs...,
+)
+
+QuanEstimation.Lindblad(
+	H0::PyArray,
+	dH::PyList,
 	ψ0::PyList,
 	tspan::PyArray;
 	kwargs...,
@@ -77,6 +95,20 @@ QuanEstimation.Lindblad(
     pyconvert(Matrix{ComplexF64}, H0),
 	pyconvert(Vector{Matrix}, dH),
 	pyconvert(Vector{ComplexF64}, ψ0),
+	pyconvert(Vector, tspan);
+	kwargs...,
+)
+
+QuanEstimation.Lindblad(
+	H0::PyArray,
+	dH::PyList,
+	ρ0::PyArray,
+	tspan::PyArray;
+	kwargs...,
+) = QuanEstimation.Lindblad(
+    pyconvert(Matrix{ComplexF64}, H0),
+	pyconvert(Vector{Matrix}, dH),
+	pyconvert(Matrix{ComplexF64}, ρ0),
 	pyconvert(Vector, tspan);
 	kwargs...,
 )
@@ -106,6 +138,24 @@ QuanEstimation.Kraus(
 )
 
 QuanEstimation.expm_py(
-	
+    tspan::PyArray,
+    ρ0::AbstractMatrix,
+    H0::PyArray,
+    dH::PyList,
+    decay_opt::PyList,
+    γ::PyList,
+    Hc::PyList,
+    ctrl::PyList,
+) = QuanEstimation.expm_py(
+	pyconvert(Vector, tspan),
+	pyconvert(Matrix{ComplexF64}, ρ0),
+	pyconvert(Matrix{ComplexF64}, H0),
+	pyconvert(Vector{Matrix{ComplexF64}}, dH),
+	pyconvert(Vector{Matrix{ComplexF64}}, decay_opt),
+	pyconvert(Vector, γ),
+	pyconvert(Vector{Matrix{ComplexF64}}, Hc),
+	pyconvert(Vector{Vector{Float64}}, ctrl),
 )
+
+
 end
