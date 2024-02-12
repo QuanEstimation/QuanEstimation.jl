@@ -90,7 +90,7 @@ function Htot(
     Hc::V,
     ctrl::Vector{R},
 ) where {T<:AbstractArray,V<:AbstractVector, R<:Real}
-    H0 + ([ctrl[i] .* [Hc[i]] for i = 1:length(ctrl)] |> sum)
+    H0 + ([ctrl[i] * Hc[i] for i = 1:length(ctrl)] |> sum)
 end
 
 
