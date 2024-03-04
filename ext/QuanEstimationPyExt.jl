@@ -1,7 +1,6 @@
 module QuanEstimationPyExt
 using PythonCall
 using QuanEstimation
-np = pyimport("numpy")
 
 QuanEstimation.ControlOpt(ctrl::PyList, ctrl_bound::PyList, seed::Py) = QuanEstimation.ControlOpt(pyconvert(Vector{Vector{Float64}}, ctrl), pyconvert(Vector{Float64}, ctrl_bound), seed)
 
