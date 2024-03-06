@@ -21,8 +21,8 @@ QuanEstimation.Lindblad(
 	pyconvert(Vector{Vector{Float64}}, ctrl),
 	pyconvert(Matrix{ComplexF64}, ρ0),
 	pyconvert(Vector, tspan),
-	pyconvert(Vector{Matrix}, decay_opt),
-	pyconvert(Vector, γ);
+	pyconvert(Vector{Matrix{ComplexF64}}, decay_opt),
+	pyconvert(Vector{Float64}, γ);
 	kwargs...,
 )
 
@@ -43,8 +43,8 @@ QuanEstimation.Lindblad(
 	pyconvert(Vector{Vector{Float64}}, ctrl),
 	pyconvert(Vector{ComplexF64}, ψ0),
 	pyconvert(Vector, tspan),
-	pyconvert(Vector{Matrix}, decay_opt),
-	pyconvert(Vector, γ);
+	pyconvert(Vector{Matrix{ComplexF64}}, decay_opt),
+	pyconvert(Vector{Float64}, γ);
 	kwargs...,
 )
 
@@ -61,8 +61,8 @@ QuanEstimation.Lindblad(
 	pyconvert(Vector{Matrix}, dH),
 	pyconvert(Vector{ComplexF64}, ψ0),
 	pyconvert(Vector, tspan),
-	pyconvert(Vector{Matrix}, decay_opt),
-	pyconvert(Vector, γ);
+	pyconvert(Vector{Matrix{ComplexF64}}, decay_opt),
+	pyconvert(Vector{Float64}, γ);
 	kwargs...,
 )
 
@@ -79,8 +79,8 @@ QuanEstimation.Lindblad(
 	pyconvert(Vector{Matrix}, dH),
 	pyconvert(Matrix{ComplexF64}, ρ0),
 	pyconvert(Vector, tspan),
-	pyconvert(Vector{Matrix}, decay_opt),
-	pyconvert(Vector, γ);
+	pyconvert(Vector{Matrix{ComplexF64}}, decay_opt),
+	pyconvert(Vector{Float64}, γ);
 	kwargs...,
 )
 
@@ -94,7 +94,7 @@ QuanEstimation.Lindblad(
     pyconvert(Matrix{ComplexF64}, H0),
 	pyconvert(Vector{Matrix}, dH),
 	pyconvert(Vector{ComplexF64}, ψ0),
-	pyconvert(Vector, tspan);
+	pyconvert(Vector{Float64}, tspan);
 	kwargs...,
 )
 
@@ -108,7 +108,7 @@ QuanEstimation.Lindblad(
     pyconvert(Matrix{ComplexF64}, H0),
 	pyconvert(Vector{Matrix}, dH),
 	pyconvert(Matrix{ComplexF64}, ρ0),
-	pyconvert(Vector, tspan);
+	pyconvert(Vector{Float64}, tspan);
 	kwargs...,
 )
 
@@ -151,7 +151,7 @@ QuanEstimation.expm_py(
 	pyconvert(Matrix{ComplexF64}, H0),
 	pyconvert(Vector{Matrix{ComplexF64}}, dH),
 	pyconvert(Vector{Matrix{ComplexF64}}, decay_opt),
-	pyconvert(Vector, γ),
+	pyconvert(Vector{Float64}, γ),
 	pyconvert(Vector{Matrix{ComplexF64}}, Hc),
 	pyconvert(Vector{Vector{Float64}}, ctrl),
 )
