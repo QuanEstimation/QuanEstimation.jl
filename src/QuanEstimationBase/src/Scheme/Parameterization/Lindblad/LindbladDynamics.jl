@@ -345,6 +345,7 @@ function expm_py(
 end
 
 expm(dynamics::Lindblad) = expm(dynamics.data...)
+expm(data::Lindblad_noisy_controlled) = expm(data.tspan, data.ρ0, data.H0, data.dH, [[data.decay_opt[1], data.γ[1]]], data.Hc, data.ctrl)
 expm(tspan, ρ0, H0, dH, decay) = 
     expm(tspan, ρ0, H0, dH; decay=decay)
 expm(tspan, ρ0, H0, dH, decay, Hc) = 
@@ -623,7 +624,7 @@ function ode_py(
     ρt, ∂ρt
 end
 
-evolve(dynamics) = _evolve(dynamics.data)
+
 
 #### evolution of pure states under time-independent Hamiltonian without noise and controls ####
 function _evolve(data::Lindblad_noiseless_free_pure{Expm})

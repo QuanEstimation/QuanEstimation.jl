@@ -1,4 +1,5 @@
-abstract type AbstractDynamics end
+abstract type AbstractParameterization end
+abstract type AbstractDynamics <: AbstractParameterization end
 abstract type AbstractDynamicsData end
 
 abstract type AbstractStateType end
@@ -17,6 +18,9 @@ abstract type timedepend <: AbstractCtrlType end
 abstract type AbstractDynamicsProblemType end
 abstract type Expm <: AbstractDynamicsProblemType end
 abstract type Ode <: AbstractDynamicsProblemType end
+
+evolve(scheme::AbstractScheme) = evolve(scheme.Parameterization)
+evolve(param::AbstractParameterization) = _evolve(param.data)
 
 # check if the dynamics are with noise
 isNoisy(::noiseless) = false

@@ -415,6 +415,22 @@ end
 
 QFIM(sym::Symbol, args...; kwargs...) = QFIM(Val{sym}, args...; kwargs...)
 
+
+function QFIM(scheme::GeneralScheme;
+    full_trajectory = false, 
+    LDtype = :SLD, 
+    exportLD ::Bool= false, 
+    eps = GLOBAL_EPS,
+)
+    if full_trajectory
+        rho, drho = expm(scheme.Parameterization.data)
+        return [QFIM(r, dr; LDtype = LDtype, exportLD = exportLD, eps = eps) for (r, dr) in zip(rho, drho)]
+    else 
+        rho, drho = evolve(scheme)
+        return QFIM(rho, drho; LDtype = LDtype, exportLD = exportLD, eps = eps)
+    end
+end
+
 """
 
     QFIM_Kraus(ρ0::AbstractMatrix, K::AbstractVector, dK::AbstractVector; LDtype=:SLD, exportLD::Bool=false, eps=GLOBAL_EPS)
