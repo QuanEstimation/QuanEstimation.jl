@@ -2,15 +2,13 @@ abstract type AbstractScheme end
 include("StatePreparation/StatePreparation.jl")
 include("Parameterization/Parameterization.jl")
 include("Measurement/Measurement.jl")
-include("ClassicalEstimation/ClassicalEstimation.jl")
+# include("ClassicalEstimation/ClassicalEstimation.jl")
 
 struct GeneralScheme <: AbstractScheme
 	StatePreparation::AbstractStatePreparation
 	Parameterization::AbstractParameterization
 	Measurement
-	ParameterRegion
-	PriorDistribution
-	PriorDistributionGradient
+	EstimationStrategy
 end
 
 function GeneralScheme(;
@@ -20,12 +18,11 @@ function GeneralScheme(;
 	x=nothing,
 	p=nothing,
 	dp=nothing,
-	kwargs...
 )
 	return GeneralScheme(
 		GeneralState(probe),
 		param,
-		measurement,
-		x,p,dp,
+		GeneralMeasurement(measurement),
+		GeneralStrategy(x,p,dp),
 	)
 end

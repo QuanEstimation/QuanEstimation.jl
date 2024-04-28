@@ -1,7 +1,7 @@
 function Objective(dynamics::AbstractDynamics, obj::QFIM_obj{P,D}) where {P,D}
     (;W, eps) = obj
     if ismissing(W)
-        W = I(get_para(dynamics.data))|>Matrix
+        W = I(get_para_num(dynamics.data))|>Matrix
     end
     
     d = LDtype(obj) |> eval
@@ -13,7 +13,7 @@ end
 function Objective(dynamics::AbstractDynamics, obj::CFIM_obj{P}) where {P}
     (;W, M, eps) = obj
     if ismissing(W)
-        W = I(get_para(dynamics.data))|>Matrix
+        W = I(get_para_num(dynamics.data))|>Matrix
     end
     
     if ismissing(M)
@@ -28,7 +28,7 @@ end
 function Objective(dynamics::AbstractDynamics, obj::HCRB_obj{P}) where {P}
     (;W, eps) = obj
     if ismissing(W)
-        W = I(get_para(dynamics.data))|>Matrix
+        W = I(get_para_num(dynamics.data))|>Matrix
     end
 
     p = para_type(dynamics.data) |> eval

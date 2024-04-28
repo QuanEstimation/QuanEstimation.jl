@@ -207,7 +207,7 @@ alg_type(::NM) = :NM
 alg_type(::RI) = :RI
 
 include("AD.jl")
-include("DDPG.jl")
+# include("DDPG.jl")
 include("DE.jl")
 include("GRAPE.jl")
 include("NM.jl")

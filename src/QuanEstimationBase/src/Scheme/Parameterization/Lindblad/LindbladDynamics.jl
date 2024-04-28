@@ -1012,7 +1012,7 @@ function _evolve(data::Lindblad_noisy_controlled{Expm})
 end
 
 function _evolve(data::Lindblad_noisy_controlled{Ode})
-    (; H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl) = data
+    (; H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl, abstol, reltol) = data
     Γ = decay_opt
     para_num = length(dH)
     dt = tspan[2] - tspan[1] 
@@ -1026,7 +1026,7 @@ function _evolve(data::Lindblad_noisy_controlled{Ode})
     ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
-    ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
+    ρt = solve(prob_ρ, Tsit5(), saveat=dt; abstol=abstol, reltol=reltol).u
 
     ∂ρt_func!(∂ρ, (pa, ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
@@ -1034,7 +1034,7 @@ function _evolve(data::Lindblad_noisy_controlled{Ode})
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:para_num
         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), (pa,ctrl,))
-        push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
+        push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt; abstol=abstol, reltol=reltol).u[end])
     end
     ρt[end], ∂ρt_∂x
 end

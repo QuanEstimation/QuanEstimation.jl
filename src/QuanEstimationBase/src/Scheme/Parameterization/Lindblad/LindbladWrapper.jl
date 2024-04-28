@@ -5,7 +5,7 @@
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the control optimization.
 """
-function Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
+function Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS, abstol=1e-6, reltol=1e-3)
 	(;ctrl) = opt
 	dim = size(ρ₀, 1)
 	if ismissing(dH)
@@ -50,11 +50,11 @@ function Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, dyn_
 	dH = complex.(dH)
 	ρ₀ = complex(ρ₀)
 	
-	Lindblad(H0, dH, Hc, ctrl, ρ₀, tspan, decay_opt, γ, dyn_method=dyn_method)
+	Lindblad(H0, dH, Hc, ctrl, ρ₀, tspan, decay_opt, γ; dyn_method=dyn_method, abstol=abstol, reltol=reltol)
 end
 
-Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc, decay; dyn_method=:Expm, eps=GLOBAL_EPS) = 
-	Lindblad(opt, tspan, ρ₀, H0, dH, Hc; decay=decay, dyn_method=dyn_method, eps=eps)
+Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc, decay; dyn_method=:Expm, eps=GLOBAL_EPS, abstol=1e-6, reltol=1e-3) = 
+	Lindblad(opt, tspan, ρ₀, H0, dH, Hc; decay=decay, dyn_method=dyn_method, eps=eps, abstol=abstol, reltol=reltol)
 	
 """
 

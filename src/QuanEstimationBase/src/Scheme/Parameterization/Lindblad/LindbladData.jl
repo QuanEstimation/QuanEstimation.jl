@@ -53,6 +53,8 @@ mutable struct Lindblad_noisy_controlled{dyn_method} <: LindbladDynamicsData
     γ::AbstractVector
     Hc::AbstractVector
     ctrl::AbstractVector
+    abstol
+    reltol
 end
 
 
@@ -171,8 +173,10 @@ Lindblad(
     decay_opt::AbstractVector,
     γ::AbstractVector;
     dyn_method::Union{Symbol, String}=:Expm,
+    abstol=1e-6,
+    reltol=1e-3
 ) = Lindblad(
-    Lindblad_noisy_controlled{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl),
+    Lindblad_noisy_controlled{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl, abstol, reltol),
     :noisy,
     :controlled,
 )
@@ -249,7 +253,7 @@ Lindblad(
     γ::AbstractVector;
     dyn_method::Union{Symbol, String}=:Expm,
 ) = Lindblad(
-    Lindblad_noisy_controlled_pure{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan, decay_opt, γ, Hc, ctrl),
+    Lindblad_noisy_controlled_pure{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan, decay_opt, γ, Hc, ctrl, abstol, reltol),
     :noisy,
     :controlled,
     :ket,
