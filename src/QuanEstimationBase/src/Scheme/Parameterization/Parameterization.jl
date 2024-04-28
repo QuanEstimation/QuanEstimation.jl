@@ -1,7 +1,7 @@
 abstract type AbstractParameterization end
 
-evolve(scheme::AbstractScheme) = evolve(scheme.Parameterization)
-evolve(param::AbstractParameterization) = _evolve(param.data)
+# evolve(scheme::AbstractScheme) = evolve(scheme.Parameterization)
+# evolve(param::AbstractParameterization) = _evolve(param.data)
 
 # # check if the dynamics are with noise
 # isNoisy(::noiseless) = false

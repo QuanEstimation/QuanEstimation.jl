@@ -1,281 +1,115 @@
-abstract type LindbladDynamicsData <: AbstractDynamicsData end
-
 ## TODO: reconstruct dynamicsdata structs
 
-mutable struct Lindblad_noiseless_free{dyn_method} <: LindbladDynamicsData
-    H0::AbstractMatrix
-    dH::AbstractVector
-    ρ0::AbstractMatrix
-    tspan::AbstractVector
+abstract type AbstractDynamicsData end
+abstract type AbstractDecay end
+abstract type NonDecay <: AbstractDecay end
+# struct Decay <: AbstractDecay 
+#     decay_opt::AbstractVector
+#     γ::AbstractVector
+# end
+abstract type Decay <: AbstractDecay end
+
+abstract type AbstractQuantumDynamics end
+abstract type NonControl <: AbstractQuantumDynamics end
+# struct Control <: AbstractQuantumDynamics
+#     Hc::AbstractVector
+#     ctrl::AbstractVector
+# end
+abstract type Control <: AbstractQuantumDynamics end 
+
+abstract type AbstractDynamicsSolver end
+abstract type Expm <: AbstractDynamicsSolver end
+abstract type Ode <: AbstractDynamicsSolver end
+
+abstract type AbstractHamiltonian end 
+struct Hamiltonian{T1,T2,N} <: AbstractHamiltonian
+    H0
+    dH
+    params
 end
 
-mutable struct Lindblad_noisy_free{dyn_method} <: LindbladDynamicsData
-    H0::AbstractMatrix
-    dH::AbstractVector
-    ρ0::AbstractMatrix
-    tspan::AbstractVector
-    decay_opt::AbstractVector
-    γ::AbstractVector
+function Hamiltonian(H0::T, dH::Vector{T}) where T
+    N = length(dH)
+    return Hamiltonian{T, Vector{T}, N}(H0, dH, nothing)
 end
 
-
-mutable struct Lindblad_noiseless_timedepend{dyn_method} <: LindbladDynamicsData
-    H0::AbstractVector
-    dH::AbstractVector
-    ρ0::AbstractMatrix
-    tspan::AbstractVector
+function Hamiltonian(H0::Function, dH::Function, params::NTuple{N, R}) where {N, R}
+    return Hamiltonian{typeof(H0), typeof(dH), N}(H0, dH, params)
 end
 
-mutable struct Lindblad_noisy_timedepend{dyn_method} <: LindbladDynamicsData
-    H0::AbstractVector
-    dH::AbstractVector
-    ρ0::AbstractMatrix
-    tspan::AbstractVector
-    decay_opt::AbstractVector
-    γ::AbstractVector
-end
-
-mutable struct Lindblad_noiseless_controlled{dyn_method} <: LindbladDynamicsData
-    H0::AbstractVecOrMat
-    dH::AbstractVector
-    ρ0::AbstractMatrix
-    tspan::AbstractVector
-    Hc::AbstractVector
-    ctrl::AbstractVector
-end
-
-mutable struct Lindblad_noisy_controlled{dyn_method} <: LindbladDynamicsData
-    H0::AbstractVecOrMat
-    dH::AbstractVector
-    ρ0::AbstractMatrix
-    tspan::AbstractVector
-    decay_opt::AbstractVector
-    γ::AbstractVector
-    Hc::AbstractVector
-    ctrl::AbstractVector
-    abstol
-    reltol
+function Hamiltonian(H0::Function, dH::Function, params::Vector{R}) where {R}
+    N = length(params)
+    return Hamiltonian{typeof(H0), typeof(dH), N}(H0, dH, params)
 end
 
 
-mutable struct Lindblad_noiseless_free_pure{dyn_method} <: LindbladDynamicsData
-    H0::AbstractMatrix
-    dH::AbstractVector
-    ψ0::AbstractVector
+
+struct LindbladData <: AbstractDynamicsData
+    hamiltonian::AbstractHamiltonian
     tspan::AbstractVector
+    decay::Union{AbstractVector, Nothing}
+    Hc::Union{AbstractVector, Nothing}
+    ctrl::Union{AbstractVector, Nothing}
+    abstol::Real
+    reltol::Real
 end
 
-mutable struct Lindblad_noisy_free_pure{dyn_method} <: LindbladDynamicsData
-    H0::AbstractMatrix
-    dH::AbstractVector
-    ψ0::AbstractVector
-    tspan::AbstractVector
-    decay_opt::AbstractVector
-    γ::AbstractVector
-end
-
-mutable struct Lindblad_noiseless_timedepend_pure{dyn_method} <: LindbladDynamicsData
-    H0::AbstractVector
-    dH::AbstractVector
-    ψ0::AbstractVector
-    tspan::AbstractVector
-end
-
-mutable struct Lindblad_noisy_timedepend_pure{dyn_method} <: LindbladDynamicsData
-    H0::AbstractVector
-    dH::AbstractVector
-    ψ0::AbstractVector
-    tspan::AbstractVector
-    decay_opt::AbstractVector
-    γ::AbstractVector
-end
-mutable struct Lindblad_noiseless_controlled_pure{dyn_method} <: LindbladDynamicsData
-    H0::AbstractVecOrMat
-    dH::AbstractVector
-    ψ0::AbstractVector
-    tspan::AbstractVector
-    Hc::AbstractVector
-    ctrl::AbstractVector
-end
-
-mutable struct Lindblad_noisy_controlled_pure{dyn_method} <: LindbladDynamicsData
-    H0::AbstractVecOrMat
-    dH::AbstractVector
-    ψ0::AbstractVector
-    tspan::AbstractVector
-    decay_opt::AbstractVector
-    γ::AbstractVector
-    Hc::AbstractVector
-    ctrl::AbstractVector
-end
+LindbladData(hamiltonian, tspan; decay=nothing, Hc=nothing, ctrl=nothing, abstol=1e-6, reltol=1e-3) = LindbladData(hamiltonian, tspan, decay, Hc, ctrl, abstol, reltol)
 
 # Constructor of Lindblad dynamics
-Lindblad(
-    H0::AbstractMatrix,
-    dH::AbstractVector,
-    ρ0::AbstractMatrix,
-    tspan::AbstractVector;
-    dyn_method::Union{Symbol, String}=:Expm,
-) = Lindblad(Lindblad_noiseless_free{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan), :noiseless, :free)
+# NonDecay, NonControl
+function Lindblad(ham::Hamiltonian,  tspan::AbstractVector; dyn_method::Union{Symbol, String}=:Ode)
+    return Lindblad{typeof(ham), NonDecay, NonControl, eval(Symbol(dyn_method))}(LindbladData(ham, tspan), ham.params)
+end
 
-Lindblad(
-    H0::AbstractMatrix,
-    dH::AbstractVector,
-    ρ0::AbstractMatrix,
-    tspan::AbstractVector,
-    decay_opt::AbstractVector,
-    γ::AbstractVector;
-    dyn_method::Union{Symbol, String}=:Expm,
-) = Lindblad(Lindblad_noisy_free{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan, decay_opt, γ), :noisy, :free)
+function Lindblad(H0::T, dH::D, tspan::AbstractVector; dyn_method::Union{Symbol, String}=:Ode) where {T, D} 
+    ham = Hamiltonian(H0, dH)
+    return Lindblad{typeof(ham), NonDecay, NonControl, eval(Symbol(dyn_method))}(LindbladData(ham, tspan), nothing)
+end
 
-Lindblad(
-    H0::AbstractVector,
-    dH::AbstractVector,
-    ρ0::AbstractMatrix,
-    tspan::AbstractVector;
-    dyn_method::Union{Symbol, String}=:Expm,
-) = Lindblad(Lindblad_noiseless_timedepend{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan), :noiseless, :timedepend)
+# Decay, NonControl,
 
-Lindblad(
-    H0::AbstractVector,
-    dH::AbstractVector,
-    ρ0::AbstractMatrix,
-    tspan::AbstractVector,
-    decay_opt::AbstractVector,
-    γ::AbstractVector;
-    dyn_method::Union{Symbol, String}=:Expm,
-) = Lindblad(
-    Lindblad_noisy_timedepend{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan, decay_opt, γ),
-    :noisy,
-    :timedepend,
-)
+function Lindblad( ham::Hamiltonian, tspan::AbstractVector, decay::AbstractVector; dyn_method::Union{Symbol, String}=:Ode,)
+    return Lindblad{typeof(ham), Decay, NonControl, eval(Symbol(dyn_method))}(LindbladData(ham, tspan; decay=decay), nothing)
+end
 
-Lindblad(
-    H0::AbstractVecOrMat,
-    dH::AbstractVector,
-    Hc::AbstractVector,
-    ctrl::AbstractVector,
-    ρ0::AbstractMatrix,
-    tspan::AbstractVector;
-    dyn_method::Union{Symbol, String}=:Expm,
-) = Lindblad(
-    Lindblad_noiseless_controlled{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan, Hc, ctrl),
-    :noiseless,
-    :controlled,
-)
-Lindblad(
-    H0::AbstractVecOrMat,
-    dH::AbstractVector,
-    Hc::AbstractVector,
-    ctrl::AbstractVector,
-    ρ0::AbstractMatrix,
-    tspan::AbstractVector,
-    decay_opt::AbstractVector,
-    γ::AbstractVector;
-    dyn_method::Union{Symbol, String}=:Expm,
-    abstol=1e-6,
-    reltol=1e-3
-) = Lindblad(
-    Lindblad_noisy_controlled{eval(Symbol(dyn_method))}(H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl, abstol, reltol),
-    :noisy,
-    :controlled,
-)
+function Lindblad( H0::H, dH::D, tspan::AbstractVector, decay::AbstractVector; dyn_method::Union{Symbol, String}=:Ode,) where {H, D}
+    ham = Hamiltonian(H0, dH)
+    return Lindblad{typeof(ham), Decay, NonControl, eval(Symbol(dyn_method))}(LindbladData(ham, tspan; decay=decay), nothing)
+end
 
-Lindblad(
-    H0::AbstractMatrix,
-    dH::AbstractVector,
-    ψ0::AbstractVector,
-    tspan::AbstractVector;
-    dyn_method::Union{Symbol, String}=:Expm,
-) = Lindblad(Lindblad_noiseless_free_pure{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan), :noiseless, :free, :ket)
+# NonDecay, Control
+function Lindblad( H0::H, dH::D, tspan::AbstractVector, Hc::AbstractVector, ctrl::AbstractVector; dyn_method::Union{Symbol, String}=:Ode,) where {H, D}
+    ham = Hamiltonian(H0, dH)
+    return Lindblad{typeof(ham), NonDecay, Control, eval(Symbol(dyn_method))}(LindbladData(
+        ;hamiltonian=ham, tspan=tspan,  Hc = Hc, ctrl=ctrl, 
+    ), nothing)
+end
 
-Lindblad(
-    H0::AbstractMatrix,
-    dH::AbstractVector,
-    ψ0::AbstractVector,
-    tspan::AbstractVector,
-    decay_opt::AbstractVector,
-    γ::AbstractVector;
-    dyn_method::Union{Symbol, String}=:Expm,
-) = Lindblad(Lindblad_noisy_free_pure{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan, decay_opt, γ), :noisy, :free, :ket)
+function Lindblad( ham::Hamiltonian, tspan::AbstractVector, Hc::AbstractVector, ctrl::AbstractVector; dyn_method::Union{Symbol, String}=:Ode,)
+    return Lindblad{typeof(ham), NonDecay, Control, eval(Symbol(dyn_method))}(LindbladData(
+        ham, tspan;  Hc = Hc, ctrl=ctrl, 
+    ), nothing)
+end
 
-Lindblad(
-    H0::AbstractVector,
-    dH::AbstractVector,
-    ψ0::AbstractVector,
-    tspan::AbstractVector;
-    dyn_method::Union{Symbol, String}=:Expm,
-) = Lindblad(
-    Lindblad_noiseless_timedepend{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan),
-    :noiseless,
-    :timedepend,
-    :ket,
-)
+# Decay, Control
+function Lindblad(H0::H, dH::D, tspan::AbstractVector, Hc::AbstractVector, ctrl::AbstractVector,  decay::AbstractVector; dyn_method::Union{Symbol, String}=:Ode, ) where {H, D}
+    ham = Hamiltonian(H0, dH)
+    return Lindblad{typeof(ham), Decay, Control, eval(Symbol(dyn_method))}(LindbladData(
+        ham, tspan; decay = decay, Hc = Hc, ctrl = ctrl
+    ), nothing)
+end
 
-Lindblad(
-    H0::AbstractVector,
-    dH::AbstractVector,
-    ψ0::AbstractVector,
-    tspan::AbstractVector,
-    decay_opt::AbstractVector,
-    γ::AbstractVector;
-    dyn_method::Union{Symbol, String}=:Expm,
-) = Lindblad(
-    Lindblad_noisy_timedepend_pure{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan, decay_opt, γ),
-    :noisy,
-    :timedepend,
-    :ket,
-)
+function Lindblad(ham::Hamiltonian, tspan::AbstractVector, Hc::AbstractVector, ctrl::AbstractVector,  decay::AbstractVector; dyn_method::Union{Symbol, String}=:Ode, ) 
+    return Lindblad{typeof(ham), Decay, Control, eval(Symbol(dyn_method))}(LindbladData(
+        ham, tspan; decay = decay, Hc = Hc, ctrl = ctrl
+    ), nothing)
+end
 
-Lindblad(
-    H0::AbstractVecOrMat,
-    dH::AbstractVector,
-    Hc::AbstractVector,
-    ctrl::AbstractVector,
-    ψ0::AbstractVector,
-    tspan::AbstractVector;
-    dyn_method::Union{Symbol, String}=:Expm,
-) = Lindblad(
-    Lindblad_noiseless_controlled{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan, Hc, ctrl),
-    :noiseless,
-    :controlled,
-    :ket,
-)
+para_type(::Lindblad{Hamiltonian{T,D, 1}, TS}) where {T,D,TS} = :single_para
+para_type(::Lindblad{Hamiltonian{T,D, N}, TS}) where {T,D,N,TS} = :multi_para
 
-Lindblad(
-    H0::AbstractVecOrMat,
-    dH::AbstractVector,
-    Hc::AbstractVector,
-    ctrl::AbstractVector,
-    ψ0::AbstractVector,
-    tspan::AbstractVector,
-    decay_opt::AbstractVector,
-    γ::AbstractVector;
-    dyn_method::Union{Symbol, String}=:Expm,
-) = Lindblad(
-    Lindblad_noisy_controlled_pure{eval(Symbol(dyn_method))}(H0, dH, ψ0, tspan, decay_opt, γ, Hc, ctrl, abstol, reltol),
-    :noisy,
-    :controlled,
-    :ket,
-)
-
-Lindblad(data::LindbladDynamicsData, N, C, R) =
-    para_type(data) |> P -> Lindblad{((N, C, R, P) .|> eval)...}(data, N, C, R, P)
-Lindblad(data::LindbladDynamicsData, N, C) = Lindblad(data, N, C, :dm)
-
-para_type(data::LindbladDynamicsData) = length(data.dH) == 1 ? :single_para : :multi_para
-
-get_dim(d::Lindblad_noiseless_free) = size(d.ρ0, 1)
-get_dim(d::Lindblad_noisy_free) = size(d.ρ0, 1)
-get_dim(d::Lindblad_noiseless_controlled) = size(d.ρ0, 1)
-get_dim(d::Lindblad_noisy_controlled) = size(d.ρ0, 1)
-get_dim(d::Lindblad_noiseless_timedepend) = size(d.ρ0, 1)
-get_dim(d::Lindblad_noisy_timedepend) = size(d.ρ0, 1)
-get_dim(d::Lindblad_noiseless_free_pure) = size(d.ψ0, 1)
-get_dim(d::Lindblad_noisy_free_pure) = size(d.ψ0, 1)
-get_dim(d::Lindblad_noiseless_controlled_pure) = size(d.ψ0, 1)
-get_dim(d::Lindblad_noisy_controlled_pure) = size(d.ψ0, 1)
-get_dim(d::Lindblad_noiseless_timedepend_pure) = size(d.ψ0, 1)
-get_dim(d::Lindblad_noisy_timedepend_pure) = size(d.ψ0, 1)
-
-get_para(d::LindbladDynamicsData) = length(d.dH)
+get_param_num(::Type{Lindblad{H,TS}}) where {H,TS} = get_param_num(H)
+get_param_num(::Type{Hamiltonian{H,D,N}}) where {H,D,N} = N
+# get_param_num(::Scheme{S,L,M,E}) where {S,L,M,E} = get_param_num(L)
+# get_param_num(::Type{T}) where {T} = get_param_num(T)

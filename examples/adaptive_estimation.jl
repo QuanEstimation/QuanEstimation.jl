@@ -48,3 +48,10 @@ H, dH = QuanEstimation.BayesInput([x], H0_func, dH_func;
 # adaptive measurement
 QuanEstimation.Adapt([x], pout, rho0, tspan, H, dH; M=M, 
                         max_episode=100, dyn_method=:Expm, method="FOP")
+
+
+H0_func(x) = 0.5*(Sx*cos(x)+Sz*sin(x))
+dH_func(x) = [0.5*(-Sx*sin(x)+Sz*cos(x))]
+H0 = Hamiltonian(H0_func, (0, pi/2))
+dH = HamiltonianDerivative(dH_func, (0, pi/2))
+dynamics = Lindblad(tspan, rho0, H0, dH, Hc, decay)

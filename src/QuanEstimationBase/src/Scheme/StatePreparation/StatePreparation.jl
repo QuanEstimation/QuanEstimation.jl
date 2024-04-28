@@ -19,3 +19,5 @@ end
 function GeneralState(probe_hook::Function, args...)
 	return GeneralState(probe_hook(args...) )
 end
+
+state_data(state::GeneralState) = state.data

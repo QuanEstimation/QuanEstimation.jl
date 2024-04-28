@@ -201,14 +201,10 @@ function Adapt(x::AbstractVector, p, rho0::AbstractMatrix, K, dK; method="FOP", 
     if para_num == 1
         #### singleparameter senario ####
         p_num = length(p)
-        F = zeros(p_num)
-        rho_all = []
-        for hi in 1:p_num
-            rho_tp = sum([Ki*rho0*Ki' for Ki in K[hi]]) 
-            drho_tp = [sum([dKi*rho0*Ki' + Ki*rho0*dKi' for (Ki,dKi) in zip(K[hi],dKj)]) for dKj in dK[hi]]
-            F[hi] = CFIM(rho_tp, drho_tp[1], M; eps=eps)
-            append!(rho_all, [rho_tp])
-        end
+
+        rho_all = evolve_states(scheme)
+        F = CFIM(scheme, full_trajectory=true)
+        
         
         u = 0.0
         if method == "FOP"
