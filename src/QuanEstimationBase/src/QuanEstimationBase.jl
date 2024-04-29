@@ -3,11 +3,12 @@ export ControlOpt, ControlMeasurementOpt, CMopt, StateMeasurementOpt, SMopt, Sta
 export QFIM, CFIM, HCRB
 export QFIM_obj, CFIM_obj, HCRB_obj
 export AbstractScheme
+export basis
 export isCtrl, isNoisy
 export autoGRAPE, GRAPE, PSO, DE
 export GeneralScheme,Lindblad, Hamiltonian
 export GeneralEstimation, GeneralMeasurement, GeneralState, GeneralParameterization
-export AdaptiveStrategy, adapt!
+export AdaptiveStrategy, adapt!, Adapt_MZI
 export Output
 export QuanEstSystem
 export solve
@@ -37,7 +38,6 @@ include("OptScenario/OptScenario.jl")
 include("Common/Common.jl")
 include("Scheme/Scheme.jl")
 include("ObjectiveFunc/ObjectiveFunc.jl")
-include("Common/AdaptiveScheme.jl")
 include("output.jl")
 include("Algorithm/Algorithm.jl")
 include("run.jl")

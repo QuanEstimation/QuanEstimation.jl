@@ -1,5 +1,6 @@
 module QuanEstimation
-using QuanEstimationBase
-using NVMagnetometer
+using Reexport
+@reexport using QuanEstimationBase
+@reexport using NVMagnetometer
 
 end

@@ -6,6 +6,7 @@ version = "0.2.0"
 [deps]
 NVMagnetometer = "28fc4bcf-da03-4841-bbdb-88baaf311b30"
 QuanEstimationBase = "9769ca81-ed10-4016-bab9-e66dc61d4d60"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [extensions]
 
