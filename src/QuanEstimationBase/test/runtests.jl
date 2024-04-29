@@ -1,4 +1,4 @@
-using QuanEstimation
+using QuanEstimationBase
 using Test
 using Trapz
 using StableRNGs
@@ -37,9 +37,9 @@ end
         include("dynamics/test_kraus.jl")
     end
 
-    @testset "Lindblad Wrapper" begin
-        include("dynamics/test_lindblad_wrapper.jl")
-    end
+    # @testset "Lindblad Wrapper" begin
+    #     include("dynamics/test_lindblad_wrapper.jl")
+    # end
     
 end
 
@@ -61,9 +61,9 @@ end
         include("algorithms/test_PSO.jl")
     end
 
-    @testset "DDPG" begin
-        include("algorithms/test_DDPG.jl")
-    end
+    # @testset "DDPG" begin
+    #     include("algorithms/test_DDPG.jl")
+    # end
 end
 
 @testset "Utils" begin

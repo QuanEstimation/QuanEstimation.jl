@@ -1,4 +1,4 @@
-using QuanEstimation: ControlEnv, StateEnv, QFIM_obj
+using QuanEstimationBase: ControlEnv, StateEnv, QFIM_obj
 using StableRNGs, IntervalSets, Random
 using ReinforcementLearning:Space
 
@@ -28,9 +28,9 @@ function test_ControlEnv()
 	ctrl_bound = [-2.0, 2.0]
 
 	obj = QFIM_obj()
-	opt = QuanEstimation.ControlOpt(ctrl = ctrl, ctrl_bound = ctrl_bound, seed = 1234)
-	dynamics = QuanEstimation.Lindblad(opt, tspan, rho0, H0, dH, Hc, decay, dyn_method = :Expm)
-	output = QuanEstimation.Output(opt)
+	opt = QuanEstimationBase.ControlOpt(ctrl = ctrl, ctrl_bound = ctrl_bound, seed = 1234)
+	dynamics = QuanEstimationBase.Lindblad(opt, tspan, rho0, H0, dH, Hc, decay, dyn_method = :Expm)
+	output = QuanEstimationBase.Output(opt)
     state = rho0|>vec
     dstate = [zero(state)]
 	action_space = Space([opt.ctrl_bound[1] .. opt.ctrl_bound[2] for _ = 1:cnum])
@@ -105,9 +105,9 @@ function test_StateEnv()
 	ctrl_bound = [-2.0, 2.0]
 
 	obj = QFIM_obj()
-	opt = QuanEstimation.ControlOpt(ctrl = ctrl, ctrl_bound = ctrl_bound, seed = 1234)
-	dynamics = QuanEstimation.Lindblad(opt, tspan, rho0, H0, dH, Hc, decay, dyn_method = :Expm)
-	output = QuanEstimation.Output(opt)
+	opt = QuanEstimationBase.ControlOpt(ctrl = ctrl, ctrl_bound = ctrl_bound, seed = 1234)
+	dynamics = QuanEstimationBase.Lindblad(opt, tspan, rho0, H0, dH, Hc, decay, dyn_method = :Expm)
+	output = QuanEstimationBase.Output(opt)
     state = rho0|>vec
 	action_space = Space([opt.ctrl_bound[1] .. opt.ctrl_bound[2] for _ = 1:cnum])
     state_space = Space(fill(-1.0e35 .. 1.0e35, length(state)))

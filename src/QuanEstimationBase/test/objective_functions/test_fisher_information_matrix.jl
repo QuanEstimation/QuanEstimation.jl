@@ -1,4 +1,4 @@
-using QuanEstimation
+using QuanEstimationBase
 using Test
 using LinearAlgebra
 
@@ -24,15 +24,15 @@ M = [M1, M2]
 # time length for the evolution
 tspan = range(0., 50., length=200)
 # dynamics
-rho, drho = QuanEstimation.expm(tspan, rho0, H0, dH, decay)
+rho, drho = QuanEstimationBase.expm(tspan, rho0, H0, dH, decay)
 # calculation of the CFI and QFI
 Im, F = Matrix{Float64}[], Matrix{Float64}[]
 for ti in eachindex(tspan)
     # CFI
-    I_tp = QuanEstimation.CFIM(rho[ti], drho[ti], M)
+    I_tp = QuanEstimationBase.CFIM(rho[ti], drho[ti], M)
     append!(Im, [I_tp])
     # QFI
-    F_tp = QuanEstimation.QFIM(rho[ti], drho[ti])
+    F_tp = QuanEstimationBase.QFIM(rho[ti], drho[ti])
     append!(F, [F_tp])
 end
 
@@ -56,11 +56,11 @@ end
 U = exp(im*pi/8*sx)
 ρ_0 = rho[end]
 ρ_1 = U*ρ_0*U'
-@test QuanEstimation.QFIM(ρ_1, [U*dr*U' for dr in drho[end]]) ≈ F[end]
+@test QuanEstimationBase.QFIM(ρ_1, [U*dr*U' for dr in drho[end]]) ≈ F[end]
 
 # convexity
 p = 0.3
-@test (QuanEstimation.QFIM(
+@test (QuanEstimationBase.QFIM(
     p*ρ_0+(1-p)*ρ_1, 
     [p*dr+(1-p)*U*dr*U' for dr in drho[end]]
     ) 

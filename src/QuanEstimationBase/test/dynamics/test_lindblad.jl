@@ -1,4 +1,4 @@
-using QuanEstimation
+using QuanEstimationBase
 using Random
 
 # initial state
@@ -28,10 +28,10 @@ cnum = length(tspan)-1
 ctrl = [zeros(cnum) for _ in 1:length(Hc)]
 ctrl_bound = [-2., 2.]
 # choose the optimization type
-opt = QuanEstimation.ControlOpt(ctrl=ctrl, ctrl_bound=ctrl_bound, seed=1234)
+opt = QuanEstimationBase.ControlOpt(ctrl=ctrl, ctrl_bound=ctrl_bound, seed=1234)
 
 # test single parameter noisy controled
-dyn_sg_dm_decay = QuanEstimation.Lindblad(opt, tspan, rho0, H0, dH, Hc, decay, dyn_method=:Expm)
+dyn_sg_dm_decay = QuanEstimationBase.Lindblad(opt, tspan, rho0, H0, dH, Hc, decay, dyn_method=:Expm)
 
 @test dyn_sg_dm_decay.para_type == :single_para 
 @test dyn_sg_dm_decay.noise_type == :noisy

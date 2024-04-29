@@ -361,6 +361,22 @@ function CFIM(ρ::Matrix{T}, dρ::Matrix{T}; M=nothing, eps=GLOBAL_EPS) where {T
     real(F)
 end
 
+function CFIM(scheme::Scheme;
+    full_trajectory = false, 
+    LDtype = :SLD, 
+    exportLD ::Bool= false, 
+    eps = GLOBAL_EPS,
+)
+    M = meas_data(scheme)
+    if full_trajectory
+        rho, drho = expm(scheme)
+        return [CFIM(r, dr, M; eps = eps) for (r, dr) in zip(rho, drho)]
+    else 
+        rho, drho = evolve(scheme)
+        return CFIM(rho, drho, M; eps = eps)
+    end
+end
+
 ## QFI with exportLD
 """
 
@@ -416,20 +432,22 @@ end
 QFIM(sym::Symbol, args...; kwargs...) = QFIM(Val{sym}, args...; kwargs...)
 
 
-function QFIM(scheme::GeneralScheme;
+function QFIM(scheme::Scheme;
     full_trajectory = false, 
     LDtype = :SLD, 
     exportLD ::Bool= false, 
     eps = GLOBAL_EPS,
 )
     if full_trajectory
-        rho, drho = expm(scheme.Parameterization.data)
+        rho, drho = expm(scheme)
         return [QFIM(r, dr; LDtype = LDtype, exportLD = exportLD, eps = eps) for (r, dr) in zip(rho, drho)]
     else 
         rho, drho = evolve(scheme)
         return QFIM(rho, drho; LDtype = LDtype, exportLD = exportLD, eps = eps)
     end
 end
+
+
 
 """
 

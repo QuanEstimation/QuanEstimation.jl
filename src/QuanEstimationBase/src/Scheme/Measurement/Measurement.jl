@@ -3,10 +3,8 @@ abstract type AbstractPOVM end
 abstract type SIC_POVM <: AbstractPOVM end
 abstract type POVM <: AbstractPOVM end
 struct GeneralMeasurement{M<:AbstractPOVM} <: AbstractMeasurement
-	data::Union{Nothing, Vector{Matrix}, Int64}
+	data::Union{Nothing, Vector{Matrix{T}}, Int64} where {T}
 end
-
-struct SIC_POVM <: AbstractPOVM end
 
 function GeneralMeasurement(dim::Int64)
 	return GeneralMeasurement{SIC_POVM}(dim)

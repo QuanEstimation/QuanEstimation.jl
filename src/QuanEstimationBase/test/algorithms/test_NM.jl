@@ -1,4 +1,4 @@
-using QuanEstimation: NM
+using QuanEstimationBase: NM
 
 # Test the update! function
 @testset "update!" begin

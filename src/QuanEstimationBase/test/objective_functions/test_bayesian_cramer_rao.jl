@@ -1,5 +1,5 @@
 using Test
-using QuanEstimation: BCFIM, BQFIM, BQCRB, BCRB
+using QuanEstimationBase: BCFIM, BQFIM, BQCRB, BCRB
 
 function data_gen()
 	# prior distribution
@@ -32,7 +32,7 @@ function data_gen()
 	for i in eachindex(x)
 		H0_tp = 0.5 * B * omega0 * (sx * cos(x[i]) + sz * sin(x[i]))
 		dH_tp = [0.5 * B * omega0 * (-sx * sin(x[i]) + sz * cos(x[i]))]
-		rho_tp, drho_tp = QuanEstimation.expm(tspan, rho0, H0_tp, dH_tp)
+		rho_tp, drho_tp = QuanEstimationBase.expm(tspan, rho0, H0_tp, dH_tp)
 		rho[i], drho[i] = rho_tp[end], drho_tp[end]
 	end
 	return (;
@@ -47,7 +47,7 @@ end
 # Test for BCFIM
 function test_BCFIM()
 	(;x, p, rho, drho) = data_gen()
-	M = QuanEstimation.SIC(2)
+	M = QuanEstimationBase.SIC(2)
 	result = BCFIM([x], p, rho, drho, M = M)
 	# Add assertions here
 end

@@ -34,19 +34,19 @@ rho = Vector{Matrix{ComplexF64}}(undef, length(x))
 for i = 1:length(x) 
     H0_tp = H0_func(x[i])
     dH_tp = dH_func(x[i])
-    rho_tp, drho_tp = QuanEstimation.expm(tspan, rho0, H0_tp, dH_tp)
+    rho_tp, drho_tp = QuanEstimationBase.expm(tspan, rho0, H0_tp, dH_tp)
     rho[i] = rho_tp[end]
 end
 # Bayesian estimation
 Random.seed!(1234)
 y = [rand() >= 0.5 ? 0 : 1 for _ in 1:500]
-pout, xout = QuanEstimation.Bayes([x], p, rho, y, M=M, savefile=false)
+pout, xout = QuanEstimationBase.Bayes([x], p, rho, y, M=M, savefile=false)
 # generation of H and dH
-H, dH = QuanEstimation.BayesInput(
+H, dH = QuanEstimationBase.BayesInput(
     [x], H0_func, dH_func; channel="dynamics"
     )
 # adaptive measurement
-QuanEstimation.Adapt(
+QuanEstimationBase.Adapt(
     [x], pout, rho0, tspan, H, dH; 
     M=M, max_episode=100, dyn_method=:Expm, method="FOP"
     )

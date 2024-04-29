@@ -3,7 +3,7 @@ using Test
 # Test for Lindblad function with ControlOpt
 function test_Lindblad_ControlOpt()
     # Set up test parameters
-    opt = QuanEstimation.ControlOpt()
+    opt = QuanEstimationBase.ControlOpt()
     tspan = range(0.0, 10.0, length = 100)
     rho0 = 0.5 * ones(2, 2)
     omega = 1.0
@@ -16,7 +16,7 @@ function test_Lindblad_ControlOpt()
     decay = [[0.0 1.0; 0.0 0.0im], [0.0 0.0; 1.0 0.0im]]
     
     # Call the function
-    QuanEstimation.Lindblad(opt, tspan, rho0, H0, dH, Hc, decay)
+    QuanEstimationBase.Lindblad(opt, tspan, rho0, H0, dH, Hc, decay)
     
     # Add your assertions here to validate the result
     # @test ...
@@ -26,7 +26,7 @@ end
 # Test for Lindblad function with StateOpt
 function test_Lindblad_StateOpt()
     # Set up test parameters
-    opt = QuanEstimation.StateOpt()
+    opt = QuanEstimationBase.StateOpt()
     tspan = range(0.0, 10.0, length = 100)
     rho0 = 0.5 * ones(2, 2)
     omega = 1.0
@@ -35,7 +35,7 @@ function test_Lindblad_StateOpt()
     dH = [0.5 * sz]
     
     # Call the function
-    QuanEstimation.Lindblad(opt, tspan, H0, dH)
+    QuanEstimationBase.Lindblad(opt, tspan, H0, dH)
     
     # Add your assertions here to validate the result
     # @test ...
@@ -53,16 +53,16 @@ function test_Lindblad_MeasurementOpt()
     H0 = 0.5 * omega * sz
     dH = [0.5 * sz]
     dim = size(rho0, 1)
-    POVM_basis = QuanEstimation.SIC(dim)
+    POVM_basis = QuanEstimationBase.SIC(dim)
     opts = [
-        QuanEstimation.MeasurementOpt(;
+        QuanEstimationBase.MeasurementOpt(;
         mtype = :Projection,
         ),
-        QuanEstimation.MeasurementOpt(;
+        QuanEstimationBase.MeasurementOpt(;
         mtype = :LC,
         POVM_basis = POVM_basis,
         ),
-        QuanEstimation.MeasurementOpt(;
+        QuanEstimationBase.MeasurementOpt(;
         mtype = :Rotation, 
         POVM_basis = POVM_basis,
         )
@@ -70,7 +70,7 @@ function test_Lindblad_MeasurementOpt()
 
     # Call the function for each opt
     for opt in opts
-        QuanEstimation.Lindblad(opt, tspan, rho0, H0, dH)
+        QuanEstimationBase.Lindblad(opt, tspan, rho0, H0, dH)
         # Add your assertions here to validate the result
         # @test ...
     end
@@ -80,14 +80,14 @@ end
 
 function test_Lindblad_StateControlOpt()
     # Set up test parameters
-    opt = QuanEstimation.StateControlOpt()
+    opt = QuanEstimationBase.StateControlOpt()
     tspan = range(0.0, 10.0, length = 100)
     H0 = [1.0 0.0im; 0.0 -1.0]
     dH = [0.5 * H0]
     Hc = [H0]
     
     # Call the function
-    QuanEstimation.Lindblad(opt, tspan, H0, dH, Hc)
+    QuanEstimationBase.Lindblad(opt, tspan, H0, dH, Hc)
     
     # Add your assertions here to validate the result
     # @test ...
@@ -97,7 +97,7 @@ end
 # Test for Lindblad function with ControlMeasurementOpt
 function test_Lindblad_ControlMeasurementOpt()
     # Set up test parameters
-    opt = QuanEstimation.ControlMeasurementOpt()
+    opt = QuanEstimationBase.ControlMeasurementOpt()
     tspan = range(0.0, 10.0, length = 100)
     ρ₀ = 0.5 * ones(2, 2)
     H0 = [1.0 0.0im; 0.0 -1.0]
@@ -115,7 +115,7 @@ end
 # Test for Lindblad function with StateMeasurementOpt
 function test_Lindblad_StateMeasurementOpt()
     # Set up test parameters
-    opt = QuanEstimation.StateMeasurementOpt()
+    opt = QuanEstimationBase.StateMeasurementOpt()
     tspan = range(0.0, 10.0, length = 100)
     rho0 = 0.5 * ones(2, 2)
     omega = 1.0
@@ -125,7 +125,7 @@ function test_Lindblad_StateMeasurementOpt()
     Hc = [sz]
     
     # Call the function
-    QuanEstimation.Lindblad(opt, tspan, H0, dH)
+    QuanEstimationBase.Lindblad(opt, tspan, H0, dH)
     
     # Add your assertions here to validate the result
     # @test ...
@@ -135,7 +135,7 @@ end
 # Test for Lindblad function with SCMopt
 function test_Lindblad_SCMopt()
     # Set up test parameters
-    opt = QuanEstimation.SCMopt()
+    opt = QuanEstimationBase.SCMopt()
     tspan = range(0.0, 10.0, length = 100)
     rho0 = 0.5 * ones(2, 2)
     omega = 1.0
@@ -146,7 +146,7 @@ function test_Lindblad_SCMopt()
     M = [sz]
     
     # Call the function
-    QuanEstimation.Lindblad(opt, tspan, H0, dH, Hc)
+    QuanEstimationBase.Lindblad(opt, tspan, H0, dH, Hc)
     
     # Add your assertions here to validate the result
     # @test ...

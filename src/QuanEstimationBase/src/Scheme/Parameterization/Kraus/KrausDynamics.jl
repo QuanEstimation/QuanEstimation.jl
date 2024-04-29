@@ -5,7 +5,7 @@
 
 Evolution of pure states under time-independent Hamiltonian without noise and controls
 """
-function evolve(dynamics::Kraus{ket})
+function evolve(dynamics::Kraus{Ket})
     (; ψ0, K, dK) = dynamics.data
     ρ0 = ψ0 * ψ0'
     K_num = length(K)
@@ -23,7 +23,7 @@ end
 
 Evolution of density matrix under time-independent Hamiltonian without noise and controls.
 """
-function evolve(dynamics::Kraus{dm})
+function evolve(dynamics::Kraus{DensityMatrix})
     (; ρ0, K, dK) = dynamics.data
     K_num = length(K)
     para_num = length(dK[1])

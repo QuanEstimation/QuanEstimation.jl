@@ -1,6 +1,6 @@
 using Test
 using Random
-using QuanEstimation: ControlOpt, StateOpt, Mopt_Projection, Mopt_LinearComb, Mopt_Rotation, StateControlOpt, ControlMeasurementOpt, StateMeasurementOpt, StateControlMeasurementOpt
+using QuanEstimationBase: ControlOpt, StateOpt, Mopt_Projection, Mopt_LinearComb, Mopt_Rotation, StateControlOpt, ControlMeasurementOpt, StateMeasurementOpt, StateControlMeasurementOpt
 
 # Test for ControlOpt
 function test_ControlOpt()
@@ -31,7 +31,7 @@ end
 
 # Test for Mopt_Projection
 function test_Mopt_Projection()
-    M = QuanEstimation.SIC(2)
+    M = QuanEstimationBase.SIC(2)
     seed = 1234
     opt = Mopt_Projection(M = M, seed = seed)
     @test opt.M == M
@@ -40,7 +40,7 @@ end
 
 # Test for Mopt_LinearComb
 function test_Mopt_LinearComb()
-    POVM_basis = QuanEstimation.SIC(2)
+    POVM_basis = QuanEstimationBase.SIC(2)
     M_num = 2
     seed = 1234
     opt = Mopt_LinearComb(POVM_basis=POVM_basis, M_num=M_num, seed=seed)
@@ -51,7 +51,7 @@ end
 
 # Test for Mopt_Rotation
 function test_Mopt_Rotation()
-    POVM_basis = QuanEstimation.SIC(2)
+    POVM_basis = QuanEstimationBase.SIC(2)
     seed = 1234
     opt = Mopt_Rotation(POVM_basis=POVM_basis, seed=seed)
     @test opt.POVM_basis == POVM_basis
@@ -93,7 +93,7 @@ end
 
 # # Test for update! function in Mopt_LinearComb
 # function test_update_Mopt_LinearComb()
-#     opt = Mopt_LinearComb(POVM_basis=QuanEstimation.SIC(2), M_num=2, seed=1234)
+#     opt = Mopt_LinearComb(POVM_basis=QuanEstimationBase.SIC(2), M_num=2, seed=1234)
 #     alg = PSO(max_episode=10, p_num=5, ini_particle=([opt.B],), c0=0.1, c1=0.2, c2=0.3)
 #     obj = ...
 #     dynamics = ...
@@ -104,7 +104,7 @@ end
 
 # # Test for update! function in Mopt_Rotation
 # function test_update_Mopt_Rotation()
-#     opt = Mopt_Rotation(POVM_basis=QuanEstimation.SIC(2), seed=1234)
+#     opt = Mopt_Rotation(POVM_basis=QuanEstimationBase.SIC(2), seed=1234)
 #     alg = PSO(max_episode=10, p_num=5, ini_particle=([opt.s],), c0=0.1, c1=0.2, c2=0.3)
 #     obj = ...
 #     dynamics = ...

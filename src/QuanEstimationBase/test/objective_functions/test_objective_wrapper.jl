@@ -1,5 +1,5 @@
 using Test
-using QuanEstimation: AbstractDynamics, QFIM_obj, CFIM_obj, HCRB_obj, get_para, get_dim, LDtype, para_type, SIC, Objective
+using QuanEstimationBase: AbstractDynamics, QFIM_obj, CFIM_obj, HCRB_obj, get_para, get_dim, LDtype, para_type, SIC, Objective
 
 # Test for Objective with QFIM_obj
 function test_Objective_QFIM_obj()
@@ -37,7 +37,7 @@ end
 
 function mock_dynamics()
     # Set up test parameters
-    opt = QuanEstimation.ControlOpt()
+    opt = QuanEstimationBase.ControlOpt()
     tspan = range(0.0, 10.0, length = 100)
     rho0 = 0.5 * ones(2, 2)
     omega = 1.0

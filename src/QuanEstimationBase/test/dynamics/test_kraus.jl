@@ -10,7 +10,7 @@ dK1 = [1. 0.; 0. -0.5/sqrt(1-gamma)]
 dK2 = [0. 0.5/sqrt(gamma); 0. 0.]
 dK = [[dK1], [dK2]]
 # parameterization process
-Kraus = QuanEstimation.Kraus(rho0, K, dK)
-rho, drho = QuanEstimation.evolve(Kraus)
+Kraus = QuanEstimationBase.Kraus(rho0, K, dK)
+rho, drho = QuanEstimationBase.evolve(Kraus)
 
 @test isposdef(rho)

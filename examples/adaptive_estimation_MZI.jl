@@ -11,19 +11,19 @@ rho0 = psi*psi'
 # prior distribution
 x = range(-pi, pi, length=100)
 p = (1.0/(x[end]-x[1]))*ones(length(x))
-apt = QuanEstimation.Adapt_MZI(x, p, rho0)
+apt = Adapt_MZI(x, p, rho0)
 
 #================online strategy=========================#
-QuanEstimation.online(apt, target=:sharpness, output="phi")
+online(apt, target=:sharpness, output="phi")
 
 #================offline strategy=========================#
 # # algorithm: DE
-# alg = QuanEstimation.DE(p_num=10, ini_population=missing, 
+# alg = DE(p_num=10, ini_population=missing, 
 #                         max_episode=1000, c=1.0, cr=0.5)
-# QuanEstimation.offline(apt, alg, target=:sharpness, seed=1234)
+# offline(apt, alg, target=:sharpness, seed=1234)
 
 # # algorithm: PSO
-# alg = QuanEstimation.PSO(p_num=10, ini_particle=missing,  
+# PSO(p_num=10, ini_particle=missing,  
 #                          max_episode=[1000,100], c0=1.0, 
 #                          c1=2.0, c2=2.0)
-# QuanEstimation.offline(apt, alg, target=:sharpness, seed=1234)
+# offline(apt, alg, target=:sharpness, seed=1234)

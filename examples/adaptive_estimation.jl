@@ -1,20 +1,18 @@
-using QuanEstimation
+using Revise
+using QuanEstimationBase
 using Random
 using StatsBase
-
-# free Hamiltonian
-function H0_func(x)
-    return 0.5*B*omega0*(sx*cos(x[1])+sz*sin(x[1]))
-end
-# derivative of free Hamiltonian in x
-function dH_func(x)
-    return [0.5*B*omega0*(-sx*sin(x[1])+sz*cos(x[1]))]
-end
 
 B, omega0 = pi/2.0, 1.0
 sx = [0. 1.; 1. 0.0im]
 sy = [0. -im; im 0.]
 sz = [1. 0.0im; 0. -1.]
+
+# free Hamiltonian
+H0_func(x) = 0.5*(sx*cos(x[1])+sz*sin(x[1]))
+# derivative of free Hamiltonian in x
+dH_func(x) = [0.5*(-sx*sin(x[1])+sz*cos(x[1]))]
+
 # initial state
 rho0 = 0.5*ones(2, 2)
 # measurement 
@@ -22,36 +20,25 @@ M1 = 0.5*[1.0+0.0im  1.; 1.  1.]
 M2 = 0.5*[1.0+0.0im -1.; -1.  1.]
 M = [M1, M2]
 # time length for the evolution
-tspan = range(0., stop=1., length=1000) |>Vector
+tspan = range(0., stop=1., length=1000) |> Vector
 # prior distribution
-x = range(-0.25*pi+0.1, stop=3.0*pi/4.0-0.1, length=100) |>Vector
+x = range(-pi/4+0.1, stop=3.0*pi/4.0-0.1, length=100) |> Vector
 p = (1.0/(x[end]-x[1]))*ones(length(x))
 # dynamics
 rho = Vector{Matrix{ComplexF64}}(undef, length(x))
 for i = 1:length(x) 
     H0_tp = H0_func(x[i])
     dH_tp = dH_func(x[i])
-    rho_tp, drho_tp = QuanEstimation.expm(tspan, rho0, H0_tp, dH_tp)
+    rho_tp, drho_tp = expm(tspan, rho0, H0_tp, dH_tp)
     rho[i] = rho_tp[end]
 end
-# Bayesian estimation
+# pre-estimation
 Random.seed!(1234)
-y = [0 for i in 1:500]
-res_rand = sample(1:length(y), 125, replace=false)
-for i in 1:length(res_rand)
-    y[res_rand[i]] = 1
-end
-pout, xout = QuanEstimation.Bayes([x], p, rho, y, M=M, savefile=false)
-# generation of H and dH
-H, dH = QuanEstimation.BayesInput([x], H0_func, dH_func; 
-                                  channel="dynamics")
+y = [rand() > 0.7 ? 0 : 1 for _ in 1:500] 
+pout, xout = Bayes([x], p, rho, y, M=M, savefile=false)
+
+dynamics = Lindblad(Hamiltonian(H0_func, dH_func), tspan; dyn_method=:Expm)
+strategy = AdaptiveStrategy([x], pout)
+scheme = GeneralScheme(;probe=rho0,param=dynamics,measurement=M, strat=strategy)
 # adaptive measurement
-QuanEstimation.Adapt([x], pout, rho0, tspan, H, dH; M=M, 
-                        max_episode=100, dyn_method=:Expm, method="FOP")
-
-
-H0_func(x) = 0.5*(Sx*cos(x)+Sz*sin(x))
-dH_func(x) = [0.5*(-Sx*sin(x)+Sz*cos(x))]
-H0 = Hamiltonian(H0_func, (0, pi/2))
-dH = HamiltonianDerivative(dH_func, (0, pi/2))
-dynamics = Lindblad(tspan, rho0, H0, dH, Hc, decay)
+adapt!(scheme; max_episode=100, method="FOP")

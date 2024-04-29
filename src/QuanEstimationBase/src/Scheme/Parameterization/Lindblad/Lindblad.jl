@@ -1,18 +1,19 @@
 
+# dynamics in Lindblad form
+abstract type AbstractDynamics <: AbstractParameterization end
+
+abstract type AbstractDynamicsData end
+
+mutable struct Lindblad{H, D, C, S, P} <: AbstractDynamics
+    data::AbstractDynamicsData
+    params::Union{Nothing, AbstractVector}
+end
 
 # Lindblad(data::D) where D = Lindblad{D}(data, nothing)
 
 include("LindbladData.jl")
 include("LindbladDynamics.jl")
-include("LindbladWrapper.jl")
-
-abstract type AbstractDynamics <: AbstractParameterization end
-# dynamics in Lindblad form
-
-mutable struct Lindblad{H, D, C, S} <: AbstractDynamics
-    data::AbstractDynamicsData
-    params::Union{Nothing, AbstractVector}
-end
+# include("LindbladWrapper.jl")
 
 function set_ctrl(dynamics::Lindblad, ctrl)
     temp = deepcopy(dynamics)

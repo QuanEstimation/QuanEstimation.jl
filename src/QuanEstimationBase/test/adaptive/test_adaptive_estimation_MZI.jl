@@ -6,8 +6,8 @@ N = 3
 # probe state
 psi = sum([
       sin(k*pi/(N+2)) * kron(
-            QuanEstimation.basis(N+1,k), 
-            QuanEstimation.basis(N+1, N-k+2)
+            QuanEstimationBase.basis(N+1,k), 
+            QuanEstimationBase.basis(N+1, N-k+2)
             ) for k in 1:(N+1)
       ]) |> sparse
 psi = psi*sqrt(2/(2+N))
@@ -16,14 +16,14 @@ rho0 = psi*psi'
 # prior distribution
 x = range(-pi, pi, length=5)
 p = (1.0/(x[end]-x[1])) * ones(length(x))
-apt = QuanEstimation.Adapt_MZI(x, p, rho0)
+apt = QuanEstimationBase.Adapt_MZI(x, p, rho0)
 
 #================online strategy=========================#
-# QuanEstimation.online(apt, target=:sharpness, output="phi")
+# QuanEstimationBase.online(apt, target=:sharpness, output="phi")
 
 #================offline strategy=========================#
 # algorithm: DE
-alg = QuanEstimation.DE(
+alg = QuanEstimationBase.DE(
       p_num=10, 
       ini_population=missing, 
       max_episode=10, 
@@ -31,7 +31,7 @@ alg = QuanEstimation.DE(
       cr=0.5
       )
 
-QuanEstimation.offline(
+QuanEstimationBase.offline(
       apt, 
       alg;
       target=:sharpness, 
@@ -39,7 +39,7 @@ QuanEstimation.offline(
       )
 
 # algorithm: PSO
-alg = QuanEstimation.PSO(;
+alg = QuanEstimationBase.PSO(;
       p_num=10, 
       ini_particle=missing,  
       max_episode=[10,10], 
@@ -47,7 +47,7 @@ alg = QuanEstimation.PSO(;
       c1=2.0, 
       c2=2.0)
 
-QuanEstimation.offline(
+QuanEstimationBase.offline(
       apt, 
       alg;
       target=:sharpness, 

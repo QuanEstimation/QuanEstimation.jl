@@ -42,7 +42,7 @@ rho = Vector{Matrix{ComplexF64}}(undef, length(x))
 for i = 1:length(x) 
     H0_tp = H0_func(x[i])
     dH_tp = dH_func(x[i])
-    rho_tp, drho_tp = QuanEstimation.expm(tspan, rho0, H0_tp, dH_tp)
+    rho_tp, drho_tp = QuanEstimationBase.expm(tspan, rho0, H0_tp, dH_tp)
     rho[i] = rho_tp[end]
 end
 
@@ -51,7 +51,7 @@ Random.seed!(1234)
 y = [rand() >= 0.5 ? 0 : 1 for _ in 1:5]
 
 #===============Maximum a posteriori estimation===============#
-pout, xout = QuanEstimation.Bayes(
+pout, xout = QuanEstimationBase.Bayes(
     [x], p, rho, y; 
     M=M, 
     estimator="MAP",
@@ -59,7 +59,7 @@ pout, xout = QuanEstimation.Bayes(
     )
 
 #===============Maximum likelihood estimation===============#
-Lout, xout = QuanEstimation.MLE(
+Lout, xout = QuanEstimationBase.MLE(
     [x], rho, y;
     M=M,
     savefile=false

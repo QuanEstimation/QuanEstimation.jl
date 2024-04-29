@@ -1,14 +1,18 @@
 module QuanEstimationBase
 export ControlOpt, ControlMeasurementOpt, CMopt, StateMeasurementOpt, SMopt, StateControlMeasurementOpt, SCMopt, opt_target, Htot
 export QFIM, CFIM, HCRB
+export QFIM_obj, CFIM_obj, HCRB_obj
 export AbstractScheme
 export isCtrl, isNoisy
-export Lindblad
+export autoGRAPE, GRAPE, PSO, DE
+export GeneralScheme,Lindblad, Hamiltonian
+export GeneralEstimation, GeneralMeasurement, GeneralState, GeneralParameterization
+export AdaptiveStrategy, adapt!
 export Output
-export autoGRAPE
-export QFIM_obj
 export QuanEstSystem
 export solve
+export expm, ode
+export Bayes
 using Random
 using LinearAlgebra
 using Zygote

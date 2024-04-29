@@ -239,35 +239,67 @@ function expm(
         end
         ctrl0 = ctrl
     end
-    para_num = length(dH)
+    param_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl0[1])) |> Int
     ## TODO reconstruct repeat feature
     ctrl = [repeat(ctrl0[i], outer=ctrl_interval) for i = 1:ctrl_num]
 
     H = Htot(H0, Hc, ctrl)
-    dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
+    dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
 
     Δt = tspan[2] - tspan[1]
 
     ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i = 1:length(tspan)]
     ∂ρt_∂x_all = [
-        [Vector{ComplexF64}(undef, (length(H0))^2) for j = 1:para_num] for
+        [Vector{ComplexF64}(undef, (length(H0))^2) for j = 1:param_num] for
         i = 1:length(tspan)
     ]
     ρt_all[1] = ρ0 |> vec
-    for pj = 1:para_num
+    for pj = 1:param_num
         ∂ρt_∂x_all[1][pj] = ρt_all[1] |> zero
     end
 
     for t = 2:length(tspan)
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
-        for pj = 1:para_num
+        for pj = 1:param_num
             ∂ρt_∂x_all[t][pj] = -im * Δt * dH_L[pj] * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1][pj]
         end
     end
     ρt_all |> vec2mat, ∂ρt_∂x_all |> vec2mat
+end
+
+function expm(scheme::Scheme{DensityMatrix, Lindblad{HT, NonDecay, NonControl, S}, M, E}) where {HT, M, E, S}
+    (; hamiltonian, tspan) = param_data(scheme)
+    ρ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(hamiltonian)
+
+    return expm(tspan, ρ0, H0, dH)
+end
+
+function expm(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, NonControl, S}, M, E}) where {HT, M, E, S}
+    (; hamiltonian, tspan, decay) = param_data(scheme)
+    ρ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(hamiltonian)
+
+    return expm(tspan, ρ0, H0, dH; decay=decay)
+end
+
+function expm(scheme::Scheme{DensityMatrix, Lindblad{HT, NonDecay, Control, S}, M, E}) where {HT, M, E, S}
+    (; hamiltonian, tspan, Hc, ctrl) = param_data(scheme)
+    ρ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(hamiltonian)
+
+    return expm(tspan, ρ0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
+end
+
+function expm(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, Control, S}, M, E}) where {HT, M, E, S}
+    (; hamiltonian, tspan, decay, Hc, ctrl) = param_data(scheme)
+    ρ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(hamiltonian)
+
+    return expm(tspan, ρ0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
 end
 
 function expm_py(
@@ -314,44 +346,42 @@ function expm_py(
     ctrl::AbstractVector,
 )
 
-    para_num = length(dH)
+    param_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
     ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
 
     H = Htot(H0, Hc, ctrl)
-    dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
+    dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
 
     Δt = tspan[2] - tspan[1]
 
     ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i = 1:length(tspan)]
     ∂ρt_∂x_all = [
-        [Vector{ComplexF64}(undef, (length(H0))^2) for j = 1:para_num] for
+        [Vector{ComplexF64}(undef, (length(H0))^2) for j = 1:param_num] for
         i = 1:length(tspan)
     ]
     ρt_all[1] = ρ0 |> vec
-    for pj = 1:para_num
+    for pj = 1:param_num
         ∂ρt_∂x_all[1][pj] = ρt_all[1] |> zero
     end
 
     for t = 2:length(tspan)
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
-        for pj = 1:para_num
+        for pj = 1:param_num
             ∂ρt_∂x_all[t][pj] = -im * Δt * dH_L[pj] * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1][pj]
         end
     end
     ρt_all |> vec2mat, ∂ρt_∂x_all |> vec2mat
 end
 
-# expm(dynamics::Lindblad) = expm(dynamics.data...)
-# expm(data::Lindblad_noisy_controlled) = expm(data.tspan, data.ρ0, data.H0, data.dH, [[data.decay_opt[1], data.γ[1]]], data.Hc, data.ctrl)
-# expm(tspan, ρ0, H0, dH, decay) = 
-#     expm(tspan, ρ0, H0, dH; decay=decay)
-# expm(tspan, ρ0, H0, dH, decay, Hc) = 
-#     expm(tspan, ρ0, H0, dH; decay=decay, Hc=Hc)
-# expm(tspan, ρ0, H0, dH, decay, Hc, ctrl) = 
-#     expm(tspan, ρ0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
+expm(tspan, ρ0, H0, dH, decay) = 
+    expm(tspan, ρ0, H0, dH; decay=decay)
+expm(tspan, ρ0, H0, dH, decay, Hc) = 
+    expm(tspan, ρ0, H0, dH; decay=decay, Hc=Hc)
+expm(tspan, ρ0, H0, dH, decay, Hc, ctrl) = 
+    expm(tspan, ρ0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
 
 function secondorder_derivative(
     tspan::AbstractVector,
@@ -365,27 +395,27 @@ function secondorder_derivative(
     ctrl::Vector{Vector{R}},
 ) where {T<:Complex,R<:Real}
 
-    para_num = length(dH)
+    param_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
     ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
 
     H = Htot(H0, Hc, ctrl)
-    dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
-    dH_L = [liouville_commu(dH_∂x[i]) for i = 1:para_num]
+    dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
+    dH_L = [liouville_commu(dH_∂x[i]) for i = 1:param_num]
 
     ρt = ρ0 |> vec
-    ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
-    ∂2ρt_∂x = [ρt |> zero for i = 1:para_num]
+    ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
+    ∂2ρt_∂x = [ρt |> zero for i = 1:param_num]
     for t = 2:length(tspan)
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
-        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
+        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
         ∂2ρt_∂x =
             [
                 (-im * Δt * dH_L[i] + Δt * Δt * dH_L[i] * dH_L[i]) * ρt -
-                2 * im * Δt * dH_L[i] * ∂ρt_∂x[i] for i = 1:para_num
+                2 * im * Δt * dH_L[i] * ∂ρt_∂x[i] for i = 1:param_num
             ] + [exp_L] .* ∂2ρt_∂x
     end
     # ρt = exp(vec(H[end])' * zero(ρt)) * ρt
@@ -527,7 +557,7 @@ function ode(
         end
         ctrl0 = ctrl
     end
-    para_num = length(dH)
+    param_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = (length(tspan) / length(ctrl0[1])) |> Int
     ctrl = [repeat(ctrl0[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
@@ -544,11 +574,11 @@ function ode(
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_tp = []
-    for pa in 1:para_num
+    for pa in 1:param_num
         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), (pa, ctrl,))
         push!(∂ρt_tp, solve(prob_∂ρ, Tsit5(), saveat=dt).u)
     end
-    ∂ρt = [[∂ρt_tp[i][j] for i in 1:para_num] for j in 1:length(tspan)]
+    ∂ρt = [[∂ρt_tp[i][j] for i in 1:param_num] for j in 1:length(tspan)]
     ρt, ∂ρt
 end
 
@@ -558,6 +588,38 @@ ode(tspan, ρ0, H0, dH, decay, Hc) =
     ode(tspan, ρ0, H0, dH; decay=decay, Hc=Hc)
 ode(tspan, ρ0, H0, dH, decay, Hc, ctrl) = 
     ode(tspan, ρ0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
+
+function ode(scheme::Scheme{DensityMatrix, Lindblad{HT, NonDecay, NonControl, S}, M, E}) where {HT, M, E, S}
+    (; hamiltonian, tspan) = param_data(scheme)
+    ρ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(hamiltonian)
+
+    return ode(tspan, ρ0, H0, dH)
+end
+
+function ode(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, NonControl, S}, M, E}) where {HT, M, E, S}
+    (; hamiltonian, tspan, decay) = param_data(scheme)
+    ρ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(hamiltonian)
+
+    return ode(tspan, ρ0, H0, dH; decay=decay)
+end
+
+function ode(scheme::Scheme{DensityMatrix, Lindblad{HT, NonDecay, Control, S}, M, E}) where {HT, M, E, S}
+    (; hamiltonian, tspan, Hc, ctrl) = param_data(scheme)
+    ρ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(hamiltonian)
+
+    return ode(tspan, ρ0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
+end
+
+function ode(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, Control, S}, M, E}) where {HT, M, E, S}
+    (; hamiltonian, tspan, decay, Hc, ctrl) = param_data(scheme)
+    ρ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(hamiltonian)
+
+    return ode(tspan, ρ0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
+end
 
 function ode_py(
     tspan,
@@ -599,7 +661,7 @@ function ode_py(
     Hc::AbstractVector,
     ctrl::AbstractVector,
     )
-    para_num = length(dH)
+    param_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan)-1) / length(ctrl[1])) |> Int
     ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |>Array for i = 1:ctrl_num]
@@ -616,36 +678,48 @@ function ode_py(
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_tp = []
-    for pa in 1:para_num
+    for pa in 1:param_num
         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), (pa, ctrl,))
         push!(∂ρt_tp, solve(prob_∂ρ, Tsit5(), saveat=dt).u)
     end
-    ∂ρt = [[∂ρt_tp[i][j] for i in 1:para_num] for j in 1:length(tspan)]
+    ∂ρt = [[∂ρt_tp[i][j] for i in 1:param_num] for j in 1:length(tspan)]
     ρt, ∂ρt
 end
 
 
+function evaluate_hamiltonian(scheme::Scheme{S,Lindblad{HT, DT, CT, ST, Nothing},TS}) where {S,HT,DT,CT,ST,TS}
+    (;hamiltonian,) = param_data(scheme)
+    return evaluate_hamiltonian(hamiltonian)
+end
 
-function evaluate(ham::Hamiltonian{T, Vector{T}, N}) where {T, N}
+function evaluate_hamiltonian(scheme::Scheme)
+    (;hamiltonian,) = param_data(scheme)
+    params = scheme.Parameterization.params
+    H0 = hamiltonian.H0([params...])
+    dH = hamiltonian.dH([params...])
+    return H0, dH
+end
+
+function evaluate_hamiltonian(ham::Hamiltonian{T, Vector{T}, N}) where {T, N}
     H0 = getfield(ham, :H0)
     dH = getfield(ham, :dH)
     return H0, dH
 end
 
-function evaluate(ham::Hamiltonian{F1, F2, N}) where {F1,F2, N}
+function evaluate_hamiltonian(ham::Hamiltonian{F1, F2, N}) where {F1,F2, N}
     params = getfield(ham, :params)
-    H0 = ham.H0(params...)
-    dH = ham.dH(params...)
+    H0 = ham.H0([params...])
+    dH = ham.dH([params...])
     return H0, dH
 end
 
 #### evolution of pure states under time-independent Hamiltonian without noise and controls ####
-function _evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Matrix{T}, Vector{Matrix{T}}, N}, NonDecay, NonControl, Expm}, M, E}) where {T, N, M, E}
-    (; hamiltonian, tspan) = param_data(scheme)
+function evolve(scheme::Scheme{Ket, Lindblad{HT, NonDecay, NonControl, Expm, P}, M, E}) where {HT,M,E,P}
+    (; tspan) = param_data(scheme)
     ψ0 = state_data(scheme)
-    H0, dH = evaluate(hamiltonian)
+    H0, dH = evaluate_hamiltonian(scheme)
+    param_num = length(dH)
 
-    param_num = N
     Δt = tspan[2] - tspan[1]
     U = exp(-im * H0 * Δt)
     ψt = ψ0
@@ -659,14 +733,13 @@ function _evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Matrix{T}, Vector{Matr
     ρt, ∂ρt_∂x
 end
 
-function _evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Matrix{T}, Vector{Matrix{T}}, N}, NonDecay, NonControl, Ode}, M, E}) where {T, N, M, E}
-    (; hamiltonian, tspan) = param_data(scheme)
+function evolve(scheme::Scheme{Ket, Lindblad{HT, NonDecay, NonControl, Ode, P}, M, E}) where {HT,M,E,P}
+    (; tspan) = param_data(scheme)
     ψ0 = state_data(scheme)
-    H0, dH = evaluate(hamiltonian)
+    H0, dH = evaluate_hamiltonian(scheme)
+    param_num = length(dH)
 
-    para_num = get_param_num(H)
     dt = tspan[2] - tspan[1] 
-
     ψt_func!(ψ, p, t) = -im*H0*ψ
     prob_ψ = ODEProblem(ψt_func!, ψ0, (tspan[1], tspan[end]))
     ψt = solve(prob_ψ, Tsit5(), saveat=dt).u
@@ -674,163 +747,92 @@ function _evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Matrix{T}, Vector{Matr
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
     ∂ψt_func!(∂ψ, pa, t) = -im * dH[pa] * ψt[t2Num(t)] - im * H0 * ∂ψ
     ∂ψ∂x = typeof(ψ0)[]
-    for pa in 1:para_num
+    for pa in 1:param_num
         prob_∂ψ = ODEProblem(∂ψt_func!, ψ0|>zero, (tspan[1], tspan[end]), pa)
         push!(∂ψ∂x, solve(prob_∂ψ, Tsit5(), saveat=dt).u[end])
     end
     ρt = ψt[end]*ψt[end]'
-    ∂ρt_∂x = [(∂ψ∂x[i] * ψt[end]' + ψt[end] * ∂ψ∂x[i]') for i = 1:para_num]
+    ∂ρt_∂x = [(∂ψ∂x[i] * ψt[end]' + ψt[end] * ∂ψ∂x[i]') for i = 1:param_num]
     ρt, ∂ρt_∂x
 end
 
-# #### evolution of pure states under time-dependent Hamiltonian without noise and controls ####
-# function _evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Vector{Matrix{T}}, Vector{Vector{Matrix{T}}}, N},NonDecay, NonControl, Expm}, M, E}) where {T, N, M, E} 
-#     (; hamiltonian, tspan) = param_data(scheme)
-#     ψ0 = state_data(scheme)
-#     H0, dH = evaluate(hamiltonian)
-#     para_num = N
-#     dH_L = [liouville_commu.(dh) for dh in dH]
-#     ρt = (ψ0 * ψ0') |> vec
-#     ∂ρt_∂x = [ρt |> zero for _ in 1:para_num]
-#     for t = 2:length(tspan)
-#         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
-#         exp_L = expL(H0[t-1], Δt)
-#         ρt = exp_L * ρt
-#         ∂ρt_∂x = [-im * Δt * dhl[t] * ρt for dhl in dH_L] + [exp_L] .* ∂ρt_∂x
-#     end
-#     # ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
-#     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
-# end
 
-# function _evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Vector{Matrix{T}}, Vector{Vector{Matrix{T}}}, N},NonDecay, NonControl, Ode}, M, E}) where {T, N, M, E} 
-#     (; hamiltonian, tspan) = param_data(scheme)
-#     ψ0 = state_data(scheme)
-#     H0, dH = evaluate(hamiltonian)
-#     para_num = N
-#     dt = tspan[2] - tspan[1] 
-#     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-
-#     ψt_func!(ψ, p, t) = -im*H0[t2Num(t)]*ψ
-#     prob_ψ = ODEProblem(ψt_func!, ψ0, (tspan[1], tspan[end]))
-#     ψt = solve(prob_ψ, Tsit5(), saveat=dt).u
-
-#     ∂ψt_func!(∂ψ, pa, t) = -im * dH[pa] * ψt[t2Num(t)] - im * H0[t2Num(t)] * ∂ψ
-#     ∂ψ∂x = typeof(ψ0)[]
-#     for pa in 1:para_num
-#         prob_∂ψ = ODEProblem(∂ψt_func!, ψ0|>zero, (tspan[1], tspan[end]), pa)
-#         push!(∂ψ∂x, solve(prob_∂ψ, Tsit5(), saveat=dt).u[end])
-#     end
-#     ρt = ψt[end]*ψt[end]'
-#     ∂ρt_∂x = [(∂ψ∂x[i] * ψt[end]' + ψt[end] * ∂ψ∂x[i]') for i = 1:para_num]
-#     ρt, ∂ρt_∂x 
-# end
 
 #### evolution of density matrix under time-independent Hamiltonian without noise and controls ####
-function _evolve(scheme::Scheme{DensityMatrix, Lindblad{Hamiltonian{Matrix{T}, Vector{Matrix{T}}, N}, NonDecay, NonControl, Expm}, M, E}) where {T, N, M, E}
-    (; hamiltonian, tspan) = param_data(scheme)
+function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, NonDecay, NonControl, Expm, P}, M, E}) where {HT,M,E,P}
+    (; tspan) = param_data(scheme)
     ρ0 = state_data(scheme)
-    H0, dH = evaluate(hamiltonian)
+    H0, dH = evaluate_hamiltonian(scheme)
+    param_num = length(dH)
 
-    para_num = N
+
     Δt = tspan[2] - tspan[1]
     exp_L = expL(H0, Δt)
-    dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
+    dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
     ρt = ρ0 |> vec
-    ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
-    for t = 2:length(tspan)
+    ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
+    for _ in 2:length(tspan)
         ρt = exp_L * ρt
-        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
+        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
     end
     # ρt = exp(vec(H[end])' * zero(ρt)) * ρt
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
-function _evolve(scheme::Scheme{DensityMatrix, Lindblad{Hamiltonian{Matrix{T}, Vector{Matrix{T}}, N}, NonDecay, NonControl, Ode}, M, E}) where {T, N, M, E}
-    (; hamiltonian, tspan) = param_data(scheme)
-    ρ0 = state_data(scheme)
-    H0, dH = evaluate(hamiltonian)
 
-    para_num =  N
+function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, NonDecay, NonControl, Ode, P}, M, E}) where {HT,M,E,P}
+    (; tspan) = param_data(scheme)
+    ρ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(scheme)
+    param_num = length(dH)
+
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
 
-    ρt_func!(ρ, p, t) = -im*H0*ρ+im*ρ*H0
+    ρt_func!(ρ, p, t) = -im*(H0*ρ-ρ*H0)
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
     ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0 * ∂ρ - ∂ρ * H0)
     ∂ρt_∂x = typeof(ρ0)[]
-    for pa in 1:para_num
+    for pa in 1:param_num
         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
         push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
     ρt[end], ∂ρt_∂x
 end
 
-# #### evolution of density matrix under time-dependent Hamiltonian without noise and controls ####
-# function _evolve(data::Lindblad_noiseless_timedepend{Expm})
-#     (; H0, dH, ρ0, tspan) = data
-
-#     para_num = length(dH)
-#     dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
-#     ρt = ρ0 |> vec
-#     ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
-#     for t = 2:length(tspan)
-#         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
-#         exp_L = expL(H0[t-1], Δt)
-#         ρt = exp_L * ρt
-#         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
-#     end
-#     # ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
-#     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
-# end
-
-# function _evolve(data::Lindblad_noiseless_timedepend{Ode})
-#     (; H0, dH, ρ0, tspan) = data
-#     para_num = length(dH)
-#     dt = tspan[2] - tspan[1] 
-#     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-
-#     ρt_func!(ρ, p, t) = -im*H0[t2Num(t)]*ρ+im*ρ*H0[t2Num(t)]
-#     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
-#     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
-
-#     ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)])
-#     ∂ρt_∂x = typeof(ρ0)[]
-#     for pa in 1:para_num
-#         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
-#         push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
-#     end
-#     ρt[end], ∂ρt_∂x
-# end
 
 #### evolution of pure states under time-independent Hamiltonian  
 #### with noise but without controls
-function _evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Matrix{T}, Vector{Matrix{T}}, N}, Decay, NonControl, Expm}, M, E}) where {T, N, M, E}
-    (; hamiltonian, tspan, decay) = param_data(scheme)
+function evolve(scheme::Scheme{Ket, Lindblad{HT, Decay, NonControl, Expm, P}, M, E}) where {HT,M,E,P}
+    (; tspan, decay) = param_data(scheme)
     ψ0 = state_data(scheme)
     decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
-    H0, dH = evaluate(hamiltonian)
-    para_num = N
+    H0, dH = evaluate_hamiltonian(scheme)
+    param_num = length(dH)
+
     ρt = (ψ0 * ψ0') |> vec
-    ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
+    ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
     Δt = tspan[2] - tspan[1]
     exp_L = expL(H0, decay_opt, γ, Δt, 1)
-    dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
-    for t = 2:length(tspan)
+    dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
+    for _ in 2:length(tspan)
         ρt = exp_L * ρt
-        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
+        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
     end
     
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
-function _evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Matrix{T}, Vector{Matrix{T}}, N}, Decay, NonControl, Ode}, M, E}) where {T, N, M, E}
-    (; hamiltonian, tspan, decay) = param_data(scheme)
+
+function evolve(scheme::Scheme{Ket, Lindblad{HT, Decay, NonControl, Ode, P}, M, E}) where {HT,M,E,P}
+    (; tspan, decay) = param_data(scheme)
     ψ0 = state_data(scheme)
     decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
-    H0, dH = evaluate(hamiltonian)
-    para_num = N
+    H0, dH = evaluate_hamiltonian(scheme)
+    param_num = length(dH)
+
     Γ = decay_opt
     ρ0 = (ψ0 * ψ0')
     dt = tspan[2] - tspan[1] 
@@ -844,7 +846,7 @@ function _evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Matrix{T}, Vector{Matr
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
-    for pa in 1:para_num
+    for pa in 1:param_num
         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
         push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
@@ -853,33 +855,33 @@ end
 
 #### evolution of density matrix under time-independent Hamiltonian  
 #### with noise but without controls
-function _evolve(scheme::Scheme{DensityMatrix, Lindblad{Hamiltonian{Matrix{T}, Vector{Matrix{T}}, N}, Decay, NonControl, Expm}, M, E}) where {T, N, M, E}
-    (; hamiltonian, tspan, decay) = param_data(scheme)
+function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, NonControl, Expm, P}, M, E}) where {HT,M,E,P}
+    (; tspan, decay) = param_data(scheme)
     ρ0 = state_data(scheme)
     decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
-    H0, dH = evaluate(hamiltonian)
-    para_num = N
+    H0, dH = evaluate_hamiltonian(scheme)
+    param_num = length(dH)
+
     ρt = ρ0 |> vec
-    ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
+    ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
     Δt = tspan[2] - tspan[1]
     exp_L = expL(H0, decay_opt, γ, Δt, 1)
-    dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
+    dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
     for t = 2:length(tspan)
         ρt = exp_L * ρt
-        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
+        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
     end
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
-function _evolve(scheme::Scheme{DensityMatrix, Lindblad{Hamiltonian{Matrix{T}, Vector{Matrix{T}}, N}, Decay, NonControl, Ode}, M, E}) where {T, N, M, E}
-    (; hamiltonian, tspan, decay) = param_data(scheme)
+function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, NonControl, Ode, P}, M, E}) where {HT,M,E,P}
+    (; tspan, decay) = param_data(scheme)
     ρ0 = state_data(scheme)
     decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
-    H0, dH = evaluate(hamiltonian)
+    H0, dH = evaluate_hamiltonian(scheme)
+    param_num = length(dH)
 
-    para_num = N
     Γ = decay_opt
-    para_num = length(dH)
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
     ρt_func!(ρ, p, t) = -im * (H0 * ρ - ρ * H0) + 
@@ -891,124 +893,48 @@ function _evolve(scheme::Scheme{DensityMatrix, Lindblad{Hamiltonian{Matrix{T}, V
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
-    for pa in 1:para_num
+    for pa in 1:param_num
         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
         push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
     ρt[end], ∂ρt_∂x
 end
 
-# #### evolution of pure states under time-dependent Hamiltonian  
-# #### with noise but without controls
-# function _evolve(data::Lindblad_noisy_timedepend_pure{Expm})
-#     (; H0, dH, ψ0, tspan, decay_opt, γ) = data
 
-#     para_num = length(dH)
-#     dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
-#     ρt = (ψ0 * ψ0') |> vec
-#     ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
-#     for t = 2:length(tspan)
-#         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
-#         exp_L = expL(H0[t-1], decay_opt, γ, Δt, t-1)
-#         ρt = exp_L * ρt
-#         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
-#     end
-#     # ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
-#     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
-# end
-
-# function _evolve(data::Lindblad_noisy_timedepend_pure{Ode})
-#     (; H0, dH, ψ0, tspan, decay_opt, γ) = data
-#     Γ = decay_opt
-#     para_num = length(dH)
-#     ρ0 = (ψ0 * ψ0')
-#     dt = tspan[2] - tspan[1] 
-#     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-#     ρt_func!(ρ, p, t) = -im * (H0[t2Num(t)] * ρ - ρ * H0[t2Num(t)]) + 
-#                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-#     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
-#     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
-
-#     ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)]) + 
-#                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-
-#     ∂ρt_∂x = typeof(ρ0)[]
-#     for pa in 1:para_num
-#         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
-#         push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
-#     end
-#     ρt[end], ∂ρt_∂x
-# end
-
-# #### evolution of density matrix under time-dependent Hamiltonian  
-# #### with noise but without controls
-# function _evolve(data::Lindblad_noisy_timedepend{Expm})
-#     (; H0, dH, ρ0, tspan, decay_opt, γ) = data
-
-#     para_num = length(dH)
-#     dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
-#     ρt = ρ0 |> vec
-#     ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
-#     for t = 2:length(tspan)
-#         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
-#         exp_L = expL(H0[t-1], decay_opt, γ, Δt, t-1)
-#         ρt = exp_L * ρt
-#         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
-#     end
-#     # ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
-#     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
-# end
-
-# function _evolve(data::Lindblad_noisy_timedepend{Ode})
-#     (; H0, dH, ρ0, tspan, decay_opt, γ) = data
-#     Γ = decay_opt
-#     para_num = length(dH)
-#     dt = tspan[2] - tspan[1] 
-#     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-#     ρt_func!(ρ, p, t) = -im * (H0[t2Num(t)] * ρ - ρ * H0[t2Num(t)]) + 
-#                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-#     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
-#     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
-
-#     ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)]) + 
-#                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
-
-#     ∂ρt_∂x = typeof(ρ0)[]
-#     for pa in 1:para_num
-#         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
-#         push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
-#     end
-#     ρt[end], ∂ρt_∂x
-# end
 
 #### evolution of density matrix under time-independent Hamiltonian 
 #### with controls but without noise #### 
-function _evolve(data::Lindblad_noiseless_controlled{Expm})
-    (; H0, dH, ρ0, tspan, Hc, ctrl) = data
+function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, NonDecay, Control, Expm, P}, M, E}) where {HT, M, E, P}
+    (; tspan, Hc, ctrl) = param_data(scheme)
+    ρ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(scheme)
 
-    para_num = length(dH)
+    param_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
     ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
     H = Htot(H0, Hc, ctrl)
-    dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
+    dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
     ρt = ρ0 |> vec
-    ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
+    ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
     for t = 2:length(tspan)
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], Δt)
         ρt = exp_L * ρt
-        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
+        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
     end
     # ρt = exp(vec(H[end])' * zero(ρt)) * ρt
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
-function _evolve(data::Lindblad_noiseless_controlled{Ode})
-    (; H0, dH, ρ0, tspan, Hc, ctrl) = data
-    para_num = length(dH)
-    dt = tspan[2] - tspan[1] 
+function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, NonDecay, Control, Ode, P}, M, E}) where {HT, M, E, P}
+    (; tspan, Hc, ctrl) = param_data(scheme)
+    ρ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(shceme)
+
+    param_num = length(dH)
     ctrl_num = length(Hc)
+    dt = tspan[2] - tspan[1] 
     ctrl_interval = ((length(tspan)-1) / length(ctrl[1])) |> Int
     ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |>Array for i = 1:ctrl_num]
     push!.(ctrl, [0.0 for i in 1:ctrl_num])
@@ -1020,7 +946,7 @@ function _evolve(data::Lindblad_noiseless_controlled{Ode})
 
     ∂ρt_func!(∂ρ, (pa,ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)])
     ∂ρt_∂x = typeof(ρ0)[]
-    for pa in 1:para_num
+    for pa in 1:param_num
         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), (pa,ctrl,))
         push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
@@ -1028,31 +954,38 @@ function _evolve(data::Lindblad_noiseless_controlled{Ode})
 end
 
 #### evolution of density matrix under time-independent Hamiltonian with noise and controls #### 
-function _evolve(data::Lindblad_noisy_controlled{Expm})
-    (; H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl) = data
+function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, Control, Expm, P}, M, E}) where {HT, M, E, P}
+    (; tspan, decay, Hc, ctrl) = param_data(scheme)
+    ρ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(scheme)
+    decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
 
-    para_num = length(dH)
+    param_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
     ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
     H = Htot(H0, Hc, ctrl)
-    dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
+    dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
     ρt = ρ0 |> vec
-    ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
+    ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
     for t = 2:length(tspan)
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
-        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
+        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
     end
     # ρt = exp(vec(H[end])' * zero(ρt)) * ρt
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
-function _evolve(data::Lindblad_noisy_controlled{Ode})
-    (; H0, dH, ρ0, tspan, decay_opt, γ, Hc, ctrl, abstol, reltol) = data
+function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, Control, Ode, P}, M, E}) where {HT, M, E, P}
+    (; tspan, decay, Hc, ctrl) = param_data(scheme)
+    ρ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(scheme)
+    decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
+
     Γ = decay_opt
-    para_num = length(dH)
+    param_num = length(dH)
     dt = tspan[2] - tspan[1] 
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan)-1) / length(ctrl[1])) |> Int
@@ -1070,7 +1003,7 @@ function _evolve(data::Lindblad_noisy_controlled{Ode})
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
-    for pa in 1:para_num
+    for pa in 1:param_num
         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), (pa,ctrl,))
         push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt; abstol=abstol, reltol=reltol).u[end])
     end
@@ -1078,32 +1011,39 @@ function _evolve(data::Lindblad_noisy_controlled{Ode})
 end
 
 #### evolution of state under time-independent Hamiltonian with noise and controls #### 
-function _evolve(data::Lindblad_noisy_controlled_pure{Expm})
-    (; H0, dH, ψ0, tspan, decay_opt, γ, ctrl, Hc) = data
+function evolve(scheme::Scheme{Ket, Lindblad{HT, Decay, Control, Expm, P}, M, E}) where {HT, M, E, P}
+    (; tspan, decay, Hc, ctrl) = param_data(scheme)
+    ψ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(scheme)
+    decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
 
-    para_num = length(dH)
+    param_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
     ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
     H = Htot(H0, Hc, ctrl)
-    dH_L = [liouville_commu(dH[i]) for i = 1:para_num]
+    dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
     ρt = (ψ0 * ψ0') |> vec
-    ∂ρt_∂x = [ρt |> zero for i = 1:para_num]
+    ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
     for t = 2:length(tspan)
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
-        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:para_num] + [exp_L] .* ∂ρt_∂x
+        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
     end
     # ρt = exp(vec(H[end])' * zero(ρt)) * ρt
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
-function _evolve(data::Lindblad_noisy_controlled_pure{Ode})
-    (; H0, dH, ψ0, tspan, decay_opt, γ, ctrl, Hc) = data
+function evolve(scheme::Scheme{Ket, Lindblad{HT, Decay, Control, Ode, P}, M, E}) where {HT, M, E, P}
+    (; tspan, decay, Hc, ctrl) = param_data(scheme)
+    ψ0 = state_data(scheme)
+    H0, dH = evaluate_hamiltonian(scheme)
+    decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
+
     ρ0 = (ψ0 * ψ0')
     Γ = decay_opt
-    para_num = length(dH)
+    param_num = length(dH)
     dt = tspan[2] - tspan[1] 
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan)-1) / length(ctrl[1])) |> Int
@@ -1120,62 +1060,224 @@ function _evolve(data::Lindblad_noisy_controlled_pure{Ode})
                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
-    for pa in 1:para_num
+    for pa in 1:param_num
         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), (pa,ctrl,))
         push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
     end
     ρt[end], ∂ρt_∂x
 end
 
-function propagate(
-    dynamics::Lindblad{noisy,controlled,dm,P},
-    ρₜ::AbstractMatrix,
-    dρₜ::AbstractVector,
-    a::Vector{R},
-    t::Real,
-) where {R<:Real,P}
-    (; H0, dH, decay_opt, γ, Hc, tspan, ctrl) = dynamics.data
-    Δt = tspan[t] - tspan[t-1]
-    ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    para_num = length(dH)
-    H = Htot(H0, Hc, a)
-    dH_L = [liouville_commu(dH) for dH in dH]
-    exp_L = expL(H, decay_opt, γ, Δt)
-    dρₜ_next = [dρₜ|>vec for dρₜ in dρₜ]
-    ρₜ_next = ρₜ
-    for i in 1:ctrl_interval
-        ρₜ_next = exp_L * vec(ρₜ_next)
-        for para = 1:para_num
-            dρₜ_next[para] = -im * Δt * dH_L[para] * ρₜ_next + exp_L * dρₜ_next[para]
-        end
-    end
-    ρₜ_next |> vec2mat, dρₜ_next |> vec2mat
-end
+# #### evolution of pure states under time-dependent Hamiltonian without noise and controls ####
+# function evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Vector{Matrix{T}}, Vector{Vector{Matrix{T}}}, N},NonDecay, NonControl, Expm, P}, M, E}) where {T, N, M, E} 
+#     (; hamiltonian, tspan) = param_data(scheme)
+#     ψ0 = state_data(scheme)
+#     H0, dH = evaluate_hamiltonian(hamiltonian)
+#     param_num = N
+#     dH_L = [liouville_commu.(dh) for dh in dH]
+#     ρt = (ψ0 * ψ0') |> vec
+#     ∂ρt_∂x = [ρt |> zero for _ in 1:param_num]
+#     for t = 2:length(tspan)
+#         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
+#         exp_L = expL(H0[t-1], Δt)
+#         ρt = exp_L * ρt
+#         ∂ρt_∂x = [-im * Δt * dhl[t] * ρt for dhl in dH_L] + [exp_L] .* ∂ρt_∂x
+#     end
+#     # ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
+#     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
+# end
 
-function propagate(
-    dynamics::Lindblad{noiseless,controlled,dm,P},
-    ρₜ::AbstractMatrix,
-    dρₜ::AbstractVector,
-    a::Vector{R},
-    t::Real,
-) where {R<:Real,P}
-    (; H0, dH, Hc, tspan, ctrl) = dynamics.data
-    Δt = tspan[t] - tspan[t-1]
-    ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    para_num = length(dH)
-    H = Htot(H0, Hc, a)
-    dH_L = [liouville_commu(dH) for dH in dH]
-    exp_L = expL(H, Δt)
-    dρₜ_next = [dρₜ|>vec for dρₜ in dρₜ]
-    ρₜ_next = ρₜ
-    for i in 1:ctrl_interval
-        ρₜ_next = exp_L * vec(ρₜ_next)
-        for para = 1:para_num
-            dρₜ_next[para] = -im * Δt * dH_L[para] * ρₜ_next + exp_L * dρₜ_next[para]
-        end
-    end
-    ρₜ_next |> vec2mat, dρₜ_next |> vec2mat
-end
+# function evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Vector{Matrix{T}}, Vector{Vector{Matrix{T}}}, N},NonDecay, NonControl, Ode, P}, M, E}) where {T, N, M, E} 
+#     (; hamiltonian, tspan) = param_data(scheme)
+#     ψ0 = state_data(scheme)
+#     H0, dH = evaluate_hamiltonian(hamiltonian)
+#     param_num = N
+#     dt = tspan[2] - tspan[1] 
+#     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+
+#     ψt_func!(ψ, p, t) = -im*H0[t2Num(t)]*ψ
+#     prob_ψ = ODEProblem(ψt_func!, ψ0, (tspan[1], tspan[end]))
+#     ψt = solve(prob_ψ, Tsit5(), saveat=dt).u
+
+#     ∂ψt_func!(∂ψ, pa, t) = -im * dH[pa] * ψt[t2Num(t)] - im * H0[t2Num(t)] * ∂ψ
+#     ∂ψ∂x = typeof(ψ0)[]
+#     for pa in 1:param_num
+#         prob_∂ψ = ODEProblem(∂ψt_func!, ψ0|>zero, (tspan[1], tspan[end]), pa)
+#         push!(∂ψ∂x, solve(prob_∂ψ, Tsit5(), saveat=dt).u[end])
+#     end
+#     ρt = ψt[end]*ψt[end]'
+#     ∂ρt_∂x = [(∂ψ∂x[i] * ψt[end]' + ψt[end] * ∂ψ∂x[i]') for i = 1:param_num]
+#     ρt, ∂ρt_∂x 
+# end
+
+# #### evolution of density matrix under time-dependent Hamiltonian without noise and controls ####
+# function evolve(data::Lindblad_noiseless_timedepend{Expm, P})
+#     (; H0, dH, ρ0, tspan) = data
+
+#     param_num = length(dH)
+#     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
+#     ρt = ρ0 |> vec
+#     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
+#     for t = 2:length(tspan)
+#         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
+#         exp_L = expL(H0[t-1], Δt)
+#         ρt = exp_L * ρt
+#         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
+#     end
+#     # ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
+#     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
+# end
+
+# function evolve(data::Lindblad_noiseless_timedepend{Ode, P})
+#     (; H0, dH, ρ0, tspan) = data
+#     param_num = length(dH)
+#     dt = tspan[2] - tspan[1] 
+#     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+
+#     ρt_func!(ρ, p, t) = -im*H0[t2Num(t)]*ρ+im*ρ*H0[t2Num(t)]
+#     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
+#     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
+
+#     ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)])
+#     ∂ρt_∂x = typeof(ρ0)[]
+#     for pa in 1:param_num
+#         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
+#         push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
+#     end
+#     ρt[end], ∂ρt_∂x
+# end
+
+# #### evolution of pure states under time-dependent Hamiltonian  
+# #### with noise but without controls
+# function evolve(data::Lindblad_noisy_timedepend_pure{Expm, P})
+#     (; H0, dH, ψ0, tspan, decay_opt, γ) = data
+
+#     param_num = length(dH)
+#     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
+#     ρt = (ψ0 * ψ0') |> vec
+#     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
+#     for t = 2:length(tspan)
+#         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
+#         exp_L = expL(H0[t-1], decay_opt, γ, Δt, t-1)
+#         ρt = exp_L * ρt
+#         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
+#     end
+#     # ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
+#     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
+# end
+
+# function evolve(data::Lindblad_noisy_timedepend_pure{Ode, P})
+#     (; H0, dH, ψ0, tspan, decay_opt, γ) = data
+#     Γ = decay_opt
+#     param_num = length(dH)
+#     ρ0 = (ψ0 * ψ0')
+#     dt = tspan[2] - tspan[1] 
+#     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+#     ρt_func!(ρ, p, t) = -im * (H0[t2Num(t)] * ρ - ρ * H0[t2Num(t)]) + 
+#                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+#     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
+#     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
+
+#     ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)]) + 
+#                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+
+#     ∂ρt_∂x = typeof(ρ0)[]
+#     for pa in 1:param_num
+#         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
+#         push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
+#     end
+#     ρt[end], ∂ρt_∂x
+# end
+
+# #### evolution of density matrix under time-dependent Hamiltonian  
+# #### with noise but without controls
+# function evolve(data::Lindblad_noisy_timedepend{Expm, P})
+#     (; H0, dH, ρ0, tspan, decay_opt, γ) = data
+
+#     param_num = length(dH)
+#     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
+#     ρt = ρ0 |> vec
+#     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
+#     for t = 2:length(tspan)
+#         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
+#         exp_L = expL(H0[t-1], decay_opt, γ, Δt, t-1)
+#         ρt = exp_L * ρt
+#         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
+#     end
+#     # ρt = exp(vec(H0[end])' * zero(ρt)) * ρt
+#     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
+# end
+
+# function evolve(data::Lindblad_noisy_timedepend{Ode, P})
+#     (; H0, dH, ρ0, tspan, decay_opt, γ) = data
+#     Γ = decay_opt
+#     param_num = length(dH)
+#     dt = tspan[2] - tspan[1] 
+#     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+#     ρt_func!(ρ, p, t) = -im * (H0[t2Num(t)] * ρ - ρ * H0[t2Num(t)]) + 
+#                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+#     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
+#     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
+
+#     ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)]) + 
+#                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+
+#     ∂ρt_∂x = typeof(ρ0)[]
+#     for pa in 1:param_num
+#         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), pa)
+#         push!(∂ρt_∂x, solve(prob_∂ρ, Tsit5(), saveat=dt).u[end])
+#     end
+#     ρt[end], ∂ρt_∂x
+# end
+
+# function propagate(
+#     dynamics::Lindblad{noisy,controlled,dm,P},
+#     ρₜ::AbstractMatrix,
+#     dρₜ::AbstractVector,
+#     a::Vector{R},
+#     t::Real,
+# ) where {R<:Real,P}
+#     (; H0, dH, decay_opt, γ, Hc, tspan, ctrl) = dynamics.data
+#     Δt = tspan[t] - tspan[t-1]
+#     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
+#     param_num = length(dH)
+#     H = Htot(H0, Hc, a)
+#     dH_L = [liouville_commu(dH) for dH in dH]
+#     exp_L = expL(H, decay_opt, γ, Δt)
+#     dρₜ_next = [dρₜ|>vec for dρₜ in dρₜ]
+#     ρₜ_next = ρₜ
+#     for i in 1:ctrl_interval
+#         ρₜ_next = exp_L * vec(ρₜ_next)
+#         for para = 1:param_num
+#             dρₜ_next[para] = -im * Δt * dH_L[para] * ρₜ_next + exp_L * dρₜ_next[para]
+#         end
+#     end
+#     ρₜ_next |> vec2mat, dρₜ_next |> vec2mat
+# end
+
+# function propagate(
+#     dynamics::Lindblad{noiseless,controlled,dm,P},
+#     ρₜ::AbstractMatrix,
+#     dρₜ::AbstractVector,
+#     a::Vector{R},
+#     t::Real,
+# ) where {R<:Real,P}
+#     (; H0, dH, Hc, tspan, ctrl) = dynamics.data
+#     Δt = tspan[t] - tspan[t-1]
+#     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
+#     param_num = length(dH)
+#     H = Htot(H0, Hc, a)
+#     dH_L = [liouville_commu(dH) for dH in dH]
+#     exp_L = expL(H, Δt)
+#     dρₜ_next = [dρₜ|>vec for dρₜ in dρₜ]
+#     ρₜ_next = ρₜ
+#     for i in 1:ctrl_interval
+#         ρₜ_next = exp_L * vec(ρₜ_next)
+#         for para = 1:param_num
+#             dρₜ_next[para] = -im * Δt * dH_L[para] * ρₜ_next + exp_L * dρₜ_next[para]
+#         end
+#     end
+#     ρₜ_next |> vec2mat, dρₜ_next |> vec2mat
+# end
 
 # function propagate(ρₜ, dρₜ, dynamics, ctrl, t = 1, ctrl_interval = 1)
 #     Δt = dynamics.data.tspan[t+1] - system.data.tspan[t]
@@ -1187,5 +1289,3 @@ end
 #                             system.decay_opt, system.γ, system.Hc, 
 #                             system.ctrl, system.tspan)
 # # end
-
-function Hamiltonian(func::function, ) end

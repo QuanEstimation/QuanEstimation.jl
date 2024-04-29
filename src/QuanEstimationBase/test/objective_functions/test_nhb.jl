@@ -1,4 +1,4 @@
-using QuanEstimation
+using QuanEstimationBase
 using LinearAlgebra
 
 # initial state
@@ -24,15 +24,15 @@ W = one(zeros(2, 2))
 # time length for the evolution
 tspan = range(0., 5., length=20)
 # dynamics
-rho, drho = QuanEstimation.expm(tspan, rho0, H0, dH, decay)
-# calculation of the HCRB
-f_HCRB = []
+rho, drho = QuanEstimationBase.expm(tspan, rho0, H0, dH, decay)
+# calculation of the NHB
+f_HCRB, f_NHB = [], []
 for ti in 2:length(tspan)
-    # HCRB
-    f_tp1 = QuanEstimation.HCRB(rho[ti], drho[ti], W)
-    append!(f_HCRB, f_tp1)
+    # NHB
+    f_tp2 = QuanEstimationBase.NHB(rho[ti], drho[ti], W)
+    append!(f_NHB, f_tp2)
 end
 
-@test f_HCRB[1] >= 0 
+@test f_NHB[1] >= 0
 # positivity
-@test all(>=(0), f_HCRB)
+@test all(>=(0), f_NHB)

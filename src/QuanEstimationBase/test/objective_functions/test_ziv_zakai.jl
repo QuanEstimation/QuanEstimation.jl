@@ -1,4 +1,4 @@
-using QuanEstimation: trace_norm, fidelity, helstrom_bound, QZZB
+using QuanEstimationBase: trace_norm, fidelity, helstrom_bound, QZZB
 
 # Test for trace_norm with matrices
 function test_trace_norm_matrix()
@@ -78,7 +78,7 @@ function data_gen()
 	for i in eachindex(x)
 		H0_tp = 0.5 * B * omega0 * (sx * cos(x[i]) + sz * sin(x[i]))
 		dH_tp = [0.5 * B * omega0 * (-sx * sin(x[i]) + sz * cos(x[i]))]
-		rho_tp, drho_tp = QuanEstimation.expm(tspan, rho0, H0_tp, dH_tp)
+		rho_tp, drho_tp = QuanEstimationBase.expm(tspan, rho0, H0_tp, dH_tp)
 		rho[i], drho[i] = rho_tp[end], drho_tp[end]
 	end
 	return (;
