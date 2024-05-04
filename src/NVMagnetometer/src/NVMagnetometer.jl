@@ -1,5 +1,5 @@
 module NVMagnetometer
-export NVMagnetometerScheme, NVMagnetometerData, NVMagnetometerScheme, nv_dynamics_hooks, nv_state_hooks, nv_measurement_hooks, nv_control_hooks, nv_measurement_hooks, nv_state_hooks, nv_dynamics_hooks, QFIM, CFIM, HCRB
+export NVMagnetometerScheme, NVMagnetometerData, NVMagnetometerScheme, nv_dynamics_hooks, nv_state_hooks, nv_measurement_hooks, nv_control_hooks, nv_measurement_hooks, nv_state_hooks, nv_dynamics_hooks
 using QuanEstimationBase
 using UnPack
 using LinearAlgebra
@@ -144,9 +144,9 @@ function control_Hamiltonians_hook(ctrl)
 end
 
 ## 
-QFIM(nv::NVMagnetometerScheme; kwargs...) = QuanEstimationBase.QFIM(scheme(nv.data); kwargs...)
-CFIM(nv::NVMagnetometerScheme; kwargs...) = QuanEstimationBase.CFIM(scheme(nv.data); kwargs...)
-HCRB(nv::NVMagnetometerScheme; kwargs...) = QuanEstimationBase.HCRB(scheme(nv.data); kwargs...)
+QuanEstimationBase.QFIM(nv::NVMagnetometerScheme; kwargs...) = QFIM(scheme(nv.data); kwargs...)
+QuanEstimationBase.CFIM(nv::NVMagnetometerScheme; kwargs...) = CFIM(scheme(nv.data); kwargs...)
+QuanEstimationBase.HCRB(nv::NVMagnetometerScheme; kwargs...) = HCRB(scheme(nv.data); kwargs...)
 
 
 end # NVMagnetometer
