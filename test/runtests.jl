@@ -61,9 +61,9 @@ end
         include("algorithms/test_PSO.jl")
     end
 
-    @testset "DDPG" begin
-        include("algorithms/test_DDPG.jl")
-    end
+    # @testset "DDPG" begin
+    #     include("algorithms/test_DDPG.jl")
+    # end
 end
 
 @testset "Utils" begin

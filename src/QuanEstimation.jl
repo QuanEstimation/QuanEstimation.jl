@@ -14,7 +14,6 @@ using SparseArrays
 using DelimitedFiles
 using StatsBase
 using Flux
-using ReinforcementLearning
 using SCS
 using BoundaryValueDiffEq
 using Trapz
