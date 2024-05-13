@@ -40,7 +40,7 @@ function SLD(
     SLD_eig = zeros(T, dim, dim)
     for fi = 1:dim
         for fj = 1:dim
-            if abs(val[fi] + val[fj]) > eps
+            if val[fi] + val[fj] > eps
                 SLD_eig[fi, fj] = 2 * (vec[:, fi]' * dρ * vec[:, fj]) / (val[fi] + val[fj])
             end
         end
@@ -420,7 +420,16 @@ function QFIM(
     eps = GLOBAL_EPS,
 ) where {T<:Complex}
 
-    F = eval(Symbol("QFIM_" * string(LDtype)))(ρ, dρ; eps = eps)
+    if LDtype == :SLD
+        return QFIM_SLD(ρ, dρ; eps = eps)
+    elseif LDtype == :RLD
+        return QFIM_RLD(ρ, dρ; eps = eps)
+    elseif LDtype == :LLD
+        return QFIM_LLD(ρ, dρ; eps = eps)
+    else
+        throw(ArgumentError("The LDtype should be chosen in {'SLD', 'RLD', 'LLD'}."))
+    end
+    
     if exportLD == false
         return F
     else

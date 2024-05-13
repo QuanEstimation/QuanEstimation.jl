@@ -108,7 +108,7 @@ end
 function Lindblad(H0::H, dH::D, tspan::AbstractVector, Hc::AbstractVector, decay::AbstractVector; dyn_method::Union{Symbol, String}=:Ode,) where {H, D}
     ham = Hamiltonian(H0, dH)
     return Lindblad{typeof(ham), Decay, Control, eval(Symbol(dyn_method)), Nothing}(LindbladData(
-        ham, tspan;  Hc = Hc, ctrl=[zero.(tspan) for _ in eachindex(Hc)], decay = decay
+        ham, tspan;  Hc = Hc, ctrl=[zeros(length(tspan)-1) for _ in eachindex(Hc)], decay = decay
     ), nothing)
 end
 
