@@ -24,7 +24,7 @@ function test_ControlEnv()
 	tspan = range(0.0, 10.0, length = 2500)
 	# guessed control coefficients
 	cnum = length(tspan) - 1
-	ctrl = [zeros(cnum) for _ in 1:length(Hc)]
+	ctrl = [zeros(cnum) for _ in eachindex(Hc)]
 	ctrl_bound = [-2.0, 2.0]
 
 	obj = QFIM_obj()
@@ -101,7 +101,7 @@ function test_StateEnv()
 	tspan = range(0.0, 10.0, length = 10)
 	# guessed control coefficients
 	cnum = length(tspan) - 1
-	ctrl = [zeros(cnum) for _ in 1:length(Hc)]
+	ctrl = [zeros(cnum) for _ in eachindex(Hc)]
 	ctrl_bound = [-2.0, 2.0]
 
 	obj = QFIM_obj()

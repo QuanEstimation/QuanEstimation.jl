@@ -317,12 +317,12 @@ function update!(opt::Mopt_Rotation, alg::DE, obj, dynamics, output)
     suN = suN_generator(dim)
     Lambda = Matrix{ComplexF64}[]
     append!(Lambda, [Matrix{ComplexF64}(I,dim,dim)])
-    append!(Lambda, [suN[i] for i in 1:length(suN)])
+    append!(Lambda, [suN[i] for i in eachindex(suN)])
 
     # if ismissing(Lambda)
     #     Lambda = Matrix{ComplexF64}[]
     #     append!(Lambda, [Matrix{ComplexF64}(I,dim,dim)])
-    #     append!(Lambda, [suN[i] for i in 1:length(suN)])
+    #     append!(Lambda, [suN[i] for i in eachindex(suN)])
     # end
     
     M_num = length(POVM_basis)

@@ -29,9 +29,9 @@ end
 
 function update_ctrl!(alg::autoGRAPE_Adam, obj, dynamics, δ)
     (; epsilon, beta1, beta2) = alg
-    for ci in 1:length(δ)
+    for ci in eachindex(δ)
         mt, vt = 0.0, 0.0
-        for ti in 1:length(δ[1])
+        for ti in eachindex(δ[1])
             dynamics.data.ctrl[ci][ti], mt, vt = Adam(δ[ci][ti], ti, 
             dynamics.data.ctrl[ci][ti], mt, vt, epsilon, beta1, beta2, obj.eps)
         end
@@ -66,7 +66,7 @@ end
 function update_state!(alg::AD_Adam, obj, dynamics, δ)
     (; epsilon, beta1, beta2) = alg
     mt, vt = 0.0, 0.0
-    for ti in 1:length(δ)
+    for ti in eachindex(δ)
         dynamics.data.ψ0[ti], mt, vt = Adam(δ[ti], ti, dynamics.data.ψ0[ti], mt, vt, epsilon, beta1, beta2, obj.eps)
     end
 end
@@ -111,9 +111,9 @@ end
 
 function update_M!(opt::Mopt_LinearComb, alg::AD_Adam, obj, δ)
     (; epsilon, beta1, beta2) = alg
-    for ci in 1:length(δ)
+    for ci in eachindex(δ)
         mt, vt = 0.0, 0.0
-        for ti in 1:length(δ[1])
+        for ti in eachindex(δ[1])
             opt.B[ci][ti], mt, vt = Adam(δ[ci][ti], ti, opt.B[ci][ti], mt, vt, epsilon, beta1, beta2, obj.eps)
         end
     end
@@ -132,12 +132,12 @@ function update!(opt::Mopt_Rotation, alg::AbstractAD, obj, dynamics, output)
     suN = suN_generator(dim)
     opt.Lambda = Matrix{ComplexF64}[]
     append!(opt.Lambda, [Matrix{ComplexF64}(I,dim,dim)])
-    append!(opt.Lambda, [suN[i] for i in 1:length(suN)])
+    append!(opt.Lambda, [suN[i] for i in eachindex(suN)])
 
     # if ismissing(Lambda)
     #     opt.Lambda = Matrix{ComplexF64}[]
     #     append!(opt.Lambda, [Matrix{ComplexF64}(I,dim,dim)])
-    #     append!(opt.Lambda, [suN[i] for i in 1:length(suN)])
+    #     append!(opt.Lambda, [suN[i] for i in eachindex(suN)])
     # end
     
     U = rotation_matrix(opt.s, opt.Lambda)
@@ -171,7 +171,7 @@ end
 function update_M!(opt::Mopt_Rotation, alg::AD_Adam, obj, δ)
     (; epsilon, beta1, beta2) = alg
     mt, vt = 0.0, 0.0
-    for ti in 1:length(δ)
+    for ti in eachindex(δ)
         opt.s[ti], mt, vt = Adam(δ[ti], ti, opt.s[ti], mt, vt, epsilon, beta1, beta2, obj.eps)
     end
 end
@@ -213,9 +213,9 @@ end
 
 function update_ctrl!(alg::AD_Adam, obj, dynamics, δ)
     (; epsilon, beta1, beta2) = alg
-    for ci in 1:length(δ)
+    for ci in eachindex(δ)
         mt, vt = 0.0, 0.0
-        for ti in 1:length(δ[1])
+        for ti in eachindex(δ[1])
             dynamics.data.ctrl[ci][ti], mt, vt = Adam(δ[ci][ti], ti, 
             dynamics.data.ctrl[ci][ti], mt, vt, epsilon, beta1, beta2, obj.eps)
         end

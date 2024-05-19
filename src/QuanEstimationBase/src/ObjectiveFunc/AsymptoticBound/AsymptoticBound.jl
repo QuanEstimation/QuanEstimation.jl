@@ -285,7 +285,7 @@ end
 #### objective function for linear combination in Mopt ####
 function objective(opt::Mopt_LinearComb, obj::CFIM_obj{single_para}, dynamics::Lindblad)
     (; W, eps) = obj
-    M = [sum([opt.B[i][j]*opt.POVM_basis[j] for j in 1:length(opt.POVM_basis)]) for i in 1:opt.M_num]
+    M = [sum([opt.B[i][j]*opt.POVM_basis[j] for j in eachindex(opt.POVM_basis)]) for i in 1:opt.M_num]
     ρ, dρ = evolve(dynamics)
     f = W[1] * CFIM(ρ, dρ[1], M; eps = eps)
     return f, f
@@ -293,7 +293,7 @@ end
 
 function objective(opt::Mopt_LinearComb, obj::CFIM_obj{multi_para}, dynamics::Lindblad)
     (; W, eps) = obj
-    M = [sum([opt.B[i][j]*opt.POVM_basis[j] for j in 1:length(opt.POVM_basis)]) for i in 1:opt.M_num]
+    M = [sum([opt.B[i][j]*opt.POVM_basis[j] for j in eachindex(opt.POVM_basis)]) for i in 1:opt.M_num]
     ρ, dρ = evolve(dynamics)
     f = tr(W * pinv(CFIM(ρ, dρ, M; eps = eps)))
     return f, 1.0 / f
@@ -301,7 +301,7 @@ end
 
 function objective(opt::Mopt_LinearComb, obj::CFIM_obj{single_para}, dynamics::Kraus)
     (; W, eps) = obj
-    M = [sum([opt.B[i][j]*opt.POVM_basis[j] for j in 1:length(opt.POVM_basis)]) for i in 1:opt.M_num]
+    M = [sum([opt.B[i][j]*opt.POVM_basis[j] for j in eachindex(opt.POVM_basis)]) for i in 1:opt.M_num]
     ρ, dρ = evolve(dynamics)
     f = W[1] * CFIM(ρ, dρ[1], M; eps = eps)
     return f, f
@@ -309,7 +309,7 @@ end
 
 function objective(opt::Mopt_LinearComb, obj::CFIM_obj{multi_para}, dynamics::Kraus)
     (; W, eps) = obj
-    M = [sum([opt.B[i][j]*opt.POVM_basis[j] for j in 1:length(opt.POVM_basis)]) for i in 1:opt.M_num]
+    M = [sum([opt.B[i][j]*opt.POVM_basis[j] for j in eachindex(opt.POVM_basis)]) for i in 1:opt.M_num]
     ρ, dρ = evolve(dynamics)
     f = tr(W * pinv(CFIM(ρ, dρ, M; eps = eps)))
     return f, 1.0 / f
@@ -319,7 +319,7 @@ end
 function objective(opt::Mopt_Rotation, obj::CFIM_obj{single_para}, dynamics::Lindblad)
     (; W, eps) = obj
     U = rotation_matrix(opt.s, opt.Lambda)
-    M = [U*opt.POVM_basis[i]*U' for i in 1:length(opt.POVM_basis)]
+    M = [U*opt.POVM_basis[i]*U' for i in eachindex(opt.POVM_basis)]
     ρ, dρ = evolve(dynamics)
     f = W[1] * CFIM(ρ, dρ[1], M; eps = eps)
     return f, f
@@ -328,7 +328,7 @@ end
 function objective(opt::Mopt_Rotation, obj::CFIM_obj{multi_para}, dynamics::Lindblad)
     (; W, eps) = obj
     U = rotation_matrix(opt.s, opt.Lambda)
-    M = [U*opt.POVM_basis[i]*U' for i in 1:length(opt.POVM_basis)]
+    M = [U*opt.POVM_basis[i]*U' for i in eachindex(opt.POVM_basis)]
     ρ, dρ = evolve(dynamics)
     f = tr(W * pinv(CFIM(ρ, dρ, M; eps = eps)))
     return f, 1.0 / f
@@ -337,7 +337,7 @@ end
 function objective(opt::Mopt_Rotation, obj::CFIM_obj{single_para}, dynamics::Kraus)
     (; W, eps) = obj
     U = rotation_matrix(opt.s, opt.Lambda)
-    M = [U*opt.POVM_basis[i]*U' for i in 1:length(opt.POVM_basis)]
+    M = [U*opt.POVM_basis[i]*U' for i in eachindex(opt.POVM_basis)]
     ρ, dρ = evolve(dynamics)
     f = W[1] * CFIM(ρ, dρ[1], M; eps = eps)
     return f, f
@@ -346,7 +346,7 @@ end
 function objective(opt::Mopt_Rotation, obj::CFIM_obj{multi_para}, dynamics::Kraus)
     (; W, eps) = obj
     U = rotation_matrix(opt.s, opt.Lambda)
-    M = [U*opt.POVM_basis[i]*U' for i in 1:length(opt.POVM_basis)]
+    M = [U*opt.POVM_basis[i]*U' for i in eachindex(opt.POVM_basis)]
     ρ, dρ = evolve(dynamics)
     f = tr(W * pinv(CFIM(ρ, dρ, M; eps = eps)))
     return f, 1.0 / f

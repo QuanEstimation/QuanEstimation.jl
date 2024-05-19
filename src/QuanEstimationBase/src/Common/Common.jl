@@ -176,15 +176,15 @@ end
 
 #### bound control coefficients ####
 function bound!(ctrl::Vector{Vector{Float64}}, ctrl_bound)
-    for ck in 1:length(ctrl)
-        for tk in 1:length(ctrl[1])
+    for ck in eachindex(ctrl)
+        for tk in eachindex(ctrl[1])
             ctrl[ck][tk] = (x-> x < ctrl_bound[1] ? ctrl_bound[1] : x > ctrl_bound[2] ? ctrl_bound[2] : x)(ctrl[ck][tk])
         end 
     end
 end
 
 function bound!(ctrl::Vector{Float64}, ctrl_bound)
-    for ck in 1:length(ctrl)
+    for ck in eachindex(ctrl)
         ctrl[ck] = (x-> x < ctrl_bound[1] ? ctrl_bound[1] : x > ctrl_bound[2] ? ctrl_bound[2] : x)(ctrl[ck])
     end
 end
@@ -259,7 +259,7 @@ end
 function rotation_matrix(coefficients, Lambda)
     dim = size(Lambda[1])[1]
     U = Matrix{ComplexF64}(I,dim,dim)
-    for i in 1:length(Lambda)
+    for i in eachindex(Lambda)
         U = U*exp(1.0im*coefficients[i]*Matrix(Lambda[i]))
     end
     U
@@ -271,7 +271,7 @@ function initial_state!(psi0, dynamics, p_num, rng)
     if length(psi0) > p_num
         psi0 = [psi0[i] for i in 1:p_num]
     end
-    for pj in 1:length(psi0)
+    for pj in eachindex(psi0)
         dynamics[pj].data.ψ0 = [psi0[pj][i] for i in 1:dim]
     end
     for pj in (length(psi0)+1):p_num
@@ -289,7 +289,7 @@ function initial_ctrl!(opt, ctrl0, dynamics, p_num, rng)
     if length(ctrl0) > p_num
         ctrl0 = [ctrl0[i] for i in 1:p_num]
     end
-    for pj in 1:length(ctrl0)
+    for pj in eachindex(ctrl0)
         dynamics[pj].data.ctrl =  deepcopy(ctrl0[pj])
     end
     if opt.ctrl_bound[1] == -Inf || opt.ctrl_bound[2] == Inf
@@ -322,7 +322,7 @@ function initial_M!(measurement0, C_all, dim, p_num, M_num, rng)
     if length(measurement0) > p_num
         measurement0 = [measurement0[i] for i in 1:p_num]
     end 
-    for pj in 1:length(measurement0)
+    for pj in eachindex(measurement0)
         C_all[pj] = deepcopy(measurement0[pj]) 
     end
     for pj in (length(measurement0)+1):p_num
@@ -343,7 +343,7 @@ function initial_LinearComb!(measurement0, B_all, basis_num, M_num, p_num, rng)
     if length(measurement0) > p_num
         measurement0 = [measurement0[i] for i in 1:p_num]
     end 
-    for pj in 1:length(measurement0)
+    for pj in eachindex(measurement0)
         B_all[pj] = deepcopy(measurement0[pj])
     end
 
@@ -357,7 +357,7 @@ function initial_Rotation!(measurement0, s_all, dim, p_num, rng)
     if length(measurement0) > p_num
         measurement0 = [measurement0[i] for i in 1:p_num]
     end 
-    for pj in 1:length(measurement0)
+    for pj in eachindex(measurement0)
         s_all[pj] = [measurement0[pj][i] for i in 1:dim*dim]
     end
 

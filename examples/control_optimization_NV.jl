@@ -40,16 +40,16 @@ tspan = range(0., 2., length=4000)
 # guessed control coefficients
 cnum = 10
 rng = MersenneTwister(1234)
-ini_1 = [zeros(cnum) for _ in 1:length(Hc)]
-ini_2 = 0.2.*[ones(cnum) for _ in 1:length(Hc)]
-ini_3 = -0.2.*[ones(cnum) for _ in 1:length(Hc)]
-ini_4 = [[range(-0.2, 0.2, length=cnum)...] for _ in 1:length(Hc)]
-ini_5 = [[range(-0.2, 0., length=cnum)...] for _ in 1:length(Hc)]
-ini_6 = [[range(0., 0.2, length=cnum)...] for _ in 1:length(Hc)]
-ini_7 = [-0.2*ones(cnum)+0.01*rand(rng,cnum) for _ in 1:length(Hc)]
-ini_8 = [-0.2*ones(cnum)+0.01*rand(rng,cnum) for _ in 1:length(Hc)]
-ini_9 = [-0.2*ones(cnum)+0.05*rand(rng,cnum) for _ in 1:length(Hc)]
-ini_10 = [-0.2*ones(cnum)+0.05*rand(rng,cnum) for _ in 1:length(Hc)]
+ini_1 = [zeros(cnum) for _ in eachindex(Hc)]
+ini_2 = 0.2.*[ones(cnum) for _ in eachindex(Hc)]
+ini_3 = -0.2.*[ones(cnum) for _ in eachindex(Hc)]
+ini_4 = [[range(-0.2, 0.2, length=cnum)...] for _ in eachindex(Hc)]
+ini_5 = [[range(-0.2, 0., length=cnum)...] for _ in eachindex(Hc)]
+ini_6 = [[range(0., 0.2, length=cnum)...] for _ in eachindex(Hc)]
+ini_7 = [-0.2*ones(cnum)+0.01*rand(rng,cnum) for _ in eachindex(Hc)]
+ini_8 = [-0.2*ones(cnum)+0.01*rand(rng,cnum) for _ in eachindex(Hc)]
+ini_9 = [-0.2*ones(cnum)+0.05*rand(rng,cnum) for _ in eachindex(Hc)]
+ini_10 = [-0.2*ones(cnum)+0.05*rand(rng,cnum) for _ in eachindex(Hc)]
 ctrl0 = [Symbol("ini_", i)|>eval for i in 1:10]
 # choose the optimization type
 opt = QuanEstimation.ControlOpt(ctrl=ini_1, ctrl_bound=[-0.2, 0.2], seed=1234)

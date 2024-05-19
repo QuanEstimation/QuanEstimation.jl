@@ -50,7 +50,7 @@ function Holevo_bound(
     para_num = length(dρ)
     suN = suN_generator(dim) / sqrt(2)
     Lambda = [Matrix{ComplexF64}(I, dim, dim) / sqrt(2)]
-    append!(Lambda, [suN[i] for i = 1:length(suN)])
+    append!(Lambda, [suN[i] for i in eachindex(suN)])
     vec_∂ρ = [[0.0 for i = 1:num] for j = 1:para_num]
 
     for pa = 1:para_num

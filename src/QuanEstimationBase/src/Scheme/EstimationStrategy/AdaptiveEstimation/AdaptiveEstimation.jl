@@ -167,7 +167,7 @@ function iter_MI(p, p_num, para_num, x, x_list, u, rho_all, M, ei)
         end
 
         value_tp = zeros(size(p))
-        for mi in 1:length(M)
+        for mi in eachindex(M)
             pyx_list_tp = real.(tr.(rho_u.*[M[mi]]))
             pyx_tp = reshape(pyx_list, size(p))
             mean_tp = trapz(tuple(x...), p.*pyx_tp)

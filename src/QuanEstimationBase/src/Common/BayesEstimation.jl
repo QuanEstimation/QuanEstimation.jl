@@ -327,7 +327,7 @@ function BayesCost(x, p, xest, rho, M; W=missing, eps=GLOBAL_EPS)
         end
 
         p_num = length(x[1])
-        value = [p[i]*sum([tr(rho[i]*M[mi])*(x[1][i]-xest[mi][1])^2 for mi in 1:length(M)]) for i in 1:p_num]
+        value = [p[i]*sum([tr(rho[i]*M[mi])*(x[1][i]-xest[mi][1])^2 for mi in eachindex(M)]) for i in 1:p_num]
         return real(trapz(x[1], value))
     else
         # multi-parameter scenario
@@ -341,7 +341,7 @@ function BayesCost(x, p, xest, rho, M; W=missing, eps=GLOBAL_EPS)
 
         x_list = Iterators.product(x...)
         p_num = length(x_list)
-        xCx = [sum([tr(rho_i*M[mi])*([xi...]-xest[mi])'*W*([xi...]-xest[mi]) for mi in 1:length(M)]) for (xi,rho_i) in zip(x_list,rho)]
+        xCx = [sum([tr(rho_i*M[mi])*([xi...]-xest[mi])'*W*([xi...]-xest[mi]) for mi in eachindex(M)]) for (xi,rho_i) in zip(x_list,rho)]
         xCx = reshape(xCx, size(p))
 
         value = p.*xCx
