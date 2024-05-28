@@ -10,7 +10,9 @@ export GeneralScheme,Lindblad, Hamiltonian
 export GeneralEstimation, GeneralMeasurement, GeneralState, GeneralParameterization
 export AdaptiveStrategy, adapt!, Adapt_MZI
 export Output
-export QuanEstSystem
+export Scheme
+export DensityMatrix, Decay, Control, Expm, Ode, Strategy, POVM
+export error_evaluation, error_control, error_control_param, error_control_eps
 export solve
 export expm, ode
 export Bayes

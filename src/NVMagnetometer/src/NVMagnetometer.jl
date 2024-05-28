@@ -54,7 +54,7 @@ function NVMagnetometerScheme(;
 	init_state = [1, 0, 0, 0, 1, 0] / sqrt(2),
 	Hc = S,
 	ctrl = nothing,
-	tspan = range(0.0, 2.0, length = 200),
+	tspan = 0.0:0.01:2.0,
 	M = nothing,
 	io_hooks = :verbose,
 )

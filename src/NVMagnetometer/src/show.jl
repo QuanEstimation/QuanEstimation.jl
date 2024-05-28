@@ -117,7 +117,7 @@ function Base.show(io::IO, ::MIME"text/plain", t::NVMagnetometerScheme)
     │  └─ ψ0   = $(init_state)
     ├─ Parameterization => LindbladDynamics
     │  ├─ tspan = $(tspan)    
-    │  ├─ Hamiltonian => NVMagnetometerHamiltonian
+    │  ├─ Hamiltonian => NVCenterHamiltonian
     │  │  ├─ D  = $(D)   
     │  │  ├─ gS = $(gS)
     │  │  ├─ gI = $(gI)

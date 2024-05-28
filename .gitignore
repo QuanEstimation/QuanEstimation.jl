@@ -4,6 +4,6 @@
 /Manifest.toml
 /deps/build.log
 /docs/build/
-
+.vscode/
 
 *.log
