@@ -31,7 +31,7 @@ x = range(-0.25*pi+0.1, stop=3.0*pi/4.0-0.1, length=10) |>Vector
 p = (1.0/(x[end]-x[1])) * ones(length(x))
 # dynamics
 rho = Vector{Matrix{ComplexF64}}(undef, length(x))
-for i = 1:length(x) 
+for i in eachindex(x) 
     H0_tp = H0_func(x[i])
     dH_tp = dH_func(x[i])
     rho_tp, drho_tp = QuanEstimationBase.expm(tspan, rho0, H0_tp, dH_tp)

@@ -472,7 +472,7 @@ Calculation of the quantum Fisher information (QFI) and quantum Fisher informati
 """
 function QFIM_Kraus(ρ0::AbstractMatrix, K::AbstractVector, dK::AbstractVector; LDtype=:SLD, exportLD::Bool=false, eps=GLOBAL_EPS)
     para_num = length(dK[1])
-    dK = [[dK[i][j] for i in 1:length(K)] for j in 1:para_num]
+    dK = [[dK[i][j] for i in eachindex(K)] for j in 1:para_num]
     ρ = [K * ρ0 * K' for K in K] |> sum
     dρ = [[dK * ρ0 * K' + K * ρ0 * dK' for (K,dK) in zip(K,dK)] |> sum for dK in dK]
     F = QFIM(ρ, dρ; LDtype=LDtype, exportLD=exportLD, eps=eps)
@@ -642,7 +642,7 @@ function FI_Expt(y1, y2, dx; ftype=:norm)
         p1_pois = pdf.(fit(Poisson, y1), range(0, maximum(y1), step=1))
         p2_pois = pdf.(fit(Poisson, y2), range(0, maximum(y2), step=1))
         p1_pois, p2_pois = p1_pois/sum(p1_pois), p2_pois/sum(p2_pois)
-        fidelity = sum([sqrt(p1_pois[i]*p2_pois[i]) for i in 1:length(p1_pois)])
+        fidelity = sum([sqrt(p1_pois[i]*p2_pois[i]) for i in eachindex(p1_pois)])
         Fc = 8*(1-fidelity)/dx^2
     else
         println("supported values for ftype are 'norm', 'poisson', 'gamma' and 'rayleigh'")

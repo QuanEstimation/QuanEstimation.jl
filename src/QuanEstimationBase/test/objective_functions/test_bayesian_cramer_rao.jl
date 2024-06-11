@@ -18,8 +18,8 @@ function data_gen_bayes()
 	# prior distribution
 	x = range(-0.5 * pi, stop = 0.5 * pi, length = 10) |> Vector
 	mu, eta = 0.0, 0.2
-	p_tp = [p_func(x[i], mu, eta) for i in 1:length(x)]
-	dp_tp = [dp_func(x[i], mu, eta) for i in 1:length(x)]
+	p_tp = [p_func(x[i], mu, eta) for i in eachindex(x)]
+	dp_tp = [dp_func(x[i], mu, eta) for i in eachindex(x)]
 	# normalization of the distribution
 	c = trapz(x, p_tp)
 	p = p_tp / c

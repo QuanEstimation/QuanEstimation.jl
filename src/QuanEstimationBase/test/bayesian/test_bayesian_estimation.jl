@@ -39,7 +39,7 @@ tspan = range(0., stop=1., length=5)
 
 # dynamics
 rho = Vector{Matrix{ComplexF64}}(undef, length(x))
-for i = 1:length(x) 
+for i in eachindex(x) 
     H0_tp = H0_func(x[i])
     dH_tp = dH_func(x[i])
     rho_tp, drho_tp = QuanEstimationBase.expm(tspan, rho0, H0_tp, dH_tp)

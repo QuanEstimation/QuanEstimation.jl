@@ -204,7 +204,7 @@ function _step!(env::ControlEnv, a)
     reward_current = log(f_current / env.f_noctrl[env.t])
     env.reward = reward_current
     env.total_reward += reward_current
-    [append!(env.ctrl_list[i], a[i]) for i = 1:length(a)]
+    [append!(env.ctrl_list[i], a[i]) for i in eachindex(a)]
     if env.done
         set_f!(env.output, f_out)
         set_buffer!(env.output, env.ctrl_list)

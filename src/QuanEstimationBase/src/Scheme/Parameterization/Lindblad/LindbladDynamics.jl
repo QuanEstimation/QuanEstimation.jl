@@ -55,7 +55,7 @@ function dissipation(
     γ::Vector{R},
     t::Int = 1,
 ) where {V<:AbstractVector,R<:Real}
-    [γ[i] * liouville_dissip(Γ[i]) for i = 1:length(Γ)] |> sum
+    [γ[i] * liouville_dissip(Γ[i]) for i in eachindex(Γ)] |> sum
 end
 
 function dissipation(
@@ -63,7 +63,7 @@ function dissipation(
     γ::Vector{Vector{R}},
     t::Int = 1,
 ) where {V<:AbstractVector,R<:Real}
-    [γ[i][t] * liouville_dissip(Γ[i]) for i = 1:length(Γ)] |> sum
+    [γ[i][t] * liouville_dissip(Γ[i]) for i in eachindex(Γ)] |> sum
 end
 
 function free_evolution(H0)
@@ -82,7 +82,7 @@ function liouvillian(
 end
 
 function Htot(H0::T, Hc::V, ctrl) where {T<:AbstractArray, V<:AbstractVector}
-    [H0] .+ ([ctrl[i] .* [Hc[i]] for i = 1:length(ctrl)] |> sum)
+    [H0] .+ ([ctrl[i] .* [Hc[i]] for i in eachindex(ctrl)] |> sum)
 end
 
 function Htot(
@@ -90,12 +90,12 @@ function Htot(
     Hc::V,
     ctrl::Vector{R},
 ) where {T<:AbstractArray,V<:AbstractVector, R<:Real}
-    H0 + ([ctrl[i] * Hc[i] for i = 1:length(ctrl)] |> sum)
+    H0 + ([ctrl[i] * Hc[i] for i in eachindex(ctrl)] |> sum)
 end
 
 
 function Htot(H0::V1, Hc::V2, ctrl) where {V1,V2<:AbstractVector}
-    H0 + ([ctrl[i] * Hc[i] for i = 1:length(ctrl)] |> sum)
+    H0 + ([ctrl[i] * Hc[i] for i in eachindex(ctrl)] |> sum)
 end
 
 function expL(H, decay_opt, γ, dt, tj = 1)
@@ -168,13 +168,13 @@ function expm(
 
     Δt = tspan[2] - tspan[1]
 
-    ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i = 1:length(tspan)]
-    ∂ρt_∂x_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i = 1:length(tspan)]
+    ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i in eachindex(tspan)]
+    ∂ρt_∂x_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i in eachindex(tspan)]
     ρt_all[1] = ρ0 |> vec
     ∂ρt_∂x_all[1] = ρt_all[1] |> zero
 
     decay_opt, γ = decay
-    for t = 2:length(tspan)
+    for t in eachindex(tspan[2:end])
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         ∂ρt_∂x_all[t] = -im * Δt * dH_L * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1]
@@ -250,7 +250,7 @@ function expm(
 
     Δt = tspan[2] - tspan[1]
 
-    ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i = 1:length(tspan)]
+    ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i in eachindex(tspan)]
     ∂ρt_∂x_all = [
         [Vector{ComplexF64}(undef, (length(H0))^2) for j = 1:param_num] for
         i = 1:length(tspan)
@@ -260,7 +260,7 @@ function expm(
         ∂ρt_∂x_all[1][pj] = ρt_all[1] |> zero
     end
 
-    for t = 2:length(tspan)
+    for t in eachindex(tspan[2:end])
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         for pj = 1:param_num
@@ -322,12 +322,12 @@ function expm_py(
 
     Δt = tspan[2] - tspan[1]
 
-    ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i = 1:length(tspan)]
-    ∂ρt_∂x_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i = 1:length(tspan)]
+    ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i in eachindex(tspan)]
+    ∂ρt_∂x_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i in eachindex(tspan)]
     ρt_all[1] = ρ0 |> vec
     ∂ρt_∂x_all[1] = ρt_all[1] |> zero
 
-    for t = 2:length(tspan)
+    for t in eachindex(tspan[2:end])
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         ∂ρt_∂x_all[t] = -im * Δt * dH_L * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1]
@@ -356,7 +356,7 @@ function expm_py(
 
     Δt = tspan[2] - tspan[1]
 
-    ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i = 1:length(tspan)]
+    ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i in eachindex(tspan)]
     ∂ρt_∂x_all = [
         [Vector{ComplexF64}(undef, (length(H0))^2) for j = 1:param_num] for
         i = 1:length(tspan)
@@ -366,7 +366,7 @@ function expm_py(
         ∂ρt_∂x_all[1][pj] = ρt_all[1] |> zero
     end
 
-    for t = 2:length(tspan)
+    for t in eachindex(tspan[2:end])
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         for pj = 1:param_num
@@ -407,7 +407,7 @@ function secondorder_derivative(
     ρt = ρ0 |> vec
     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
     ∂2ρt_∂x = [ρt |> zero for i = 1:param_num]
-    for t = 2:length(tspan)
+    for t in eachindex(tspan[2:end])
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
@@ -485,12 +485,12 @@ function ode(
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
     ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
-                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
     ∂ρt_func!(∂ρ, ctrl, t) = -im * (dH * ρt[t2Num(t)] - ρt[t2Num(t)] * dH) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
-                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
 
     prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), ctrl)
     ∂ρt = solve(prob_∂ρ, Tsit5(), saveat=dt).u
@@ -566,19 +566,19 @@ function ode(
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
     ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
-                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
     ∂ρt_func!(∂ρ, (pa, ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
-                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
 
     ∂ρt_tp = []
     for pa in 1:param_num
         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), (pa, ctrl,))
         push!(∂ρt_tp, solve(prob_∂ρ, Tsit5(), saveat=dt).u)
     end
-    ∂ρt = [[∂ρt_tp[i][j] for i in 1:param_num] for j in 1:length(tspan)]
+    ∂ρt = [[∂ρt_tp[i][j] for i in 1:param_num] for j in eachindex(tspan)]
     ρt, ∂ρt
 end
 
@@ -639,12 +639,12 @@ function ode_py(
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
     ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
-                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
     ∂ρt_func!(∂ρ, ctrl, t) = -im * (dH * ρt[t2Num(t)] - ρt[t2Num(t)] * dH) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
-                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
 
     prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), ctrl)
     ∂ρt = solve(prob_∂ρ, Tsit5(), saveat=dt).u
@@ -670,19 +670,19 @@ function ode_py(
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
     ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
-                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
     ∂ρt_func!(∂ρ, (pa, ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
-                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
 
     ∂ρt_tp = []
     for pa in 1:param_num
         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0|>zero, (tspan[1], tspan[end]), (pa, ctrl,))
         push!(∂ρt_tp, solve(prob_∂ρ, Tsit5(), saveat=dt).u)
     end
-    ∂ρt = [[∂ρt_tp[i][j] for i in 1:param_num] for j in 1:length(tspan)]
+    ∂ρt = [[∂ρt_tp[i][j] for i in 1:param_num] for j in eachindex(tspan)]
     ρt, ∂ρt
 end
 
@@ -724,7 +724,7 @@ function evolve(scheme::Scheme{Ket, Lindblad{HT, NonDecay, NonControl, Expm, P},
     U = exp(-im * H0 * Δt)
     ψt = ψ0
     ∂ψ∂x = [ψ0 |> zero for i = 1:param_num]
-    for i = 2:length(tspan)
+    for i in eachindex(tspan[2:end])
         ψt = U * ψt
         ∂ψ∂x = [-im * Δt * dH[i] * ψt for i = 1:param_num] + [U] .* ∂ψ∂x
     end
@@ -838,12 +838,12 @@ function evolve(scheme::Scheme{Ket, Lindblad{HT, Decay, NonControl, Ode, P}, M, 
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
     ρt_func!(ρ, p, t) = -im * (H0 * ρ - ρ * H0) + 
-                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
     ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0 * ∂ρ - ∂ρ * H0) + 
-                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:param_num
@@ -867,7 +867,7 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, NonControl, Ex
     Δt = tspan[2] - tspan[1]
     exp_L = expL(H0, decay_opt, γ, Δt, 1)
     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
-    for t = 2:length(tspan)
+    for t in eachindex(tspan[2:end])
         ρt = exp_L * ρt
         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
     end
@@ -885,12 +885,12 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, NonControl, Od
     dt = tspan[2] - tspan[1] 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
     ρt_func!(ρ, p, t) = -im * (H0 * ρ - ρ * H0) + 
-                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
     ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0 * ∂ρ - ∂ρ * H0) + 
-                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:param_num
@@ -917,7 +917,7 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, NonDecay, Control, Ex
     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
     ρt = ρ0 |> vec
     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-    for t = 2:length(tspan)
+    for t in eachindex(tspan[2:end])
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], Δt)
         ρt = exp_L * ρt
@@ -968,7 +968,7 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, Control, Expm,
     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
     ρt = ρ0 |> vec
     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-    for t = 2:length(tspan)
+    for t in eachindex(tspan[2:end])
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
@@ -995,12 +995,12 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, Control, Ode, 
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
     
     ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
-                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
     ρt = solve(prob_ρ, Tsit5(), saveat=dt; abstol=abstol, reltol=reltol).u
 
     ∂ρt_func!(∂ρ, (pa, ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
-                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:param_num
@@ -1025,7 +1025,7 @@ function evolve(scheme::Scheme{Ket, Lindblad{HT, Decay, Control, Expm, P}, M, E}
     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
     ρt = (ψ0 * ψ0') |> vec
     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-    for t = 2:length(tspan)
+    for t in eachindex(tspan[2:end])
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
@@ -1052,12 +1052,12 @@ function evolve(scheme::Scheme{Ket, Lindblad{HT, Decay, Control, Ode, P}, M, E})
     H(ctrl) = Htot(H0, Hc, ctrl)
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
     ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + 
-                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
     ∂ρt_func!(∂ρ, (pa,ctrl,), t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + 
-                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+                 ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
 
     ∂ρt_∂x = typeof(ρ0)[]
     for pa in 1:param_num
@@ -1076,7 +1076,7 @@ end
 #     dH_L = [liouville_commu.(dh) for dh in dH]
 #     ρt = (ψ0 * ψ0') |> vec
 #     ∂ρt_∂x = [ρt |> zero for _ in 1:param_num]
-#     for t = 2:length(tspan)
+#     for t in eachindex(tspan[2:end])
 #         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
 #         exp_L = expL(H0[t-1], Δt)
 #         ρt = exp_L * ρt
@@ -1117,7 +1117,7 @@ end
 #     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
 #     ρt = ρ0 |> vec
 #     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-#     for t = 2:length(tspan)
+#     for t in eachindex(tspan[2:end])
 #         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
 #         exp_L = expL(H0[t-1], Δt)
 #         ρt = exp_L * ρt
@@ -1155,7 +1155,7 @@ end
 #     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
 #     ρt = (ψ0 * ψ0') |> vec
 #     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-#     for t = 2:length(tspan)
+#     for t in eachindex(tspan[2:end])
 #         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
 #         exp_L = expL(H0[t-1], decay_opt, γ, Δt, t-1)
 #         ρt = exp_L * ρt
@@ -1173,12 +1173,12 @@ end
 #     dt = tspan[2] - tspan[1] 
 #     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
 #     ρt_func!(ρ, p, t) = -im * (H0[t2Num(t)] * ρ - ρ * H0[t2Num(t)]) + 
-#                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+#                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
 #     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
 #     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
 #     ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)]) + 
-#                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+#                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
 
 #     ∂ρt_∂x = typeof(ρ0)[]
 #     for pa in 1:param_num
@@ -1197,7 +1197,7 @@ end
 #     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
 #     ρt = ρ0 |> vec
 #     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-#     for t = 2:length(tspan)
+#     for t in eachindex(tspan[2:end])
 #         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
 #         exp_L = expL(H0[t-1], decay_opt, γ, Δt, t-1)
 #         ρt = exp_L * ρt
@@ -1214,12 +1214,12 @@ end
 #     dt = tspan[2] - tspan[1] 
 #     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
 #     ρt_func!(ρ, p, t) = -im * (H0[t2Num(t)] * ρ - ρ * H0[t2Num(t)]) + 
-#                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+#                  ([γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
 #     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]))
 #     ρt = solve(prob_ρ, Tsit5(), saveat=dt).u
 
 #     ∂ρt_func!(∂ρ, pa, t) = -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -im * (H0[t2Num(t)] * ∂ρ - ∂ρ * H0[t2Num(t)]) + 
-#                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in 1:length(Γ)] |> sum)
+#                  ([γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5*(Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i] )) for i in eachindex(Γ)] |> sum)
 
 #     ∂ρt_∂x = typeof(ρ0)[]
 #     for pa in 1:param_num

@@ -33,7 +33,7 @@ function adaptMZI_online(x, p, rho0, output, target::Symbol)
     phi_span = range(-pi, stop=pi, length=length(x)) |> collect
 
     phi = 0.0
-    a_res = [Matrix{ComplexF64}(I, (N+1)^2, (N+1)^2) for i in 1:length(x)]
+    a_res = [Matrix{ComplexF64}(I, (N+1)^2, (N+1)^2) for i in eachindex(x)]
 
     xout, y = [], []
 
@@ -44,7 +44,7 @@ function adaptMZI_online(x, p, rho0, output, target::Symbol)
             enter = readline()
             u = parse(Int64, enter)
             pyx = zeros(length(x)) |> sparse
-            for xi in 1:length(x)
+            for xi in eachindex(x)
                 a_res_tp = a_res[xi]*a_u(a, x[xi], phi, u)
                 pyx[xi] = real(tr(rho0*a_res_tp'*a_res_tp))*(factorial(N-ei)/factorial(N))
                 a_res[xi] = a_res_tp
@@ -66,7 +66,7 @@ function adaptMZI_online(x, p, rho0, output, target::Symbol)
             u = parse(Int64, enter)
 
             pyx = zeros(length(x)) |> sparse
-            for xi in 1:length(x)
+            for xi in eachindex(x)
                 a_res_tp = a_res[xi]*a_u(a, x[xi], phi, u)
                 pyx[xi] = real(tr(rho0*a_res_tp'*a_res_tp))*(factorial(N-ei)/factorial(N))
                 a_res[xi] = a_res_tp
@@ -88,11 +88,11 @@ adaptMZI_online(x, p, rho0, output::String, target::String) = adaptMZI_online(x,
 function calculate_online{sharpness}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix)
     
     M_res = zeros(length(phi_span))
-    for mj in 1:length(phi_span)
+    for mj in eachindex(phi_span)
         M1_res = trapz(x, pyx.*p)
         pyx0, pyx1 = zeros(length(x)), zeros(length(x))
         M2_res = 0.0
-        for xj in 1:length(x)
+        for xj in eachindex(x)
             a_res0 = a_res[xj]*a_u(a, x[xj], phi_span[mj], 0)
             a_res1 = a_res[xj]*a_u(a, x[xj], phi_span[mj], 1)
             pyx0[xj] = real(tr(rho0*a_res0'*a_res0))*(factorial(N-(ei+1))/factorial(N))
@@ -108,11 +108,11 @@ end
 function calculate_online{MI}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix)
     
     M_res = zeros(length(phi_span))
-    for mj in 1:length(phi_span)
+    for mj in eachindex(phi_span)
         M1_res = trapz(x, pyx.*p)
         pyx0, pyx1 = zeros(length(x)), zeros(length(x))
         M2_res = 0.0
-        for xj in 1:length(x)
+        for xj in eachindex(x)
             a_res0 = a_res[xj]*a_u(a, x[xj], phi_span[mj], 0)
             a_res1 = a_res[xj]*a_u(a, x[xj], phi_span[mj], 1)
             pyx0[xj] = real(tr(rho0*a_res0'*a_res0))*(factorial(N-(ei+1))/factorial(N))
@@ -174,7 +174,7 @@ function DE_deltaphiOpt(x, p, rho0, comb, p_num, ini_population, c, cr, rng::Abs
     if length(ini_population) > p_num
         ini_population = [ini_population[i] for i in 1:p_num]
     end
-    for pj in 1:length(ini_population)
+    for pj in eachindex(ini_population)
         deltaphi[pj] = [ini_population[pj][i] for i in 1:N]
     end
     for pk in (length(ini_population)+1):p_num
@@ -245,7 +245,7 @@ function PSO_deltaphiOpt(x, p, rho0, comb, p_num, ini_particle, c0, c1, c2, rng:
     if length(ini_particle) > p_num
         ini_particle = [ini_particle[i] for i in 1:p_num]
     end
-    for pj in 1:length(ini_particle)
+    for pj in eachindex(ini_particle)
         deltaphi[pj] = [ini_particle[pj][i] for i in 1:N]
     end
     for pk in (length(ini_particle)+1):p_num
@@ -313,20 +313,20 @@ function calculate_offline{sharpness}(delta_phi, x, p, rho0, a, comb, eps)
     exp_ix = [exp(1.0im*xi) for xi in x]
     
     M_res = zeros(length(comb))
-    for ui in 1:length(comb)
+    for ui in eachindex(comb)
         u = comb[ui]
         phi = 0.0
 
-        a_res = [Matrix{ComplexF64}(I, (N+1)^2, (N+1)^2) for i in 1:length(x)]
+        a_res = [Matrix{ComplexF64}(I, (N+1)^2, (N+1)^2) for i in eachindex(x)]
         for ei in 1:N-1
             phi = phi - (-1)^u[ei]*delta_phi[ei]
-            for xi in 1:length(x)
+            for xi in eachindex(x)
                 a_res[xi] = a_res[xi]*a_u(a, x[xi], phi, u[ei])
             end
         end
 
         pyx = zeros(length(x))
-        for xj in 1:length(x)
+        for xj in eachindex(x)
             pyx[xj] = real(tr(rho0*a_res[xj]'*a_res[xj]))*(1/factorial(N))
         end
         M_res[ui] = abs(trapz(x, pyx.*p.*exp_ix))
@@ -339,20 +339,20 @@ function calculate_offline{MI}(delta_phi, x, p, rho0, a, comb, eps)
     exp_ix = [exp(1.0im*xi) for xi in x]
     
     M_res = zeros(length(comb))
-    for ui in 1:length(comb)
+    for ui in eachindex(comb)
         u = comb[ui]
         phi = 0.0
 
-        a_res = [Matrix{ComplexF64}(I, (N+1)^2, (N+1)^2) for i in 1:length(x)]
+        a_res = [Matrix{ComplexF64}(I, (N+1)^2, (N+1)^2) for i in eachindex(x)]
         for ei in 1:N-1
             phi = phi - (-1)^u[ei]*delta_phi[ei]
-            for xi in 1:length(x)
+            for xi in eachindex(x)
                 a_res[xi] = a_res[xi]*a_u(a, x[xi], phi, u[ei])
             end
         end
 
         pyx = zeros(length(x))
-        for xj in 1:length(x)
+        for xj in eachindex(x)
             pyx[xj] = real(tr(rho0*a_res[xj]'*a_res[xj]))*(1/factorial(N))
         end
         M_res[ui] = trapz(x, pyx.*p.*log.(2, pyx./trapz(x, pyx.*p)))

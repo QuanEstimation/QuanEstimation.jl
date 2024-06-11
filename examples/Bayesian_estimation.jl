@@ -28,7 +28,7 @@ p = (1.0/(x[end]-x[1]))*ones(length(x))
 tspan = range(0., stop=1., length=1000)
 # dynamics
 rho = Vector{Matrix{ComplexF64}}(undef, length(x))
-for i = 1:length(x) 
+for i in eachindex(x) 
     H0_tp = H0_func(x[i])
     dH_tp = dH_func(x[i])
     rho_tp, drho_tp = QuanEstimation.expm(tspan, rho0, H0_tp, dH_tp)
@@ -39,7 +39,7 @@ end
 Random.seed!(1234)
 y = [0 for i in 1:500]
 res_rand = sample(1:length(y), 125, replace=false)
-for i in 1:length(res_rand)
+for i in eachindex(res_rand)
     y[res_rand[i]] = 1
 end
 

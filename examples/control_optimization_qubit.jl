@@ -25,7 +25,7 @@ M = [M1, M2]
 tspan = range(0., 10., length=2500)
 # guessed control coefficients
 cnum = length(tspan)-1
-ctrl = [zeros(cnum) for _ in 1:length(Hc)]
+ctrl = [zeros(cnum) for _ in eachindex(Hc)]
 ctrl_bound = [-2., 2.]
 # choose the optimization type
 opt = ControlOpt(ctrl=ctrl, ctrl_bound=ctrl_bound, seed=1234)

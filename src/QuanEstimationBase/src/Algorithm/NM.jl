@@ -10,7 +10,7 @@ function update!(opt::StateOpt, alg::NM, obj, dynamics, output)
     if length(ini_state) > p_num
         ini_state = [ini_state[i] for i in 1:p_num]
     end 
-    for pj in 1:length(ini_state)
+    for pj in eachindex(ini_state)
         nelder_mead[pj].data.ψ0 = [ini_state[pj][i] for i in 1:dim]
     end
     for pj in (length(ini_state)+1):p_num

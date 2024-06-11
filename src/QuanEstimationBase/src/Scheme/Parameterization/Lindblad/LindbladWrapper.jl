@@ -112,7 +112,7 @@ function Lindblad(opt::StateOpt, tspan, H0, dH; Hc=missing, ctrl=missing, decay=
 				end
 			end
 
-			hc = [sum([c[i]*hc for (c,hc) in zip(ctrl,Hc)]) for i in 1:length(ctrl[1]) ]
+			hc = [sum([c[i]*hc for (c,hc) in zip(ctrl,Hc)]) for i in eachindex(ctrl[1]) ]
 
 			if typeof(H0) <: AbstractMatrix
 				H0 = [complex(H0+hc) for hc in hc]
@@ -249,7 +249,7 @@ function Lindblad(opt::AbstractMopt, tspan, ρ₀, H0, dH; Hc=missing, ctrl=miss
 				end
 			end
 
-			hc = [sum([c[i]*hc for (c,hc) in zip(ctrl,Hc)]) for i in 1:length(ctrl[1]) ]
+			hc = [sum([c[i]*hc for (c,hc) in zip(ctrl,Hc)]) for i in eachindex(ctrl[1]) ]
 
 			if typeof(H0) <: AbstractMatrix
 				H0 = [complex(H0+hc) for hc in hc]
@@ -473,7 +473,7 @@ function Lindblad(opt::StateMeasurementOpt, tspan, H0, dH; Hc=missing, ctrl=miss
 				end
 			end
 
-			hc = [sum([c[i]*hc for (c,hc) in zip(ctrl,Hc)]) for i in 1:length(ctrl[1]) ]
+			hc = [sum([c[i]*hc for (c,hc) in zip(ctrl,Hc)]) for i in eachindex(ctrl[1]) ]
 
 			if typeof(H0) <: AbstractMatrix
 				H0 = [complex(H0+hc) for hc in hc]
