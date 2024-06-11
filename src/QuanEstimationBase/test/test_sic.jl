@@ -1,4 +1,4 @@
-using QuanEstimation: suN_generatorU, suN_generatorV, suN_generatorW, suN_generator, basis, SIC
+using QuanEstimationBase: suN_generatorU, suN_generatorV, suN_generatorW, suN_generator, basis, SIC
 # Test for suN_generatorU function
 function test_suN_generatorU()
 	n = 3

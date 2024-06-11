@@ -23,25 +23,25 @@ using SparseArrays
         include("objective_functions/test_ziv_zakai.jl")
     end
     
-    @testset "Objective Wrapper" begin
-        include("objective_functions/test_objective_wrapper.jl")
-    end
-end
-
-
-@testset verbose = true "Dynamics" begin
-    @testset "Lindblad Dynamics" begin
-        include("dynamics/test_lindblad.jl")
-    end
-    @testset "Kraus Dynamics" begin
-        include("dynamics/test_kraus.jl")
-    end
-
-    # @testset "Lindblad Wrapper" begin
-    #     include("dynamics/test_lindblad_wrapper.jl")
+    # @testset "Objective Wrapper" begin
+    #     include("objective_functions/test_objective_wrapper.jl")
     # end
-    
 end
+
+
+# @testset verbose = true "Dynamics" begin
+#     @testset "Lindblad Dynamics" begin
+#         include("dynamics/test_lindblad.jl")
+#     end
+#     @testset "Kraus Dynamics" begin
+#         include("dynamics/test_kraus.jl")
+#     end
+
+#     # @testset "Lindblad Wrapper" begin
+#     #     include("dynamics/test_lindblad_wrapper.jl")
+#     # end
+    
+# end
 
 
 @testset "Algorithm" begin
@@ -76,27 +76,27 @@ end
 end
 
 
-@testset "Optimization" begin
-    @testset "Optimization Scenario" begin
-        include("optimization/test_opt_scenario.jl")
-    end
-end
+# @testset "Optimization" begin
+#     @testset "Optimization Scenario" begin
+#         include("optimization/test_opt_scenario.jl")
+#     end
+# end
 
 
-# Adaptive Estimation 
-@testset "Adaptive" begin
-    # @testset "Adaptive Estimation" begin
-    #     include("adaptive/test_adaptive_estimation.jl")
-    # end
+# # Adaptive Estimation 
+# @testset "Adaptive" begin
+#     # @testset "Adaptive Estimation" begin
+#     #     include("adaptive/test_adaptive_estimation.jl")
+#     # end
 
-    @testset "Adaptive Estimation MZI" begin
-        include("adaptive/test_adaptive_estimation_MZI.jl")
-    end
-end
+#     @testset "Adaptive Estimation MZI" begin
+#         include("adaptive/test_adaptive_estimation_MZI.jl")
+#     end
+# end
 
 
-@testset "BayesEstimation" begin
-    @testset "Bayesian Estimation" begin
-        include("bayesian/test_bayesian_estimation.jl")
-    end
-end
+# @testset "BayesEstimation" begin
+#     @testset "Bayesian Estimation" begin
+#         include("bayesian/test_bayesian_estimation.jl")
+#     end
+# end

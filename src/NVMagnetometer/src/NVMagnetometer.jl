@@ -123,7 +123,7 @@ function nv_control_hooks(ctrl, tspan)
 	return ctrl
 end
 
-function nv_measurement_hooks(M)
+function nv_measurement_hooks()
 	return QuanEstimationBase.SIC(6)
 end
 
@@ -131,7 +131,7 @@ function nv_measurement_hooks(M::Vector{T}) where {T <: Matrix}
 	return M
 end
 
-function control_Hamiltonians_hook(ctrl)
+function control_Hamiltonians_hook()
 	sx = [0.0 1.0; 1.0 0.0]
 	sy = [0.0 -im; im 0.0]
 	sz = [1.0 0.0; 0.0 -1.0]

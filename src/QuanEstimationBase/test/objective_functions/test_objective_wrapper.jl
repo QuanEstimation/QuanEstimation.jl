@@ -37,7 +37,6 @@ end
 
 function mock_dynamics()
     # Set up test parameters
-    opt = QuanEstimationBase.ControlOpt()
     tspan = range(0.0, 10.0, length = 100)
     rho0 = 0.5 * ones(2, 2)
     omega = 1.0
@@ -50,7 +49,7 @@ function mock_dynamics()
     decay = [[0.0 1.0; 0.0 0.0im], [0.0 0.0; 1.0 0.0im]]
     
     # Call the function
-    return Lindblad(opt, tspan, rho0, H0, dH, Hc, decay)
+    return Lindblad(tspan, rho0, H0, dH, Hc, decay)
 end
 
 

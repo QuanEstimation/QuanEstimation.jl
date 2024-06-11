@@ -1,7 +1,7 @@
 using Test
 using QuanEstimationBase: BCFIM, BQFIM, BQCRB, BCRB
 
-function data_gen()
+function data_gen_bayes()
 	# prior distribution
 	function p_func(x, mu, eta)
 		return exp(-(x - mu)^2 / (2 * eta^2)) / (eta * sqrt(2 * pi))
@@ -46,7 +46,7 @@ end
 
 # Test for BCFIM
 function test_BCFIM()
-	(;x, p, rho, drho) = data_gen()
+	(;x, p, rho, drho) = data_gen_bayes()
 	M = QuanEstimationBase.SIC(2)
 	result = BCFIM([x], p, rho, drho, M = M)
 	# Add assertions here
@@ -54,7 +54,7 @@ end
 
 # Test for BQFIM
 function test_BQFIM()
-	(;x, p, rho, drho) = data_gen()
+	(;x, p, rho, drho) = data_gen_bayes()
 	LDtype = :SLD
 	eps = 1e-6
 	result = BQFIM([x], p, rho, drho, LDtype = LDtype, eps = eps)
@@ -63,7 +63,7 @@ end
 
 # Test for BQCRB
 function test_BQCRB()
-	(;x, p, dp, rho, drho) = data_gen()
+	(;x, p, dp, rho, drho) = data_gen_bayes()
 	LDtype = :SLD
 	btypes = [1, 2, 3]
 	eps = 1e-6
@@ -73,7 +73,7 @@ end
 
 # Test for BCRB
 function test_BCRB()
-	(;x, p, dp, rho, drho) = data_gen()
+	(;x, p, dp, rho, drho) = data_gen_bayes()
 	btype = 1
 	eps = 1e-6
     btypes = [1, 2, 3]

@@ -47,7 +47,7 @@ function test_helstrom_bound_pure()
     @test helstrom_bound(ψ, ϕ) ≈ expected_result
 end
 
-function data_gen()
+function data_gen_zz()
 	# prior distribution
 	function p_func(x, mu, eta)
 		return exp(-(x - mu)^2 / (2 * eta^2)) / (eta * sqrt(2 * pi))
@@ -92,7 +92,7 @@ end
 
 # Test for QZZB
 function test_QZZB()
-    (;x, p, rho) = data_gen()
+    (;x, p, rho) = data_gen_zz()
     @test QZZB(x, p, rho) >= 0
 end
 

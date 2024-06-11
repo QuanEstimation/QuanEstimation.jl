@@ -1,5 +1,6 @@
 # NVMagnetometer
 
+NV center Magnetometer submodule for QuanEstimation.
 
 ## Installation
 
