@@ -33,7 +33,7 @@ Hc = [S1, S2, S3]
 decay = [[S3, 2pi/cons]]
 # generation of a set of POVM basis
 dim = size(rho0, 1)
-POVM_basis = [QuanEstimation.basis(dim, i)*QuanEstimation.basis(dim, i)' 
+POVM_basis = [QuanEstimationBase.basis(dim, i)*QuanEstimationBase.basis(dim, i)' 
               for i in 1:dim]
 # time length for the evolution
 tspan = range(0., 2., length=4000)
