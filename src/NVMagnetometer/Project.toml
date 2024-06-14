@@ -4,16 +4,12 @@ authors = ["Huaiming Yu<huaimingyuuu@gmail.com>"]
 version = "0.1.0"
 
 [deps]
-AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
-Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 QuanEstimationBase = "9769ca81-ed10-4016-bab9-e66dc61d4d60"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 
 [compat]
-AbstractTrees = "0.3"
-Crayons = "4.1"
 UnPack = "1.0"
 QuanEstimationBase = "0.1"
 julia = "1.10"
