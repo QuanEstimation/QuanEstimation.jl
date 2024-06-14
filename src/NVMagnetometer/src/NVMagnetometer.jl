@@ -1,5 +1,6 @@
 module NVMagnetometer
-export NVMagnetometerScheme, NVMagnetometerData, NVMagnetometerScheme, nv_dynamics_hooks, nv_state_hooks, nv_measurement_hooks, nv_control_hooks, nv_measurement_hooks, nv_state_hooks, nv_dynamics_hooks
+export NVMagnetometerScheme, NVMagnetometerData, NVMagnetometerScheme
+# export nv_dynamics_hooks, nv_state_hooks, nv_measurement_hooks, nv_control_hooks, nv_measurement_hooks, nv_state_hooks, nv_dynamics_hooks
 using QuanEstimationBase
 using UnPack
 using LinearAlgebra
