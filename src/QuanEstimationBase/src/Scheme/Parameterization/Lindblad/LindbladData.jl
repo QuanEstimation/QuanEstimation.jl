@@ -21,6 +21,15 @@ abstract type Expm <: AbstractDynamicsSolver end
 abstract type Ode <: AbstractDynamicsSolver end
 
 abstract type AbstractHamiltonian end 
+
+"""
+$(TYPEDEF)
+
+### Fields
+* 'H0': Free Hamiltonian of a system, can be a matrix, a list of matrics or function.
+* 'dH': Derivatives with respect to the unknown parameters to be estimated of the free Hamiltonian.
+* 'params': Other parameters.
+"""
 struct Hamiltonian{T1,T2,N} <: AbstractHamiltonian
     H0
     dH
@@ -45,7 +54,18 @@ function Hamiltonian(H0::Function, dH::Function)
     return Hamiltonian{typeof(H0), typeof(dH), Nothing}(H0, dH, nothing)
 end
 
+"""
+$(TYPEDEF)
 
+### Fields
+* 'hamiltonian': Hamiltonian.
+* 'tspan': Time length for the evolution.
+* 'decay': Decay operators and the corresponding decay rates.
+* 'Hc': Control Hamiltonians.
+* 'ctrl': Corresponding control coefficients.
+* 'abstol': 
+* 'reltol': 
+"""
 struct LindbladData <: AbstractDynamicsData
     hamiltonian::AbstractHamiltonian
     tspan::AbstractVector

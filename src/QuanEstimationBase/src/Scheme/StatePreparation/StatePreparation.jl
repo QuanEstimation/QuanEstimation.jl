@@ -4,6 +4,12 @@ abstract type AbstractState end
 abstract type DensityMatrix <: AbstractState end
 abstract type Ket <: AbstractState end
 
+"""
+$(TYPEDEF)
+
+### Fields
+* `data` : State data.
+"""
 struct GeneralState{S<:AbstractState} <: AbstractStatePreparation
 	data
 end
