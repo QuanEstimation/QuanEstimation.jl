@@ -1,4 +1,14 @@
 abstract type AbstractScheme end
+
+"""
+$(TYPEDEF)
+
+### Fields
+* `StatePreparation`
+* `Parameterization`
+* `Measurement`
+* 'EstimationStrategy'
+"""
 struct Scheme{S,P,M,E} <: AbstractScheme
 	StatePreparation
 	Parameterization

@@ -1,3 +1,11 @@
+"""
+$(TYPEDEF)
+
+### Fields
+* 'x': ParameterRegion.
+* 'p': PriorDistribution.
+* 'online': 
+"""
 struct AdaptiveStrategy <: EstimationStrategy
     x #ParameterRegion
     p #PriorDistribution

@@ -1,6 +1,5 @@
 """
-
-    Bayes(x, p, rho, y; M=missing, savefile=false)
+$(TYPEDSIGNATURES)
 
 Bayesian estimation. The prior distribution is updated via the posterior distribution obtained by the Bayes’ rule and the estimated value of parameters obtained via the maximum a posteriori probability (MAP).
 - `x`: The regimes of the parameters for the integral.
@@ -174,8 +173,7 @@ function Bayes(x, p, rho, y; M=missing, estimator="mean", savefile=false)
 end
 
 """
-
-    MLE(x, rho, y; M=missing, savefile=false)
+$(TYPEDSIGNATURES)
 
 Bayesian estimation. The estimated value of parameters obtained via the maximum likelihood estimation (MLE).
 - `x`: The regimes of the parameters for the integral.
@@ -304,8 +302,7 @@ function integ(x, p)
 end
 
 """
-
-    BayesCost(x, p, xest, rho, M; W=missing, eps=GLOBAL_EPS)
+$(TYPEDSIGNATURES)
 
 Calculation of the average Bayesian cost with a quadratic cost function.
 - `x`: The regimes of the parameters for the integral.
@@ -353,8 +350,7 @@ function BayesCost(x, p, xest, rho, M; W=missing, eps=GLOBAL_EPS)
 end
 
 """
-
-    BCB(x, p, rho; W=missing, eps=GLOBAL_EPS)
+$(TYPEDSIGNATURES)
 
 Calculation of the minimum Bayesian cost with a quadratic cost function.
 - `x`: The regimes of the parameters for the integral.

@@ -2,6 +2,13 @@ abstract type AbstractMeasurement end
 abstract type AbstractPOVM end
 abstract type SIC_POVM <: AbstractPOVM end
 abstract type POVM <: AbstractPOVM end
+
+"""
+$(TYPEDEF)
+
+### Fields
+* 'data': Measurement data.
+"""
 struct GeneralMeasurement{M<:AbstractPOVM} <: AbstractMeasurement
 	data::Union{Nothing, Vector{Matrix{T}}, Int64} where {T}
 end

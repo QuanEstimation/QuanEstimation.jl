@@ -32,6 +32,7 @@ using Distributions
 using QuadGK
 using OrdinaryDiffEq
 using JLD2
+using DocStringExtensions
 const pkgpath = @__DIR__
 
 const GLOBAL_RNG = MersenneTwister(1234)

@@ -1,4 +1,13 @@
 abstract type EstimationStrategy end
+
+"""
+$(TYPEDEF)
+
+### Fields
+* 'x': ParameterRegion.
+* 'p': PriorDistribution.
+* 'dp': DistributionDerivative.
+"""
 struct Strategy <: EstimationStrategy
     x #ParameterRegion
     p #PriorDistribution

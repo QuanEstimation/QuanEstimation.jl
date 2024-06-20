@@ -23,8 +23,7 @@ end
 prior_uniform(W=1., μ=0.) = x -> abs(x-μ)>abs(W/2) ? 0 : 1/W
 
 """
-
-    QZZB(x::AbstractVector, p::AbstractVector, rho::AbstractVecOrMat; eps=GLOBAL_EPS)
+$TYPEDSIGNATURES
 
 Calculation of the quantum Ziv-Zakai bound (QZZB).
 - `x`: The regimes of the parameters for the integral.

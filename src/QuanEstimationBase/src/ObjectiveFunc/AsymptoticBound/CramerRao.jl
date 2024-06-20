@@ -20,8 +20,7 @@ function SLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep="original", eps=GLOBAL_E
 end
 
 """
-
-	SLD(ρ::Matrix{T}, dρ::Matrix{T}; rep="original", eps=GLOBAL_EPS) where {T<:Complex}
+$TYPEDSIGNATURES
 
 When applied to the case of single parameter.
 """
@@ -102,8 +101,7 @@ function RLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep="original", eps=GLOBAL_E
 end
 
 """
-
-	RLD(ρ::Matrix{T}, dρ::Matrix{T}; rep="original", eps=GLOBAL_EPS) where {T<:Complex}
+$TYPEDSIGNATURES
 
 When applied to the case of single parameter.
 """
@@ -158,8 +156,7 @@ function LLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep="original", eps=GLOBAL_E
 end
 
 """
-
-    LLD(ρ::Matrix{T}, dρ::Matrix{T}; rep="original", eps=GLOBAL_EPS) where {T<:Complex}
+$TYPEDSIGNATURES
 
 When applied to the case of single parameter.
 """
@@ -298,8 +295,7 @@ function CFIM(ρ::Matrix{T}, dρ::Vector{Matrix{T}}, M; eps=GLOBAL_EPS) where {T
 end
 
 """
-
-	CFIM(ρ::Matrix{T}, dρ::Matrix{T}, M; eps=GLOBAL_EPS) where {T<:Complex}
+$TYPEDSIGNATURES
 
 When applied to the case of single parameter. Calculate the classical Fisher information (CFI). 
 """
@@ -320,8 +316,7 @@ function CFIM(ρ::Matrix{T}, dρ::Matrix{T}, M; eps = GLOBAL_EPS) where {T<:Comp
 end 
 
 """
-
-	CFIM(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; M=nothing, eps=GLOBAL_EPS) where {T<:Complex}
+$TYPEDSIGNATURES
 
 When the set of POVM is not given. Calculate the CFIM with SIC-POVM. The SIC-POVM is generated from the Weyl-Heisenberg covariant SIC-POVM fiducial state which can be downloaded from [here](http://www.physics.umb.edu/Research/QBism/solutions.html).
 """
@@ -339,8 +334,7 @@ function CFIM(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; M=nothing, eps = GLOBAL_EPS
 end
 
 """
-
-	CFIM(ρ::Matrix{T}, dρ::Matrix{T}; eps=GLOBAL_EPS) where {T<:Complex}
+$TYPEDSIGNATURES
 
 When applied to the case of single parameter and the set of POVM is not given. Calculate the CFI with SIC-POVM. 
 """
@@ -379,8 +373,7 @@ end
 
 ## QFI with exportLD
 """
-
-    QFIM(ρ::Matrix{T}, dρ::Matrix{T}; LDtype=:SLD, exportLD::Bool= false, eps=GLOBAL_EPS) where {T<:Complex}
+$TYPEDSIGNATURES
 
 Calculation of the quantum Fisher information (QFI) for all types. 
 - `ρ`: Density matrix.
@@ -407,8 +400,7 @@ function QFIM(
 end
 
 """
-
-    QFIM(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; LDtype=:SLD, exportLD::Bool= false, eps=GLOBAL_EPS) where {T<:Complex}
+$TYPEDSIGNATURES
 
 When applied to the case of single parameter. Calculation of the quantum Fisher information (QFI) for all types.
 """
@@ -459,8 +451,7 @@ end
 
 
 """
-
-    QFIM_Kraus(ρ0::AbstractMatrix, K::AbstractVector, dK::AbstractVector; LDtype=:SLD, exportLD::Bool=false, eps=GLOBAL_EPS)
+$TYPEDSIGNATURES
 
 Calculation of the quantum Fisher information (QFI) and quantum Fisher information matrix (QFIM) with Kraus operator(s) for all types.
 - `ρ0`: Density matrix.
@@ -486,8 +477,7 @@ function QFIM_Kraus(ρ0::AbstractMatrix, K::AbstractVector, dK::AbstractVector; 
 end
 
 """
-
-	QFIM_Bloch(r, dr; eps=GLOBAL_EPS)
+$TYPEDSIGNATURES
 
 Calculate the SLD based quantum Fisher information (QFI) or quantum Fisher information matrix (QFIM) in Bloch representation.
 - `r`: Parameterized Bloch vector.
@@ -549,8 +539,7 @@ function QFIM_Bloch(r, dr; eps=GLOBAL_EPS)
 end
 
 """
-
-    FIM(p::Vector{R}, dp::Vector{R}; eps=GLOBAL_EPS) where {R<:Real}
+$TYPEDSIGNATURES
 
 When applied to the case of single parameter and the set of POVM is not given. Calculate the classical Fisher information for classical scenarios. 
 """
@@ -570,8 +559,7 @@ function FIM(p::Vector{R}, dp::Vector{R}; eps=GLOBAL_EPS) where {R<:Real}
 end
 
 """
-
-    FIM(p::Vector{R}, dp::Vector{R}; eps=GLOBAL_EPS) where {R<:Real}
+$TYPEDSIGNATURES
 
 Calculation of the classical Fisher information matrix for classical scenarios. 
 - `p`: The probability distribution.
@@ -609,8 +597,7 @@ function FIM(p::Vector{R}, dp::Vector{Vector{R}}; eps=GLOBAL_EPS) where {R<:Real
 end
 
 """
-
-    FI_Expt(y1, y2, dx; ftype=:norm)
+$TYPEDSIGNATURES
 
 Calculate the classical Fisher information (CFI) based on the experiment data.
 - `y1`: Experimental data obtained at the truth value (x).
@@ -702,8 +689,7 @@ function G_Gauss(S::M, dC::VM, c::V) where {M<:AbstractMatrix,V,VM<:AbstractVect
 end
 
 """
-
-	QFIM_Gauss(R̄::V, dR̄::VV, D::M, dD::VM) where {V,VV,M,VM<:AbstractVecOrMat}
+$TYPEDSIGNATURES
 
 Calculate the SLD based quantum Fisher information matrix (QFIM) with gaussian states.  
 - `R̄` : First-order moment.

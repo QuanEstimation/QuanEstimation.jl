@@ -292,8 +292,7 @@ function G_mat(p, dp, b, db)
 end
 
 """
-
-    QVTB(x::AbstractVector, p, dp, rho, drho; LDtype=:SLD, eps=GLOBAL_EPS)
+$TYPEDSIGNATURES
 
 Calculation of the Bayesian version of Cramer-Rao bound in troduced by Van Trees (VTB).
 - `x`: The regimes of the parameters for the integral.
@@ -342,8 +341,7 @@ function QVTB(x::AbstractVector, p, dp, rho, drho; LDtype=:SLD, eps=GLOBAL_EPS)
 end
 
 """
-
-    VTB(x::AbstractVector, p, dp, rho, drho; M=missing, eps=GLOBAL_EPS)
+$TYPEDSIGNATURES
 
 Calculation of the Bayesian version of Cramer-Rao bound introduced by Van Trees (VTB).
 - `x`: The regimes of the parameters for the integral.
@@ -421,8 +419,7 @@ function interp1(xspan, yspan, x)
 end
 
 """
-
-    OBB(x::AbstractVector, p, dp, rho, drho, d2rho; LDtype=:SLD, eps=GLOBAL_EPS)
+$TYPEDSIGNATURES
 
 Calculation of the Bayesian version of Cramer-Rao bound introduced by Van Trees (VTB).
 - `x`: The regimes of the parameters for the integral.

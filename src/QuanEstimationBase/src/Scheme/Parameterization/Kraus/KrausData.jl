@@ -1,3 +1,10 @@
+"""
+$(TYPEDEF)
+
+### Fields
+* 'K': Kraus operators.
+* 'dK': Derivatives with respect to the unknown parameters of kraus operators.
+"""
 mutable struct KrausData <: AbstractKrausData
     K::AbstractVector
     dK::AbstractVecOrMat

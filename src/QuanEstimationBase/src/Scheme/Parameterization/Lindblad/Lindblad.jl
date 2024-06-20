@@ -4,6 +4,13 @@ abstract type AbstractDynamics <: AbstractParameterization end
 
 abstract type AbstractDynamicsData end
 
+"""
+$(TYPEDEF)
+
+### Fields
+* 'data': LindbladData.
+* 'params': Other parameters.
+"""
 mutable struct Lindblad{H, D, C, S, P} <: AbstractDynamics
     data::AbstractDynamicsData
     params::Union{Nothing, AbstractVector}

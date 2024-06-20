@@ -13,8 +13,7 @@ end
 
 #### evolution of pure states under time-independent Hamiltonian without noise and controls ####
 """
-
-    evolve(dynamics::Kraus{ket})
+$TYPEDSIGNATURES
 
 Evolution of pure states under time-independent Hamiltonian without noise and controls
 """
@@ -33,8 +32,7 @@ end
 
 #### evolution of density matrix under time-independent Hamiltonian without noise and controls ####
 """
-
-    evolve(dynamics::Kraus{dm})
+$TYPEDSIGNATURES
 
 Evolution of density matrix under time-independent Hamiltonian without noise and controls.
 """

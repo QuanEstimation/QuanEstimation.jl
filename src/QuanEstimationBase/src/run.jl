@@ -1,5 +1,15 @@
 abstract type AbstractSystem end
 
+"""
+$(TYPEDEF)
+
+### Fields
+* `optim`: Types of optimization, options are `ControlOpt`, `StateOpt`, `MeasurementOpt`, `SMopt`, `SCopt`, `CMopt` and `SCMopt`.
+* `algorithm`: Optimization algorithms, options are `auto-GRAPE`, `GRAPE`, `AD`, `PSO`, `DE`, 'NM' and `DDPG`.
+* `obj`: Objective function, options are `QFIM_obj`, `CFIM_obj` and `HCRB_obj`.
+* 'dynamics': Lindblad or Kraus parameterization process.
+* 'output': Save the output of the optimization.
+"""
 mutable struct QuanEstSystem{
     T<:AbstractOpt,
     A<:AbstractAlgorithm,

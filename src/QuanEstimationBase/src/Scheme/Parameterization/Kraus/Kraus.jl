@@ -1,5 +1,11 @@
 abstract type AbstractKrausData end
+"""
+$(TYPEDEF)
 
+### Fields
+* 'data': KrausData.
+* 'params': Other parameters.
+"""
 mutable struct Kraus{KT,DKT,NK,NP} <: AbstractParameterization
     data::AbstractKrausData
     params::Union{Nothing, AbstractVector}

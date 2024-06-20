@@ -6,8 +6,7 @@ function decomposition(A)
 end
 
 """
-
-    HCRB(ρ::AbstractMatrix, dρ::AbstractVector, C::AbstractMatrix; eps=GLOBAL_EPS)
+$TYPEDSIGNATURES
 
 Caltulate the Holevo Cramer-Rao bound (HCRB) via the semidefinite program (SDP).
 - `ρ`: Density matrix.
@@ -97,8 +96,7 @@ function Holevo_bound_obj(
 end
 
 """
-
-    NHB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix)
+$(TYPEDSIGNATURES)
 
 Nagaoka-Hayashi bound (NHB) via the semidefinite program (SDP).
 - `ρ`: Density matrix.
