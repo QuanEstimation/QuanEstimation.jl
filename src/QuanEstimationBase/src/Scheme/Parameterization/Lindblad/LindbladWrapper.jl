@@ -1,7 +1,6 @@
 # wrapper for Lindblad dynamics with ControlOpt
 """
-
-	Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
+$TYPEDSIGNATURES
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the control optimization.
 """
@@ -57,8 +56,7 @@ Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc, decay; dyn_method=:Expm, eps
 	Lindblad(opt, tspan, ρ₀, H0, dH, Hc; decay=decay, dyn_method=dyn_method, eps=eps, abstol=abstol, reltol=reltol)
 	
 """
-
-	Lindblad(opt::StateOpt, tspan, H0, dH; Hc=missing, ctrl=missing, decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
+$TYPEDSIGNATURES
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the state optimization.
 """
@@ -201,8 +199,7 @@ function _ini_measurement!(opt::Mopt_Rotation, dim::Int; eps=GLOBAL_EPS)
 end
 
 """
-
-	Lindblad(opt::AbstractMopt, tspan, ρ₀, H0, dH; Hc=missing, ctrl=missing, decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
+$TYPEDSIGNATURES
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the measurement optimization.
 """
@@ -296,8 +293,7 @@ function _ini_measurement!(opt::CompOpt, dim::Int; eps=GLOBAL_EPS)
 end
 
 """
-
-	Lindblad(opt::StateControlOpt, tspan, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
+$TYPEDSIGNATURES
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the comprehensive optimization on state and control.
 """
@@ -359,8 +355,7 @@ Lindblad(opt::StateControlOpt, tspan, H0, dH, Hc, decay; dyn_method=:Expm, eps=G
 	Lindblad(opt, tspan, H0, dH, Hc; decay=decay, dyn_method=dyn_method, eps=eps)
 	
 """
-
-	Lindblad(opt::ControlMeasurementOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
+$TYPEDSIGNATURES
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the comprehensive optimization on control and measurement.
 """
@@ -417,8 +412,7 @@ Lindblad(opt::ControlMeasurementOpt, tspan, ρ₀, H0, dH, Hc, decay; dyn_method
 	Lindblad(opt, tspan, ρ₀, H0, dH, Hc; decay=decay, dyn_method=dyn_method, eps=eps)
 	
 """
-
-	Lindblad(opt::StateMeasurementOpt, tspan, H0, dH; Hc=missing, ctrl=missing, decay=missing, dyn_method=:Expm)
+$TYPEDSIGNATURES
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the comprehensive optimization on state and measurement.
 """
@@ -505,8 +499,7 @@ Lindblad(opt::StateMeasurementOpt, tspan, H0, dH, Hc, ctrl, decay; dyn_method=:E
 	Lindblad(opt, tspan, H0, dH; Hc=Hc, ctrl=ctrl, decay=decay, dyn_method=dyn_method, eps=eps)
 
 """
-
-	Lindblad(opt::StateControlMeasurementOpt, tspan, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
+$TYPEDSIGNATURES
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the comprehensive optimization on state, control and measurement.
 """

@@ -144,8 +144,7 @@ function sic_povm(fiducial)
 end
 
 """
-
-    SIC(dim::Int64)
+$(TYPEDSIGNATURES)
 
 Generation of a set of rank-one symmetric informationally complete positive operator-valued measure (SIC-POVM).
 - `dim`: The dimension of the system.

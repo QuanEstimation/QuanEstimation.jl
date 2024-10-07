@@ -3,6 +3,15 @@ abstract type no_save end
 abstract type savefile end
 abstract type save_reward end
 
+"""
+$(TYPEDEF)
+
+### Fields
+* `f_list` 
+* 'opt_buffer'
+* 'res_file'
+* 'io_buffer'
+"""
 mutable struct Output{S} <: AbstractOutput
     f_list::AbstractVector
     opt_buffer::AbstractVector

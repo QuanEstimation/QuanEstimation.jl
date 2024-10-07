@@ -21,8 +21,7 @@ function Jp_full(N)
 end
 
 """
-
-    SpinSqueezing(ρ::AbstractMatrix; basis="Dicke", output="KU")
+$TYPEDSIGNATURES
     
 Calculate the spin squeezing parameter for the input density matrix. The `basis` can be `"Dicke"` for the Dicke basis, or `"Pauli"` for the Pauli basis. The `output` can be both `"KU"`(for spin squeezing defined by Kitagawa and Ueda) and `"WBIMH"`(for spin squeezing defined by Wineland et al.).
 
@@ -71,7 +70,7 @@ function SpinSqueezing(ρ::AbstractMatrix; basis="Dicke", output="KU")
 end
 
 """
-    TargetTime(f::Number, tspan::AbstractVector, func::Function, args...; kwargs...)
+$TYPEDSIGNATURES
 
 Calculate the minimum time to reach a precision limit of given level. The `func` can be any objective function during the control optimization, e.g. QFIM, CFIM, HCRB, etc.
 
