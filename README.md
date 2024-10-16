@@ -1,10 +1,11 @@
-# QuanEstimation.jl
 [action-img]: https://github.com/QuanEstimation/QuanEstimation.jl/actions/workflows/CI.yml/badge.svg
 [action-url]: https://github.com/QuanEstimation/QuanEstimation.jl/actions
 [codecov-img]: https://codecov.io/gh/QuanEstimation/QuanEstimation.jl/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/QuanEstimation/QuanEstimation.jl?branch=test-codecov
 [docs-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-url]: https://quanestimation.github.io/QuanEstimation/
+
+# QuanEstimation.jl
 
 [![][docs-img]][docs-url]
 [![][action-img]][action-url]
