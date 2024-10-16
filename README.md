@@ -9,9 +9,6 @@ QuanEstimation is a Python-Julia based open-source toolkit for quantum parameter
 
 This package is a Julia implementation of [QuanEstimation](https://github.com/QuanEstimation/QuanEstimation).
 
-## :warning: This package is under structural refactoring
-It may exhibit unstable features; please use it with caution for now.
-
 ## Installation
 
 Run the command in the julia REPL to install QuanEstimation:  
