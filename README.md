@@ -21,7 +21,9 @@ This package is also the Julia implementation of [QuanEstimation](https://github
 Run the command in the julia REPL to install QuanEstimation:  
 
 ~~~
-import Pkg; Pkg.add("QuanEstimation")
+julia > using Pkg
+
+julia > Pkg.add("QuanEstimation")
 ~~~
 
 ## Citation
