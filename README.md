@@ -27,7 +27,7 @@ julia > Pkg.add("QuanEstimation")
 ~~~
 
 ## Citation
-If you find QuanEstimation useful in your research, feel free to cite the following papers:
+If you use QuanEstimation in your research, please cite the following papers:
 
 [1] M. Zhang, H.-M. Yu, H. Yuan, X. Wang, R. Demkowicz-Dobrzański, and J. Liu, 
 QuanEstimation: An open-source toolkit for quantum parameter estimation, 
