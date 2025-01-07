@@ -1,5 +1,6 @@
 module QuanEstimationBase
 export ControlOpt, ControlMeasurementOpt, CMopt, StateMeasurementOpt, SMopt, StateControlMeasurementOpt, SCMopt, opt_target, Htot
+export PlusState, MinusState, BellState
 export QFIM, CFIM, HCRB
 export QFIM_obj, CFIM_obj, HCRB_obj
 export AbstractScheme
