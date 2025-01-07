@@ -17,6 +17,7 @@ export error_evaluation, error_control, error_control_param, error_control_eps
 export solve
 export expm, ode
 export Bayes
+export SigmaX, SigmaY, SigmaZ
 using Random
 using LinearAlgebra
 using Zygote
