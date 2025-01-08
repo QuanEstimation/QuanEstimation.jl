@@ -1,7 +1,7 @@
 name = "QuanEstimation"
 uuid = "088c8dff-a786-4a66-974c-03d3f6773f87"
 authors = ["Jing Liu <liujing@hainanu.edu.cn>", "Huaiming Yu <Huaimingyuuu@gmail.com>", "Mao Zhang"]
-version = "0.2.0"
+version = "0.2.5"
 
 [deps]
 NVMagnetometer = "28fc4bcf-da03-4841-bbdb-88baaf311b30"
@@ -11,10 +11,10 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 [extensions]
 
 [compat]
-NVMagnetometer = "0.1"
-QuanEstimationBase = "0.1"
+NVMagnetometer = "0.1.0"
+QuanEstimationBase = "0.1.0"
 Reexport = "1"
-julia = "1.11"
+julia = "1.11.0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
