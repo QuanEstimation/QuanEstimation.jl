@@ -1,7 +1,7 @@
 # QuanEstimation.jl
 
 [![][docs-img]][docs-url]
-<!-- [![][action-img]][action-url] -->
+[![][action-img]][action-url]
 [![][codecov-img]][codecov-url]
 
 [action-img]: https://github.com/QuanEstimation/QuanEstimation.jl/actions/workflows/CI.yml/badge.svg
