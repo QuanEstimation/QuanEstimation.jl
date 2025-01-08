@@ -1,6 +1,6 @@
 using QuanEstimation
 using Test
 
-# @testset "NVMagnetometer.jl" begin
+# @testset "QuanEstimation.jl" begin
     
-# end # NVMagnetometer.jl tests
+# end # QuanEstimation.jl tests
