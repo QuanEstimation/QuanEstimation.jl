@@ -1,6 +1,6 @@
 name = "NVMagnetometer"
 uuid = "28fc4bcf-da03-4841-bbdb-88baaf311b30"
-authors = ["Huaiming Yu<huaimingyuuu@gmail.com>"]
+authors = ["Jing Liu <liujingphys@hust.edu.cn>", "Huaiming Yu<huaimingyuuu@gmail.com>"]
 version = "0.1.0"
 
 [deps]
