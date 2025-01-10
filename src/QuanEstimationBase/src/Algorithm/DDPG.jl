@@ -41,7 +41,7 @@ mutable struct ControlEnv <: AbstractEnv
 end
 
 #### control optimization ####
-function update!(opt::ControlOpt, alg::DDPG, obj, dynamics, output)
+function optimize!(opt::ControlOpt, alg::DDPG, obj, dynamics, output)
     (; max_episode, layer_num, layer_dim, rng) = alg
     #### environment of DDPG ####
     para_num = length(dynamics.data.dH)
@@ -55,7 +55,7 @@ function update!(opt::ControlOpt, alg::DDPG, obj, dynamics, output)
     action_space = Space([opt.ctrl_bound[1] .. opt.ctrl_bound[2] for _ = 1:ctrl_num])
     state_space = Space(fill(-1.0e35 .. 1.0e35, length(state)))
 
-    # dynamics_copy = set_ctrl(dynamics, [zeros(ctrl_length) for i = 1:ctrl_num])
+    # dynamics_copy = set_ctrl!(dynamics, [zeros(ctrl_length) for i = 1:ctrl_num])
     # f_noctrl = objective(Val{:expm}, obj, dynamics_copy)
 
     #### the objective function for non controlled scenario ####
@@ -243,7 +243,7 @@ RLBase.reward(env::StateEnv) = env.reward
 RLBase.is_terminated(env::StateEnv) = env.done 
 RLBase.state(env::StateEnv) = env.state
 
-function update!(Sopt::StateOpt, alg::DDPG, obj, dynamics::Lindblad, output)
+function optimize!(Sopt::StateOpt, alg::DDPG, obj, dynamics::Lindblad, output)
     (; max_episode, layer_num, layer_dim, rng) = alg
     episode = 1
     
@@ -299,7 +299,7 @@ function update!(Sopt::StateOpt, alg::DDPG, obj, dynamics::Lindblad, output)
     end
 end
 
-function update!(Sopt::StateOpt, alg::DDPG, obj, dynamics::Kraus, output)
+function optimize!(Sopt::StateOpt, alg::DDPG, obj, dynamics::Kraus, output)
     (; max_episode, layer_num, layer_dim, rng) = alg
     episode = 1
     

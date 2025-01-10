@@ -1,4 +1,4 @@
-function update!(opt::StateOpt, alg::NM, obj, dynamics, output)
+function optimize!(opt::StateOpt, alg::NM, obj, dynamics, output)
     (; max_episode, p_num, ini_state, ar, ae, ac, as0) = alg
     if ismissing(ini_state)
         ini_state = [opt.psi]
@@ -48,7 +48,7 @@ function update!(opt::StateOpt, alg::NM, obj, dynamics, output)
             vec_ref[nj] = vec_ave[nj] + ar*(vec_ave[nj]-nelder_mead[sort_ind[end]].data.ψ0[nj])
         end
         vec_ref = vec_ref/norm(vec_ref)
-        dynamics_copy = set_state(dynamics, vec_ref)
+        dynamics_copy = set_state!(dynamics, vec_ref)
         fr_out, fr = objective(obj, dynamics_copy)
 
         if fr > p_fit[sort_ind[1]]
@@ -58,7 +58,7 @@ function update!(opt::StateOpt, alg::NM, obj, dynamics, output)
                 vec_exp[nk] = vec_ave[nk] + ae*(vec_ref[nk]-vec_ave[nk])
             end
             vec_exp = vec_exp/norm(vec_exp)
-            dynamics_copy = set_state(dynamics, vec_exp)
+            dynamics_copy = set_state!(dynamics, vec_exp)
             fe_out, fe = objective(obj, dynamics_copy)
             if fe <= fr
                 for np in 1:dim
@@ -84,7 +84,7 @@ function update!(opt::StateOpt, alg::NM, obj, dynamics, output)
                     vec_ic[nl] = vec_ave[nl] - ac*(vec_ave[nl]-nelder_mead[sort_ind[end]].data.ψ0[nl])
                 end
                 vec_ic = vec_ic/norm(vec_ic)
-                dynamics_copy = set_state(dynamics, vec_ic)
+                dynamics_copy = set_state!(dynamics, vec_ic)
                 fic_out, fic = objective(obj, dynamics_copy)
                 if fic > p_fit[sort_ind[end]]
                     for np in 1:dim
@@ -112,7 +112,7 @@ function update!(opt::StateOpt, alg::NM, obj, dynamics, output)
                     vec_oc[nn] = vec_ave[nn] + ac*(vec_ref[nn]-vec_ave[nn])
                 end
                 vec_oc = vec_oc/norm(vec_oc)
-                dynamics_copy = set_state(dynamics, vec_oc)
+                dynamics_copy = set_state!(dynamics, vec_oc)
                 foc_out, foc = objective(obj, dynamics_copy)
                 if foc >= fr
                     for np in 1:dim

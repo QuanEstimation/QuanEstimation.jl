@@ -1,5 +1,6 @@
 module QuanEstimationBase
-export ControlOpt, ControlMeasurementOpt, CMopt, StateMeasurementOpt, SMopt, StateControlMeasurementOpt, SCMopt, opt_target, Htot
+export ControlOpt, StateOpt, MeasurementOpt, ControlMeasurementOpt, CMopt, StateMeasurementOpt, SMopt, StateControlMeasurementOpt, SCMopt, opt_target, Htot
+export evolve
 export QFIM, CFIM, HCRB
 export QFIM_obj, CFIM_obj, HCRB_obj
 export AbstractScheme
@@ -13,7 +14,8 @@ export Output
 export Scheme
 export DensityMatrix, Decay, Control, Expm, Ode, Strategy, POVM
 export error_evaluation, error_control, error_control_param, error_control_eps
-export solve
+export optimize!
+export state_data, param_data, meas_data, strat_data
 export expm, ode
 export Bayes
 using Random
@@ -25,7 +27,6 @@ using StatsBase
 using Flux
 # using ReinforcementLearning
 using SCS
-using BoundaryValueDiffEq
 using Trapz
 using Interpolations
 using Distributions

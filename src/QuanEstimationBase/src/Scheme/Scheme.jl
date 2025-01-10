@@ -39,3 +39,9 @@ state_data(scheme::Scheme) = scheme.StatePreparation.data
 param_data(scheme::Scheme) = scheme.Parameterization.data
 meas_data(scheme::Scheme) = scheme.Measurement.data
 strat_data(scheme::Scheme) = scheme.EstimationStrategy
+
+set_ctrl!(scheme, ctrl) = set_ctrl!(scheme.Parameterization, ctrl)
+set_ctrl(scheme, ctrl) = set_ctrl(scheme.Parameterization, ctrl)
+set_state!(scheme, state) = @set scheme.data=state
+
+get_dim(scheme) = get_dim(scheme.Parameterization)

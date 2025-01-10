@@ -24,13 +24,13 @@ dH = [-lambda*Jy*Jy/N]
 # dissipation
 decay = [[Jz, 0.1]]
 # time length for the evolution
-tspan = range(0., 10., length=2500)
+tspan = range(0., 10., length=25)
 # set the optimization type
-opt = QuanEstimation.StateOpt(psi=psi0, seed=1234) 
+opt = StateOpt(psi=psi0, seed=1234) 
 
 ##================choose the state optimization algorithm===============##
 # state optimization algorithm: AD
-alg = QuanEstimation.AD(Adam=false, max_episode=300, epsilon=0.01, 
+alg = autoGRAPE(Adam=false, max_episode=3, epsilon=0.01, 
                         beta1=0.90, beta2=0.99)
 
 # # state optimization algorithm: PSO
@@ -50,7 +50,7 @@ alg = QuanEstimation.AD(Adam=false, max_episode=300, epsilon=0.01,
 ##====================choose the objective function==================##
 ##-------------objective function: QFI---------------------##
 # objective function: QFI
-obj = QuanEstimation.QFIM_obj()
+obj = QFIM_obj()
 # input the dynamics data
 dynamics = QuanEstimation.Lindblad(opt, tspan, H0, dH, decay=decay, dyn_method=:Expm) 
 # run the state optimization problem

@@ -1,4 +1,4 @@
-function update!(opt::StateOpt, alg::RI, obj, dynamics, output)
+function optimize!(opt::StateOpt, alg::RI, obj, dynamics, output)
     (; max_episode) = alg
 
     rho, drho = evolve(dynamics)

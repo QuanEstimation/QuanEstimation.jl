@@ -1,32 +1,29 @@
-# wrapper for Lindblad dynamics with ControlOpt
 """
 
 	Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS)
 	
 Initialize the parameterization described by the Lindblad master equation governed dynamics for the control optimization.
 """
-function Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, dyn_method=:Expm, eps=GLOBAL_EPS, abstol=1e-6, reltol=1e-3)
+function init_scheme!(opt::ControlOpt, scheme)
+	param = param_data(scheme)
 	(;ctrl) = opt
 	dim = size(ρ₀, 1)
 	if ismissing(dH)
-		dH = [zeros(ComplexF64, dim, dim)]
+		param.dH = [zeros(ComplexF64, dim, dim)]
 	end
 	ctrl_num = length(Hc)
 	tnum = length(tspan)
 	
 	if ismissing(decay)
-		decay_opt = [zeros(ComplexF64, dim, dim)]
-		γ = [0.0]
-	else
-		decay_opt = [decay[1] for decay in decay]
-		γ = [decay[2] for decay in decay]
+		param.decay = [zeros(ComplexF64, dim, dim), 0.0]
+		param.γ = [0.0]
 	end
 
 	if ismissing(Hc)
-		Hc = [zeros(ComplexF64, dim, dim)]
-		ctrl = [zeros(tnum-1)]
+		param.Hc = [zeros(ComplexF64, dim, dim)]
+		param.ctrl = [zeros(tnum-1)]
 	elseif ismissing(ctrl)
-		ctrl = [zeros(tnum-1) for _ in 1:ctrl_num]
+		param.ctrl = [zeros(tnum-1) for _ in 1:ctrl_num]
 		opt.ctrl = ctrl
 	else
 		ctrl_length = length(ctrl)
@@ -46,11 +43,9 @@ function Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc; decay=missing, dyn_
 			tspan = range(tspan[1], tspan[end], length=tnum+1)
 		end
 	end
-	H0 = complex(H0)
-	dH = complex.(dH)
-	ρ₀ = complex(ρ₀)
-	
-	Lindblad(H0, dH, Hc, ctrl, ρ₀, tspan, decay_opt, γ; dyn_method=dyn_method, abstol=abstol, reltol=reltol)
+	param.H0 = complex(param.H0)
+	param.dH = complex.(param.dH)
+	param.ρ₀ = complex(param.ρ₀)
 end
 
 Lindblad(opt::ControlOpt, tspan, ρ₀, H0, dH, Hc, decay; dyn_method=:Expm, eps=GLOBAL_EPS, abstol=1e-6, reltol=1e-3) = 

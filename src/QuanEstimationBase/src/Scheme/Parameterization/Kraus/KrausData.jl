@@ -38,7 +38,6 @@ Kraus(K::KT, dK::KD) where {KT<:Function, KD<:Function} =
     
 # para_type(data::KrausData) = length(data.dK[1]) == 1 ? :single_para : :multi_para
 
-# get_dim(k::Kraus_dm) = size(k.ρ0, 1)
-# get_dim(k::Kraus_pure) = size(k.ψ0, 1)
+get_dim(k::KrausData) = size(k.K[1], 1)
 
 get_para(::Type{Kraus{KT,KD, NK, NP}}) where {KT,KD,NK, NP} = NP

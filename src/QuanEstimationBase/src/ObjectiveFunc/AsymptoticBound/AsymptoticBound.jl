@@ -29,7 +29,7 @@ Choose QFI [``\mathrm{Tr}(WF^{-1})``] as the objective function with ``W`` the w
 - `eps`: Machine epsilon.
 - `LDtype`: Types of QFI (QFIM) can be set as the objective function. Options are `:SLD` (default), `:RLD` and `:LLD`.
 """
-QFIM_obj(;W=missing, eps=GLOBAL_EPS, para_type::Symbol=:single_para, LDtype::Symbol=:SLD) = QFIM_obj{eval.([para_type, LDtype])...}(W, eps)
+QFIM_obj(;W=missing, eps=GLOBAL_EPS, para_type::Symbol=:single_para, LDtype::Symbol=:SLD) = QFIM_obj{eval.([para_type, LDtype])...}(isnothing(W) ? I : W, eps)
 
 @doc raw"""
 
@@ -88,16 +88,16 @@ function set_M(obj::CFIM_obj{P}, M::AbstractVector) where P
     CFIM_obj{P}(M, obj.W, obj.eps)
 end
 
-function objective(obj::QFIM_obj{single_para,SLD}, dynamics::Lindblad)
-    (; W, eps) = obj
-    ρ, dρ = evolve(dynamics)
-    f = W[1] * QFIM_SLD(ρ, dρ[1]; eps = eps)
+function objective(obj::QFIM_obj{single_para,SLD}, scheme)
+    (; eps) = obj
+    ρ, dρ = evolve(scheme)
+    f = QFIM_SLD(ρ, dρ[1]; eps = eps)
     return f, f
 end
 
 function objective(obj::QFIM_obj{single_para,SLD}, ρ, dρ)
-    (; W, eps) = obj
-    f = W[1] * QFIM_SLD(ρ, dρ[1]; eps = eps)
+    (; eps) = obj
+    f = QFIM_SLD(ρ, dρ[1]; eps = eps)
     return f, f
 end
 

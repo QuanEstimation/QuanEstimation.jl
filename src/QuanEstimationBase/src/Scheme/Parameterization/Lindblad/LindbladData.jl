@@ -46,7 +46,7 @@ function Hamiltonian(H0::Function, dH::Function)
 end
 
 
-struct LindbladData <: AbstractDynamicsData
+mutable struct LindbladData <: AbstractDynamicsData
     hamiltonian::AbstractHamiltonian
     tspan::AbstractVector
     decay::Union{AbstractVector, Nothing}
@@ -126,3 +126,15 @@ get_param_num(::Type{Lindblad{H,TS}}) where {H,TS} = get_param_num(H)
 get_param_num(::Type{Hamiltonian{H,D,N}}) where {H,D,N} = N
 # get_param_num(::Scheme{S,L,M,E}) where {S,L,M,E} = get_param_num(L)
 # get_param_num(::Type{T}) where {T} = get_param_num(T)
+
+get_dim(ham::Hamiltonian) = size(ham.H0, 1)
+get_dim(data::LindbladData) = get_dim(data.hamiltonian)
+get_dim(dynamics::Lindblad) = get_dim(dynamics.data.hamiltonian)
+
+get_ctrl_num(data::LindbladData) = length(data.Hc)
+get_ctrl_num(dynamics::Lindblad) = get_ctrl_num(dynamics.data)
+get_ctrl_num(scheme::Scheme) = get_ctrl_num(scheme.Parameterization)
+
+get_ctrl_length(data::LindbladData) = length(data.ctrl[1])
+get_ctrl_length(dynamics::Lindblad) = get_ctrl_length(dynamics.data)
+get_ctrl_length(scheme::Scheme) = get_ctrl_length(scheme.Parameterization)

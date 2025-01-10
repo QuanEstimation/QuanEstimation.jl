@@ -81,8 +81,8 @@ function liouvillian(
     -1.0im * freepart + dissp
 end
 
-function Htot(H0::T, Hc::V, ctrl) where {T<:AbstractArray, V<:AbstractVector}
-    [H0] .+ ([ctrl[i] .* [Hc[i]] for i in eachindex(ctrl)] |> sum)
+function Htot(H0::T, Hc::V, ctrl) where {T<:Matrix{ComplexF64}, V<:AbstractVector}
+    [ H0+sum([ctrl[i][t] * Hc[i] for i in eachindex(Hc)]) for t in eachindex(ctrl[1]) ]
 end
 
 function Htot(
@@ -94,9 +94,9 @@ function Htot(
 end
 
 
-function Htot(H0::V1, Hc::V2, ctrl) where {V1,V2<:AbstractVector}
-    H0 + ([ctrl[i] * Hc[i] for i in eachindex(ctrl)] |> sum)
-end
+# function Htot(H0::V1, Hc::V2, ctrl) where {V1<:AbstractVector,V2<:AbstractVector}
+#     H0 + ([ctrl[i] * Hc[i] for i in eachindex(ctrl)] |> sum)
+# end
 
 function expL(H, decay_opt, γ, dt, tj = 1)
     Ld = dt * liouvillian(H, decay_opt, γ, tj)
@@ -174,7 +174,7 @@ function expm(
     ∂ρt_∂x_all[1] = ρt_all[1] |> zero
 
     decay_opt, γ = decay
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         ∂ρt_∂x_all[t] = -im * Δt * dH_L * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1]
@@ -260,7 +260,7 @@ function expm(
         ∂ρt_∂x_all[1][pj] = ρt_all[1] |> zero
     end
 
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         for pj = 1:param_num
@@ -327,7 +327,7 @@ function expm_py(
     ρt_all[1] = ρ0 |> vec
     ∂ρt_∂x_all[1] = ρt_all[1] |> zero
 
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         ∂ρt_∂x_all[t] = -im * Δt * dH_L * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1]
@@ -366,7 +366,7 @@ function expm_py(
         ∂ρt_∂x_all[1][pj] = ρt_all[1] |> zero
     end
 
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         for pj = 1:param_num
@@ -407,7 +407,7 @@ function secondorder_derivative(
     ρt = ρ0 |> vec
     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
     ∂2ρt_∂x = [ρt |> zero for i = 1:param_num]
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
@@ -724,7 +724,7 @@ function evolve(scheme::Scheme{Ket, Lindblad{HT, NonDecay, NonControl, Expm, P},
     U = exp(-im * H0 * Δt)
     ψt = ψ0
     ∂ψ∂x = [ψ0 |> zero for i = 1:param_num]
-    for i in eachindex(tspan[2:end])
+    for i in eachindex(tspan)[2:end]
         ψt = U * ψt
         ∂ψ∂x = [-im * Δt * dH[i] * ψt for i = 1:param_num] + [U] .* ∂ψ∂x
     end
@@ -867,7 +867,7 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, NonControl, Ex
     Δt = tspan[2] - tspan[1]
     exp_L = expL(H0, decay_opt, γ, Δt, 1)
     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         ρt = exp_L * ρt
         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
     end
@@ -908,16 +908,17 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, NonDecay, Control, Ex
     (; tspan, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(scheme)
+    H = Matrix{ComplexF64}[]
 
     param_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
-    H = Htot(H0, Hc, ctrl)
+    ctrl = collect.([repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num])
+    append!(H, Htot(H0, Hc, ctrl))
     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
     ρt = ρ0 |> vec
     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], Δt)
         ρt = exp_L * ρt
@@ -967,8 +968,8 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, Control, Expm,
     H = Htot(H0, Hc, ctrl)
     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
     ρt = ρ0 |> vec
-    ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-    for t in eachindex(tspan[2:end])
+    ∂ρt_∂x = [ρt |> zero for _ = 1:param_num]
+    for t in eachindex(tspan)[2:end]
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
@@ -1010,10 +1011,12 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, Control, Ode, 
     ρt[end], ∂ρt_∂x
 end
 
+evolve(scheme::Scheme) = evolve(scheme.data)
+
 #### evolution of state under time-independent Hamiltonian with noise and controls #### 
 function evolve(scheme::Scheme{Ket, Lindblad{HT, Decay, Control, Expm, P}, M, E}) where {HT, M, E, P}
     (; tspan, decay, Hc, ctrl) = param_data(scheme)
-    ψ0 = state_data(scheme)
+    ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(scheme)
     decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
 
@@ -1023,9 +1026,9 @@ function evolve(scheme::Scheme{Ket, Lindblad{HT, Decay, Control, Expm, P}, M, E}
     ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
     H = Htot(H0, Hc, ctrl)
     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
-    ρt = (ψ0 * ψ0') |> vec
-    ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-    for t in eachindex(tspan[2:end])
+    ρt = vec(ρ0)
+    ∂ρt_∂x = [ρt |> zero for _ = 1:param_num]
+    for t in eachindex(tspan)[2:end]
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
@@ -1076,7 +1079,7 @@ end
 #     dH_L = [liouville_commu.(dh) for dh in dH]
 #     ρt = (ψ0 * ψ0') |> vec
 #     ∂ρt_∂x = [ρt |> zero for _ in 1:param_num]
-#     for t in eachindex(tspan[2:end])
+#     for t in eachindex(tspan)[2:end]
 #         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
 #         exp_L = expL(H0[t-1], Δt)
 #         ρt = exp_L * ρt
@@ -1117,7 +1120,7 @@ end
 #     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
 #     ρt = ρ0 |> vec
 #     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-#     for t in eachindex(tspan[2:end])
+#     for t in eachindex(tspan)[2:end]
 #         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
 #         exp_L = expL(H0[t-1], Δt)
 #         ρt = exp_L * ρt
@@ -1155,7 +1158,7 @@ end
 #     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
 #     ρt = (ψ0 * ψ0') |> vec
 #     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-#     for t in eachindex(tspan[2:end])
+#     for t in eachindex(tspan)[2:end]
 #         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
 #         exp_L = expL(H0[t-1], decay_opt, γ, Δt, t-1)
 #         ρt = exp_L * ρt
@@ -1197,7 +1200,7 @@ end
 #     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
 #     ρt = ρ0 |> vec
 #     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-#     for t in eachindex(tspan[2:end])
+#     for t in eachindex(tspan)[2:end]
 #         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
 #         exp_L = expL(H0[t-1], decay_opt, γ, Δt, t-1)
 #         ρt = exp_L * ρt
