@@ -1,5 +1,6 @@
 module QuanEstimationBase
 export ControlOpt, StateOpt, MeasurementOpt, ControlMeasurementOpt, CMopt, StateMeasurementOpt, SMopt, StateControlMeasurementOpt, SCMopt, opt_target, Htot
+export PlusState, MinusState, BellState
 export evolve
 export QFIM, CFIM, HCRB
 export QFIM_obj, CFIM_obj, HCRB_obj
@@ -18,6 +19,7 @@ export optimize!
 export state_data, param_data, meas_data, strat_data
 export expm, ode
 export Bayes
+export SigmaX, SigmaY, SigmaZ
 using Random
 using LinearAlgebra
 using Zygote

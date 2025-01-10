@@ -1,7 +1,7 @@
 # QuanEstimation.jl
-
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/QuanEstimation/QuanEstimation.jl)
 [![][docs-img]][docs-url]
-<!-- [![][action-img]][action-url] -->
+[![][action-img]][action-url]
 [![][codecov-img]][codecov-url]
 
 [action-img]: https://github.com/QuanEstimation/QuanEstimation.jl/actions/workflows/CI.yml/badge.svg
@@ -21,7 +21,7 @@ This package is also the Julia implementation of [QuanEstimation](https://github
 Run the command in the julia REPL to install QuanEstimation:  
 
 ~~~
-julia > import Pkg
+julia > using Pkg
 
 julia > Pkg.add("QuanEstimation")
 ~~~

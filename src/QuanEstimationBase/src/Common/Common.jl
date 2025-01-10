@@ -5,6 +5,10 @@ destroy(N) = diagm(1 => [sqrt(n) + 0.0im for n in 1:N-1])
 
 bases(dim; T=ComplexF64) = [e for e in I(dim) .|> T |> eachrow]
 
+SigmaX() = complex([0 1; 1 0]) 
+SigmaY() = complex([0 -im; im 0])
+SigmaZ() = complex([1 0; 0 -1]) 
+
 function vec2mat(x::Vector{T}) where {T<:Number}
     reshape(x, x |> length |> sqrt |> Int, :)
 end

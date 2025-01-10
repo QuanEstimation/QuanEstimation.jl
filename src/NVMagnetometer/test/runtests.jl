@@ -1,6 +1,7 @@
 using Test
 using NVMagnetometer
 
-# @testset "NVMagnetometer.jl" begin
+@testset "NVMagnetometer.jl" begin
+
     
-# end # NVMagnetometer.jl tests
+end # NVMagnetometer.jl tests
