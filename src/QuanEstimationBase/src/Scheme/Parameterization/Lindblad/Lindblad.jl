@@ -9,15 +9,37 @@ mutable struct Lindblad{H, D, C, S, P} <: AbstractDynamics
     params::Union{Nothing, AbstractVector}
 end
 
-# Lindblad(data::D) where D = Lindblad{D}(data, nothing)
+# Lindblad(data::D) where D = Lindblad{D, Nothing}(data, nothing)
 
 include("LindbladData.jl")
 include("LindbladDynamics.jl")
-# include("LindbladWrapper.jl")
+include("LindbladWrapper.jl")
 
-function set_ctrl(dynamics::Lindblad, ctrl)
+function get_param(scheme::Scheme{S, P, M, E}) where {S, P<:AbstractDynamics, M, E}
+    return param_data(scheme).hamiltonian.params
+end
+
+function set_param!(scheme::Scheme{S, P, M, E}, x) where {S, P<:AbstractDynamics, M, E}
+    param_data(scheme).hamiltonian.params = [x...]
+end
+
+function eachparam(scheme::Scheme{S, P, M, E}) where {S, P<:AbstractDynamics, M, E}
+    [p for p in zip(scheme.Parameterization.params...)]
+end
+
+function set_ctrl!(dynamics::Lindblad, ctrl)
+    set_ctrl!(dynamics.data, ctrl)
+    dynamics
+end
+
+function set_ctrl!(data::LindbladData, ctrl)
+    setfield!(data, :ctrl, ctrl)
+    data
+end
+
+function set_ctrl(dynamics::Scheme, ctrl)
     temp = deepcopy(dynamics)
-    setfield!(temp.data, :ctrl, ctrl)
+    setfield!(temp.Parameterization.data, :ctrl, ctrl)
     temp
 end
 

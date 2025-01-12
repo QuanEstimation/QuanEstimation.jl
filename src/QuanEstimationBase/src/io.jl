@@ -192,32 +192,35 @@ const IO_final = Dict(
 )
 
 ## io info
-function show(system::QuanEstSystem)
-    (; optim, algorithm, obj) = system
-    println(
-        (optim isa ControlOpt ? IO_obj[obj_type(obj)] : "") *
-        IO_opt[opt_target(optim)],
-    )
-    println(IO_para[para_type(obj)])
-    println(IO_alg[alg_type(algorithm)])
-end
+# function Base.show(system::QuanEstSystem)
+#     (; optim, algorithm, obj) = system
+#     println(
+#         (optim isa ControlOpt ? IO_obj[obj_type(obj)] : "") *
+#         IO_opt[opt_target(optim)],
+#     )
+#     println(IO_para[para_type(obj)])
+#     println(IO_alg[alg_type(algorithm)])
+# end
 
 ## io initialization
-function show(opt::AbstractOpt, output::Output, obj::AbstractObj)
+function Base.show(opt::AbstractOpt, output::Output, obj::AbstractObj, alg::AbstractAlgorithm)
     (; io_buffer) = output
+    # println(IO_opt[opt])
+    println(IO_para[para_type(obj)])
+    println(IO_alg[alg_type(alg)])
     @eval @printf $(IO_ini[opt_target(opt), obj_type(obj), para_type(obj)]) $(io_buffer...)
     SaveCurrent(output)
 end
 
 ## io current
-function show(output::Output, obj::AbstractObj)
+function Base.show(output::Output, obj::AbstractObj)
     (; io_buffer) = output
     @eval @printf $(IO_current[obj_type(obj), para_type(obj)]) $(io_buffer...)
     SaveCurrent(output)
 end
 
 ## io final
-function show(obj::AbstractObj, output::AbstractOutput)
+function Base.show(obj::AbstractObj, output::AbstractOutput)
     (; io_buffer) = output
     @eval @printf $(IO_final[obj_type(obj), para_type(obj)]) $(io_buffer...)
     SaveFile(output)

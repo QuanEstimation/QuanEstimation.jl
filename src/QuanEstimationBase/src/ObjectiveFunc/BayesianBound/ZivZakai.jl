@@ -50,3 +50,9 @@ function QZZB(x::AbstractVector, p::AbstractVector, rho::AbstractVecOrMat; eps=G
 
     return 0.5*I
 end  # Quantum Ziv-Zakai bound for equally likely hypotheses with valley-filling
+
+function QZZB(scheme::AbstractScheme; ν::Number=1)
+    rho, _ = evolve_parameter_region(scheme)
+    (; x, p) = getfield(scheme, :EstimationStrategy)
+    return QZZB(x, p, rho, ν=ν)
+end  # function QZZB

@@ -1,4 +1,4 @@
-function update!(opt::StateOpt, alg::RI, obj, dynamics, output)
+function optimize!(opt::StateOpt, alg::RI, obj, dynamics, output)
     (; max_episode) = alg
 
     rho, drho = evolve(dynamics)
@@ -7,7 +7,7 @@ function update!(opt::StateOpt, alg::RI, obj, dynamics, output)
     set_f!(output, f[1,1])
     set_buffer!(output, dynamics.data.ψ0)
     set_io!(output, f[1,1])
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     f_list = [f[1,1]]
     idx = 0

@@ -25,7 +25,7 @@ apt = QuanEstimationBase.Adapt_MZI(x, p, rho0)
 # algorithm: DE
 alg = QuanEstimationBase.DE(
       p_num=10, 
-      ini_population=missing, 
+      ini_population=nothing, 
       max_episode=10, 
       c=1.0, 
       cr=0.5
@@ -41,7 +41,7 @@ QuanEstimationBase.offline(
 # algorithm: PSO
 alg = QuanEstimationBase.PSO(;
       p_num=10, 
-      ini_particle=missing,  
+      ini_particle=nothing,  
       max_episode=[10,10], 
       c0=1.0, 
       c1=2.0, 

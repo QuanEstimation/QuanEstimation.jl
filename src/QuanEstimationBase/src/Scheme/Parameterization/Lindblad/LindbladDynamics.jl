@@ -81,8 +81,8 @@ function liouvillian(
     -1.0im * freepart + dissp
 end
 
-function Htot(H0::T, Hc::V, ctrl) where {T<:AbstractArray, V<:AbstractVector}
-    [H0] .+ ([ctrl[i] .* [Hc[i]] for i in eachindex(ctrl)] |> sum)
+function Htot(H0::T, Hc::V, ctrl) where {T<:Matrix{ComplexF64}, V<:AbstractVector}
+    [ H0+sum([ctrl[i][t] * Hc[i] for i in eachindex(Hc)]) for t in eachindex(ctrl[1]) ]
 end
 
 function Htot(
@@ -94,9 +94,9 @@ function Htot(
 end
 
 
-function Htot(H0::V1, Hc::V2, ctrl) where {V1,V2<:AbstractVector}
-    H0 + ([ctrl[i] * Hc[i] for i in eachindex(ctrl)] |> sum)
-end
+# function Htot(H0::V1, Hc::V2, ctrl) where {V1<:AbstractVector,V2<:AbstractVector}
+#     H0 + ([ctrl[i] * Hc[i] for i in eachindex(ctrl)] |> sum)
+# end
 
 function expL(H, decay_opt, γ, dt, tj = 1)
     Ld = dt * liouvillian(H, decay_opt, γ, tj)
@@ -112,7 +112,7 @@ end
 ##========== matrix exponential (expm) ==========##
 @doc raw"""
 
-    expm(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractMatrix, dH::AbstractMatrix; decay::Union{AbstractVector, Missing}=missing, Hc::Union{AbstractVector, Missing}=missing, ctrl::Union{AbstractVector, Missing}=missing)
+    expm(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractMatrix, dH::AbstractMatrix; decay::Union{AbstractVector, Nothing}=nothing, Hc::Union{AbstractVector, Nothing}=nothing, ctrl::Union{AbstractVector, Nothing}=nothing)
 
 When applied to the case of single parameter. 
 """
@@ -121,13 +121,13 @@ function expm(
     ρ0::AbstractMatrix,
     H0::AbstractVecOrMat,
     dH::AbstractMatrix;
-    decay::Union{AbstractVector, Missing}=missing,
-    Hc::Union{AbstractVector, Missing}=missing,
-    ctrl::Union{AbstractVector, Missing}=missing,
+    decay::Union{AbstractVector, Nothing}=nothing,
+    Hc::Union{AbstractVector, Nothing}=nothing,
+    ctrl::Union{AbstractVector, Nothing}=nothing,
 )
     dim = size(ρ0, 1)
     tnum = length(tspan)
-    if ismissing(decay)
+    if isnothing(decay)
         decay_opt = [zeros(ComplexF64, dim, dim)]
         γ = [0.0]
     else
@@ -135,10 +135,10 @@ function expm(
         γ = [decay[2] for decay in decay]
     end
 
-    if ismissing(Hc)
+    if isnothing(Hc)
         Hc = [zeros(ComplexF64, dim, dim)]
         ctrl = [zeros(tnum-1)]
-    elseif ismissing(ctrl)
+    elseif isnothing(ctrl)
         ctrl = [zeros(tnum-1)]
     else
         ctrl_num = length(Hc)
@@ -174,7 +174,7 @@ function expm(
     ∂ρt_∂x_all[1] = ρt_all[1] |> zero
 
     decay_opt, γ = decay
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         ∂ρt_∂x_all[t] = -im * Δt * dH_L * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1]
@@ -184,7 +184,7 @@ end
 
 @doc raw"""
 
-    expm(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractMatrix, dH::AbstractVector; decay::Union{AbstractVector, Missing}=missing, Hc::Union{AbstractVector, Missing}=missing, ctrl::Union{AbstractVector, Missing}=missing)
+    expm(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractMatrix, dH::AbstractVector; decay::Union{AbstractVector, Nothing}=nothing, Hc::Union{AbstractVector, Nothing}=nothing, ctrl::Union{AbstractVector, Nothing}=nothing)
 
 The dynamics of a density matrix is of the form  ``\partial_t\rho=-i[H,\rho]+\sum_i \gamma_i\left(\Gamma_i\rho\Gamma^{\dagger}_i-\frac{1}{2}\left\{\rho,\Gamma^{\dagger}_i \Gamma_i \right\}\right)``, where ``\rho`` is the evolved density matrix, ``H`` is the Hamiltonian of the system, ``\Gamma_i`` and ``\gamma_i`` are the ``i\mathrm{th}`` decay operator and the corresponding decay rate.
 - `tspan`: Time length for the evolution.
@@ -200,13 +200,13 @@ function expm(
     ρ0::AbstractMatrix,
     H0::AbstractVecOrMat,
     dH::AbstractVector;
-    decay::Union{AbstractVector, Missing}=missing,
-    Hc::Union{AbstractVector, Missing}=missing,
-    ctrl::Union{AbstractVector, Missing}=missing
+    decay::Union{AbstractVector, Nothing}=nothing,
+    Hc::Union{AbstractVector, Nothing}=nothing,
+    ctrl::Union{AbstractVector, Nothing}=nothing
 )
     dim = size(ρ0, 1)
     tnum = length(tspan)
-    if ismissing(decay)
+    if isnothing(decay)
         decay_opt = [zeros(ComplexF64, dim, dim)]
         γ = [0.0]
     else
@@ -214,10 +214,10 @@ function expm(
         γ = [decay[2] for decay in decay]
     end
 
-    if ismissing(Hc)
+    if isnothing(Hc)
         Hc = [zeros(ComplexF64, dim, dim)]
         ctrl0 = [zeros(tnum-1)]
-    elseif ismissing(ctrl)
+    elseif isnothing(ctrl)
         ctrl0 = [zeros(tnum-1)]
     else
         ctrl_num = length(Hc)
@@ -260,7 +260,7 @@ function expm(
         ∂ρt_∂x_all[1][pj] = ρt_all[1] |> zero
     end
 
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         for pj = 1:param_num
@@ -327,7 +327,7 @@ function expm_py(
     ρt_all[1] = ρ0 |> vec
     ∂ρt_∂x_all[1] = ρt_all[1] |> zero
 
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         ∂ρt_∂x_all[t] = -im * Δt * dH_L * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1]
@@ -366,7 +366,7 @@ function expm_py(
         ∂ρt_∂x_all[1][pj] = ρt_all[1] |> zero
     end
 
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt_all[t] = exp_L * ρt_all[t-1]
         for pj = 1:param_num
@@ -407,7 +407,7 @@ function secondorder_derivative(
     ρt = ρ0 |> vec
     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
     ∂2ρt_∂x = [ρt |> zero for i = 1:param_num]
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
@@ -425,7 +425,7 @@ end
 ##========== solve ordinary differential equation (ODE) ==========##
 @doc raw"""
 
-    ode(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractMatrix, dH::AbstractMatrix; decay::Union{AbstractVector, Missing}=missing, Hc::Union{AbstractVector, Missing}=missing, ctrl::Union{AbstractVector, Missing}=missing)
+    ode(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractMatrix, dH::AbstractMatrix; decay::Union{AbstractVector, Nothing}=nothing, Hc::Union{AbstractVector, Nothing}=nothing, ctrl::Union{AbstractVector, Nothing}=nothing)
 
 When applied to the case of single parameter. 
 """
@@ -434,16 +434,16 @@ function ode(
     ρ0::AbstractMatrix,
     H0::AbstractVecOrMat,
     dH::AbstractMatrix;
-    decay::Union{AbstractVector, Missing}=missing,
-    Hc::Union{AbstractVector, Missing}=missing,
-    ctrl::Union{AbstractVector, Missing}=missing
+    decay::Union{AbstractVector, Nothing}=nothing,
+    Hc::Union{AbstractVector, Nothing}=nothing,
+    ctrl::Union{AbstractVector, Nothing}=nothing
     )
 
     ##==========initialization==========##
     dim = size(ρ0, 1)
     ρ0 = complex.(ρ0)
     tnum = length(tspan)
-    if ismissing(decay)
+    if isnothing(decay)
         Γ = [zeros(ComplexF64, dim, dim)]
         γ = [0.0]
     else
@@ -451,10 +451,10 @@ function ode(
         γ = [decay[2] for decay in decay]
     end
 
-    if ismissing(Hc)
+    if isnothing(Hc)
         Hc = [zeros(ComplexF64, dim, dim)]
         ctrl0 = [zeros(tnum)]
-    elseif ismissing(ctrl)
+    elseif isnothing(ctrl)
         ctrl0 = [zeros(tnum)]
     else
         ctrl_num = length(Hc)
@@ -499,7 +499,7 @@ end
 
 @doc raw"""
 
-    ode(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractVector, dH::AbstractVector; decay::Union{AbstractVector, Missing}=missing, Hc::Union{AbstractVector, Missing}=missing, ctrl::Union{AbstractVector, Missing}=missing)
+    ode(tspan::AbstractVector, ρ0::AbstractMatrix, H0::AbstractVector, dH::AbstractVector; decay::Union{AbstractVector, Nothing}=nothing, Hc::Union{AbstractVector, Nothing}=nothing, ctrl::Union{AbstractVector, Nothing}=nothing)
 
 The dynamics of a density matrix is of the form  ``\partial_t\rho=-i[H,\rho]+\sum_i \gamma_i\left(\Gamma_i\rho\Gamma^{\dagger}_i-\frac{1}{2}\left\{\rho,\Gamma^{\dagger}_i \Gamma_i \right\}\right)``, where ``\rho`` is the evolved density matrix, ``H`` is the Hamiltonian of the system, ``\Gamma_i`` and ``\gamma_i`` are the ``i\mathrm{th}`` decay operator and the corresponding decay rate.
 - `tspan`: Time length for the evolution.
@@ -515,16 +515,16 @@ function ode(
     ρ0::AbstractMatrix,
     H0::AbstractVecOrMat,
     dH::AbstractVector;
-    decay::Union{AbstractVector, Missing}=missing,
-    Hc::Union{AbstractVector, Missing}=missing,
-    ctrl::Union{AbstractVector, Missing}=missing
+    decay::Union{AbstractVector, Nothing}=nothing,
+    Hc::Union{AbstractVector, Nothing}=nothing,
+    ctrl::Union{AbstractVector, Nothing}=nothing
     )
 
     ##==========initialization==========##
     dim = size(ρ0, 1)
     ρ0 = complex.(ρ0)
     tnum = length(tspan)
-    if ismissing(decay)
+    if isnothing(decay)
         Γ = [zeros(ComplexF64, dim, dim)]
         γ = [0.0]
     else
@@ -532,10 +532,10 @@ function ode(
         γ = [decay[2] for decay in decay]
     end
 
-    if ismissing(Hc)
+    if isnothing(Hc)
         Hc = [zeros(ComplexF64, dim, dim)]
         ctrl0 = [zeros(tnum)]
-    elseif ismissing(ctrl)
+    elseif isnothing(ctrl)
         ctrl0 = [zeros(tnum)]
     else
         ctrl_num = length(Hc)
@@ -695,8 +695,8 @@ end
 function evaluate_hamiltonian(scheme::Scheme)
     (;hamiltonian,) = param_data(scheme)
     params = scheme.Parameterization.params
-    H0 = hamiltonian.H0([params...])
-    dH = hamiltonian.dH([params...])
+    H0 = hamiltonian.H0(params...)
+    dH = hamiltonian.dH(params...)
     return H0, dH
 end
 
@@ -706,10 +706,10 @@ function evaluate_hamiltonian(ham::Hamiltonian{T, Vector{T}, N}) where {T, N}
     return H0, dH
 end
 
-function evaluate_hamiltonian(ham::Hamiltonian{F1, F2, N}) where {F1,F2, N}
+function evaluate_hamiltonian(ham::Hamiltonian{F1, F2, N}) where {F1<:Function,F2<:Function, N}
     params = getfield(ham, :params)
-    H0 = ham.H0([params...])
-    dH = ham.dH([params...])
+    H0 = ham.H0(params...)
+    dH = ham.dH(params...)
     return H0, dH
 end
 
@@ -724,7 +724,7 @@ function evolve(scheme::Scheme{Ket, Lindblad{HT, NonDecay, NonControl, Expm, P},
     U = exp(-im * H0 * Δt)
     ψt = ψ0
     ∂ψ∂x = [ψ0 |> zero for i = 1:param_num]
-    for i in eachindex(tspan[2:end])
+    for i in eachindex(tspan)[2:end]
         ψt = U * ψt
         ∂ψ∂x = [-im * Δt * dH[i] * ψt for i = 1:param_num] + [U] .* ∂ψ∂x
     end
@@ -867,7 +867,7 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, NonControl, Ex
     Δt = tspan[2] - tspan[1]
     exp_L = expL(H0, decay_opt, γ, Δt, 1)
     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         ρt = exp_L * ρt
         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
     end
@@ -908,16 +908,17 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, NonDecay, Control, Ex
     (; tspan, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(scheme)
+    H = Matrix{ComplexF64}[]
 
     param_num = length(dH)
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
-    H = Htot(H0, Hc, ctrl)
+    ctrl = collect.([repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num])
+    append!(H, Htot(H0, Hc, ctrl))
     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
     ρt = ρ0 |> vec
     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-    for t in eachindex(tspan[2:end])
+    for t in eachindex(tspan)[2:end]
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], Δt)
         ρt = exp_L * ρt
@@ -967,8 +968,8 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, Control, Expm,
     H = Htot(H0, Hc, ctrl)
     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
     ρt = ρ0 |> vec
-    ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-    for t in eachindex(tspan[2:end])
+    ∂ρt_∂x = [ρt |> zero for _ = 1:param_num]
+    for t in eachindex(tspan)[2:end]
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
@@ -979,7 +980,7 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, Control, Expm,
 end
 
 function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, Control, Ode, P}, M, E}) where {HT, M, E, P}
-    (; tspan, decay, Hc, ctrl) = param_data(scheme)
+    (; tspan, decay, Hc, ctrl, abstol,reltol) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(scheme)
     decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
@@ -1010,10 +1011,12 @@ function evolve(scheme::Scheme{DensityMatrix, Lindblad{HT, Decay, Control, Ode, 
     ρt[end], ∂ρt_∂x
 end
 
+evolve(scheme::Scheme) = evolve(scheme.data)
+
 #### evolution of state under time-independent Hamiltonian with noise and controls #### 
 function evolve(scheme::Scheme{Ket, Lindblad{HT, Decay, Control, Expm, P}, M, E}) where {HT, M, E, P}
     (; tspan, decay, Hc, ctrl) = param_data(scheme)
-    ψ0 = state_data(scheme)
+    ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(scheme)
     decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
 
@@ -1023,9 +1026,9 @@ function evolve(scheme::Scheme{Ket, Lindblad{HT, Decay, Control, Expm, P}, M, E}
     ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
     H = Htot(H0, Hc, ctrl)
     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
-    ρt = (ψ0 * ψ0') |> vec
-    ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-    for t in eachindex(tspan[2:end])
+    ρt = vec(ρ0)
+    ∂ρt_∂x = [ρt |> zero for _ = 1:param_num]
+    for t in eachindex(tspan)[2:end]
         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
         exp_L = expL(H[t-1], decay_opt, γ, Δt, t-1)
         ρt = exp_L * ρt
@@ -1066,7 +1069,6 @@ function evolve(scheme::Scheme{Ket, Lindblad{HT, Decay, Control, Ode, P}, M, E})
     end
     ρt[end], ∂ρt_∂x
 end
-
 # #### evolution of pure states under time-dependent Hamiltonian without noise and controls ####
 # function evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Vector{Matrix{T}}, Vector{Vector{Matrix{T}}}, N},NonDecay, NonControl, Expm, P}, M, E}) where {T, N, M, E} 
 #     (; hamiltonian, tspan) = param_data(scheme)
@@ -1076,7 +1078,7 @@ end
 #     dH_L = [liouville_commu.(dh) for dh in dH]
 #     ρt = (ψ0 * ψ0') |> vec
 #     ∂ρt_∂x = [ρt |> zero for _ in 1:param_num]
-#     for t in eachindex(tspan[2:end])
+#     for t in eachindex(tspan)[2:end]
 #         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
 #         exp_L = expL(H0[t-1], Δt)
 #         ρt = exp_L * ρt
@@ -1117,7 +1119,7 @@ end
 #     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
 #     ρt = ρ0 |> vec
 #     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-#     for t in eachindex(tspan[2:end])
+#     for t in eachindex(tspan)[2:end]
 #         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
 #         exp_L = expL(H0[t-1], Δt)
 #         ρt = exp_L * ρt
@@ -1155,7 +1157,7 @@ end
 #     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
 #     ρt = (ψ0 * ψ0') |> vec
 #     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-#     for t in eachindex(tspan[2:end])
+#     for t in eachindex(tspan)[2:end]
 #         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
 #         exp_L = expL(H0[t-1], decay_opt, γ, Δt, t-1)
 #         ρt = exp_L * ρt
@@ -1197,7 +1199,7 @@ end
 #     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
 #     ρt = ρ0 |> vec
 #     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-#     for t in eachindex(tspan[2:end])
+#     for t in eachindex(tspan)[2:end]
 #         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
 #         exp_L = expL(H0[t-1], decay_opt, γ, Δt, t-1)
 #         ρt = exp_L * ρt

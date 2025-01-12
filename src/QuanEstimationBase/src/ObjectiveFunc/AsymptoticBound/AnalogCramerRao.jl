@@ -5,6 +5,14 @@ function decomposition(A)
     return R
 end
 
+function HCRB(scheme::AbstractScheme; C=nothing, eps=GLOBAL_EPS)
+    if isnothing(C)
+        C = I(get_param_num(param_data(scheme).hamiltonian|>typeof))
+    end
+    rho, drho = evolve(scheme)
+    return HCRB(rho, drho, C;eps =eps)
+end
+
 """
 
     HCRB(ρ::AbstractMatrix, dρ::AbstractVector, C::AbstractMatrix; eps=GLOBAL_EPS)

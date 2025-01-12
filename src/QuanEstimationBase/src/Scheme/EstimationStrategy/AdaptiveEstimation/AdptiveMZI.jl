@@ -152,13 +152,13 @@ function offline(apt::Adapt_MZI, alg; target::Symbol=:sharpness, eps = GLOBAL_EP
     comb = brgd(N)|>x->[[parse(Int, s) for s in ss] for ss in x]
     if alg isa DE
         (;p_num,ini_population,c,cr,max_episode) = alg
-        if ismissing(ini_population)
+        if isnothing(ini_population)
             ini_population = ([apt.rho0],)
         end
         DE_deltaphiOpt(x,p,rho0,comb,p_num,ini_population[1],c,cr,rng,max_episode,target,eps)
     elseif alg isa PSO
         (;p_num,ini_particle,c0,c1,c2,max_episode) = alg
-        if ismissing(ini_particle)
+        if isnothing(ini_particle)
             ini_particle = ([apt.rho0],)
         end
         PSO_deltaphiOpt(x,p,rho0,comb,p_num,ini_particle[1],c0,c1,c2,rng,max_episode,target,eps)

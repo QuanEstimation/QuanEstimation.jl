@@ -1,7 +1,4 @@
-using QuanEstimation
-using Random
-using LinearAlgebra
-
+using QuanEstimation, Random, LinearAlgebra
 # initial state
 rho0 = zeros(ComplexF64, 6, 6)
 rho0[1:4:5, 1:4:5] .= 0.5
@@ -23,8 +20,7 @@ gS = (2pi*28.03*1000)/cons
 gI = (2pi*4.32)/cons
 A1 = (2pi*3.65)/cons
 A2 = (2pi*3.03)/cons
-H0 = sum([D*kron(s3^2, I(2)), sum(gS*B.*S), sum(gI*B.*Is),
-          A1*(kron(s1, sx) + kron(s2, sy)), A2*kron(s3, sz)])
+H0 = sum([D*kron(s3^2, I(2)), sum(gS*B.*S), sum(gI*B.*Is), A1*(kron(s1, sx) + kron(s2, sy)), A2*kron(s3, sz)])
 # derivatives of the free Hamiltonian on B1, B2 and B3
 dH = gS*S+gI*Is
 # control Hamiltonians 
@@ -33,38 +29,32 @@ Hc = [S1, S2, S3]
 decay = [[S3, 2pi/cons]]
 # generation of a set of POVM basis
 dim = size(rho0, 1)
-POVM_basis = [QuanEstimation.basis(dim, i)*QuanEstimation.basis(dim, i)' 
-              for i in 1:dim]
+POVM_basis = [basis(dim, i)*basis(dim, i)' for i in 1:dim]
 # time length for the evolution
 tspan = range(0., 2., length=4000)
-# choose the optimization type
-opt = QuanEstimation.SCopt(ctrl_bound=[-0.2,0.2], seed=1234)
 
 ##==========choose comprehensive optimization algorithm==========##
 ##-------------algorithm: DE---------------------##
-alg = QuanEstimation.DE(p_num=10, max_episode=1000, c=1.0, cr=0.5)
-# input the dynamics data
-dynamics = QuanEstimation.Lindblad(opt, tspan, H0, dH, Hc, decay=decay, dyn_method=:Expm) 
+alg = DE(p_num=10, max_episode=1000, c=1.0, cr=0.5)
 
 ##-------------algorithm: PSO---------------------##
-# alg = QuanEstimation.PSO(p_num=10, max_episode=[1000,100], c0=1.0, 
+# alg = PSO(p_num=10, max_episode=[1000,100], c0=1.0, 
 #                          c1=2.0, c2=2.0)
-# # input the dynamics data
-# dynamics = QuanEstimation.Lindblad(opt, tspan, H0, dH, Hc, decay=decay, dyn_method=:Expm) 
 
 ##-------------algorithm: AD---------------------##
-# alg = QuanEstimation.AD(Adam=true, max_episode=1000, epsilon=0.01, 
+# alg = AD(Adam=true, max_episode=1000, epsilon=0.01, 
 #                         beta1=0.90, beta2=0.99)
-# # input the dynamics data
-# dynamics = QuanEstimation.Lindblad(opt, tspan, H0, dH, Hc, decay=decay, dyn_method=:Expm) 
 
 ##===================choose objective function===================##
 ##-------------objective function: tr(WF^{-1})---------------------##
-obj = QuanEstimation.QFIM_obj()
-# run the comprehensive optimization problem
-QuanEstimation.run(opt, alg, obj, dynamics; savefile=false)
+obj = QFIM_obj()
 
 ##-------------objective function: tr(WI^{-1})---------------------##
-# obj = QuanEstimation.CFIM_obj(M=M)
-# # run the comprehensive optimization problem
-# QuanEstimation.run(opt, alg, obj, dynamics; savefile=false)
+# obj = CFIM_obj(M=M)
+
+dynamics = Lindblad(H0, dH, tspan, Hc, decay; ctrl=ZeroCTRL(), dyn_method=:Expm)
+scheme = GeneralScheme(; probe=rho0, param=dynamics,)
+
+opt = SCopt(ctrl_bound=[-0.2,0.2], seed=1234)
+
+optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=false)

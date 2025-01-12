@@ -1,5 +1,4 @@
 using QuanEstimation
-
 # initial state
 rho0 = 0.5*ones(2, 2)
 # free Hamiltonian
@@ -21,14 +20,14 @@ M = [M1, M2]
 # time length for the evolution
 tspan = range(0., 50., length=2000)
 # dynamics
-rho, drho = QuanEstimation.expm(tspan, rho0, H0, dH, decay=decay)
+rho, drho = expm(tspan, rho0, H0, dH, decay=decay)
 # calculation of the CFI and QFI
 Im, F = Float64[], Float64[]
 for ti in 2:length(tspan)
     # CFI
-    I_tp = QuanEstimation.CFIM(rho[ti], drho[ti], M)
+    I_tp = CFIM(rho[ti], drho[ti], M)
     append!(Im, I_tp)
     # QFI
-    F_tp = QuanEstimation.QFIM(rho[ti], drho[ti])
+    F_tp = QFIM(rho[ti], drho[ti])
     append!(F, F_tp)
 end

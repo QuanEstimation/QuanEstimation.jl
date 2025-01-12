@@ -1,6 +1,6 @@
 """
 
-    Bayes(x, p, rho, y; M=missing, savefile=false)
+    Bayes(x, p, rho, y; M=nothing, savefile=false)
 
 Bayesian estimation. The prior distribution is updated via the posterior distribution obtained by the Bayes’ rule and the estimated value of parameters obtained via the maximum a posteriori probability (MAP).
 - `x`: The regimes of the parameters for the integral.
@@ -10,13 +10,13 @@ Bayesian estimation. The prior distribution is updated via the posterior distrib
 - `M`: A set of positive operator-valued measure (POVM). The default measurement is a set of rank-one symmetric informationally complete POVM (SIC-POVM).
 - `savefile`: Whether or not to save all the posterior distributions. 
 """
-function Bayes(x, p, rho, y; M=missing, estimator="mean", savefile=false)
+function Bayes(x, p, rho, y; M=nothing, estimator="mean", savefile=false)
     y = y .+ 1
     para_num = length(x)
     max_episode = length(y)
     if para_num == 1
         #### singleparameter senario ####
-        if ismissing(M)
+        if isnothing(M)
             M = SIC(size(rho[1])[1])
         end
         if savefile == false
@@ -91,7 +91,7 @@ function Bayes(x, p, rho, y; M=missing, estimator="mean", savefile=false)
         end
     else 
         #### multiparameter senario ####
-        if ismissing(M)
+        if isnothing(M)
             M = SIC(size(vec(rho)[1])[1])
         end
         if savefile == false
@@ -175,7 +175,7 @@ end
 
 """
 
-    MLE(x, rho, y; M=missing, savefile=false)
+    MLE(x, rho, y; M=nothing, savefile=false)
 
 Bayesian estimation. The estimated value of parameters obtained via the maximum likelihood estimation (MLE).
 - `x`: The regimes of the parameters for the integral.
@@ -184,12 +184,12 @@ Bayesian estimation. The estimated value of parameters obtained via the maximum 
 - `M`: A set of positive operator-valued measure (POVM). The default measurement is a set of rank-one symmetric informationally complete POVM (SIC-POVM).
 - `savefile`: Whether or not to save all the posterior distributions. 
 """
-function MLE(x, rho, y; M=missing, savefile=false)
+function MLE(x, rho, y; M=nothing, savefile=false)
     y = y .+ 1
     para_num = length(x)
     max_episode = length(y)
     if para_num == 1
-        if ismissing(M)
+        if isnothing(M)
             M = SIC(size(rho[1])[1])
         end
         if savefile == false
@@ -236,7 +236,7 @@ function MLE(x, rho, y; M=missing, savefile=false)
             append!(p_shape,length(x[i]))
         end
 
-        if ismissing(M)
+        if isnothing(M)
             M = SIC(size(vec(rho)[1])[1])
         end
 
@@ -305,7 +305,7 @@ end
 
 """
 
-    BayesCost(x, p, xest, rho, M; W=missing, eps=GLOBAL_EPS)
+    BayesCost(x, p, xest, rho, M; W=nothing, eps=GLOBAL_EPS)
 
 Calculation of the average Bayesian cost with a quadratic cost function.
 - `x`: The regimes of the parameters for the integral.
@@ -316,13 +316,13 @@ Calculation of the average Bayesian cost with a quadratic cost function.
 - `W`: Weight matrix.
 - `eps`: Machine epsilon.
 """
-function BayesCost(x, p, xest, rho, M; W=missing, eps=GLOBAL_EPS)
+function BayesCost(x, p, xest, rho, M; W=nothing, eps=GLOBAL_EPS)
     para_num = length(x)
     trapzm(x, integrands, slice_dim) = [trapz(tuple(x...), I) for I in [reshape(hcat(integrands...)[i,:], length.(x)...) for i in 1:slice_dim]] 
 
     if para_num == 1
         # single-parameter scenario
-        if ismissing(M)
+        if isnothing(M)
             M = SIC(size(rho[1])[1])
         end
 
@@ -331,11 +331,11 @@ function BayesCost(x, p, xest, rho, M; W=missing, eps=GLOBAL_EPS)
         return real(trapz(x[1], value))
     else
         # multi-parameter scenario
-        if ismissing(W) 
+        if isnothing(W) 
             W = Matrix(I, para_num, para_num)
         end
 
-        if ismissing(M)
+        if isnothing(M)
             M = SIC(size(vec(rho)[1])[1])
         end
 
@@ -354,7 +354,7 @@ end
 
 """
 
-    BCB(x, p, rho; W=missing, eps=GLOBAL_EPS)
+    BCB(x, p, rho; W=nothing, eps=GLOBAL_EPS)
 
 Calculation of the minimum Bayesian cost with a quadratic cost function.
 - `x`: The regimes of the parameters for the integral.
@@ -363,7 +363,7 @@ Calculation of the minimum Bayesian cost with a quadratic cost function.
 - `W`: Weight matrix.
 - `eps`: Machine epsilon.
 """
-function BCB(x, p, rho; W=missing, eps=GLOBAL_EPS)
+function BCB(x, p, rho; W=nothing, eps=GLOBAL_EPS)
     para_num = length(x)
     trapzm(x, integrands, slice_dim) = [trapz(tuple(x...), I) for I in [reshape(hcat(integrands...)[i,:], length.(x)...) for i in 1:slice_dim]] 
 
@@ -390,7 +390,7 @@ function BCB(x, p, rho; W=missing, eps=GLOBAL_EPS)
         return minBC
     else
         # multi-parameter scenario
-        if ismissing(W) 
+        if isnothing(W) 
             W = Matrix(I, para_num, para_num)
         end
         x_list = Iterators.product(x...)

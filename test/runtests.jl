@@ -1,13 +1,18 @@
-using QuanEstimation
-using Test
+using QuanEstimation, Test, LinearAlgebra, Random, SparseArrays
+using Suppressor: @suppress
 
-@testset "QuanEstimation.jl" begin
+include("utils.jl")
 
-    @testset "QuanEstimationBase" begin
-        include("../src/QuanEstimationBase/test/runtests.jl")
+@testset "Optimization" begin
+    @testset "Control Optimization" begin
+        include("optimization/test_control_optimization.jl")
     end
-    @testset "NVMagnetometer" begin
-        include("../src/NVMagnetometer/test/runtests.jl")
+
+    @testset "State Optimization" begin
+        include("optimization/test_state_optimization.jl")
     end
-    
-end # QuanEstimation.jl tests
+
+    @testset "Measurement Optimization" begin
+        include("optimization/test_measurement_optimization.jl")
+    end
+end

@@ -29,7 +29,7 @@ function GeneralScheme(;
 	return Scheme(
 		GeneralState(probe),
 		param,
-		GeneralMeasurement(measurement),
+		isnothing(measurement) ? GeneralMeasurement(SIC(get_dim(param))) : GeneralMeasurement(measurement),
 		isnothing(strat) ? GeneralEstimation(x,p,dp) : strat,
 	)
 end
@@ -39,3 +39,9 @@ state_data(scheme::Scheme) = scheme.StatePreparation.data
 param_data(scheme::Scheme) = scheme.Parameterization.data
 meas_data(scheme::Scheme) = scheme.Measurement.data
 strat_data(scheme::Scheme) = scheme.EstimationStrategy
+
+set_ctrl!(scheme, ctrl) = set_ctrl!(scheme.Parameterization, ctrl)
+set_ctrl(scheme, ctrl) = set_ctrl(scheme.Parameterization, ctrl)
+set_state!(scheme, state) = @set scheme.StatePreparation.data=state
+
+get_dim(scheme) = get_dim(scheme.Parameterization)
