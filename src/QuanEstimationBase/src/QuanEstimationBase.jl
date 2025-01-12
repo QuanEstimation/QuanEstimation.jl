@@ -1,28 +1,25 @@
 module QuanEstimationBase
-export ControlOpt, StateOpt, MeasurementOpt, ControlMeasurementOpt, CMopt, StateMeasurementOpt, SMopt, StateControlMeasurementOpt, SCMopt, opt_target, Htot, SCopt
-export PlusState, MinusState, BellState
-export ZeroCTRL, LinearCTRL, SineCTRL, SawCTRL, TriangleCTRL, GaussianCTRL, GaussianEdgeCTRL
+
+export GeneralScheme, GeneralEstimation, GeneralMeasurement, GeneralState, GeneralParameterization, AbstractScheme
+export optimize!, init_opt
+export ControlOpt, StateOpt, MeasurementOpt, StateMeasurementOpt, ControlMeasurementOpt,StateControlOpt, StateControlMeasurementOpt
+export Copt, Sopt, Mopt, SMopt, CMopt, SCopt, SCMopt
 export evolve
-export SIC
+export Lindblad, Hamiltonian
 export QFIM, CFIM, HCRB, NHB
 export QFIM_obj, CFIM_obj, HCRB_obj
 export VTB, QVTB, QZZB, BCRB, BQCRB
-export AbstractScheme
-export basis
-export isCtrl, isNoisy
+export basis, SIC
 export autoGRAPE, GRAPE, PSO, DE, AD
-export GeneralScheme,Lindblad, Hamiltonian
-export GeneralEstimation, GeneralMeasurement, GeneralState, GeneralParameterization
-export AdaptiveStrategy, adapt!, Adapt_MZI, offline
-export Output
-export Scheme
-export DensityMatrix, Decay, Control, Expm, Ode, Strategy, POVM
+export Scheme, DensityMatrix, Decay, Control, Expm, Ode, Strategy, POVM
 export error_evaluation, error_control, error_control_param, error_control_eps
-export optimize!
 export state_data, param_data, meas_data, strat_data
 export expm, ode
-export Bayes, MLE
 export SigmaX, SigmaY, SigmaZ, σx, σy, σz
+export PlusState, MinusState, BellState
+export ZeroCTRL, LinearCTRL, SineCTRL, SawCTRL, TriangleCTRL, GaussianCTRL, GaussianEdgeCTRL
+export AdaptiveStrategy, adapt!, Adapt_MZI, offline, Bayes, MLE
+
 using Random
 using LinearAlgebra
 using Zygote

@@ -1,11 +1,11 @@
-name: CI (QuanEstimationBase)
+name: CI (NVMagnetometer)
 on:
   pull_request:
       branches:
         - main
       paths:
-        - "src/QuanEstimationBase/**"
-        - ".github/workflows/CI_QuanEstimationBase.yml"
+        - "src/NVMagnetometer/**"
+        - ".github/workflows/CI_NVMagnetometer.yml"
   push:
     branches:
       - main
@@ -51,4 +51,4 @@ jobs:
           Pkg.Registry.update()
           Pkg.instantiate()
           Pkg.test(; coverage="user")
-        shell: julia --color=yes --code-coverage=user --depwarn=yes --project=src/QuanEstimationBase {0}
+        shell: julia --color=yes --code-coverage=user --depwarn=yes --project=src/NVMagnetometer {0}

@@ -40,7 +40,7 @@ end
     # end
 
     @testset "Lindblad Wrapper" begin
-        include("dynamics/test_lindblad_wrapper.jl")
+        include("dynamics/test_init_scheme.jl")
     end
     
 end
