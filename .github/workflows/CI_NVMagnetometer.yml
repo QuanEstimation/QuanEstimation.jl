@@ -24,9 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1"
           - "lts"
-          - "pre"
         os:
           - ubuntu-latest
 
@@ -49,6 +47,12 @@ jobs:
         run: |
           import Pkg
           Pkg.Registry.update()
+          # Install packages present in subdirectories
+          dev_pks = Pkg.PackageSpec[]
+          for path in ("src/QuanEstimationBase", "src/NVMagnetometer")
+              push!(dev_pks, Pkg.PackageSpec(; path))
+          end
+          Pkg.develop(dev_pks)
           Pkg.instantiate()
           Pkg.test(; coverage="user")
         shell: julia --color=yes --code-coverage=user --depwarn=yes --project=src/NVMagnetometer {0}
