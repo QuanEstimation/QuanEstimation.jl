@@ -1,28 +1,28 @@
 #### control optimization ####
-function optimize!(opt::ControlOpt, alg::DE, obj, dynamics, output)
+function optimize!(opt::ControlOpt, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
-    if ismissing(ini_population)
+    if isnothing(ini_population)
         ini_population = ([opt.ctrl,],)
     end
     ini_population = ini_population[1]
-    ctrl_length = length(dynamics.data.ctrl[1])
-    ctrl_num = length(dynamics.data.Hc)
-    populations = repeat(dynamics, p_num)
+    ctrl_length = length(scheme.data.ctrl[1])
+    ctrl_num = length(scheme.data.Hc)
+    populations = repeat(scheme, p_num)
 
     # initialization
     initial_ctrl!(opt, ini_population, populations, p_num, opt.rng)
 
-    dynamics_copy = set_ctrl!(dynamics, [zeros(ctrl_length) for i = 1:ctrl_num])
-    f_noctrl, f_comp = objective(obj, dynamics_copy)
+    scheme_copy = set_ctrl(scheme, [zeros(ctrl_length) for i = 1:ctrl_num])
+    f_noctrl, f_comp = objective(obj, scheme_copy)
     p_fit, p_out = zeros(p_num), zeros(p_num)
     for i = 1:p_num
         p_out[i], p_fit[i] = objective(obj, populations[i])
     end
 
     set_f!(output, p_out[1])
-    set_buffer!(output, dynamics.data.ctrl)
+    set_buffer!(output, scheme.data.ctrl)
     set_io!(output, f_noctrl, p_out[1])
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
     
     for ei = 1:(max_episode-1)
         for pj = 1:p_num
@@ -55,8 +55,8 @@ function optimize!(opt::ControlOpt, alg::DE, obj, dynamics, output)
             end
             #selection
             bound!(ctrl_cross, opt.ctrl_bound)
-            dynamics_cross = set_ctrl!(populations[pj], ctrl_cross)
-            f_out, f_cross = objective(obj, dynamics_cross)
+            scheme_cross = set_ctrl(populations[pj], ctrl_cross)
+            f_out, f_cross = objective(obj, scheme_cross)
             if f_cross > p_fit[pj]
                 p_fit[pj] = f_cross
                 p_out[pj] = f_out
@@ -77,14 +77,14 @@ function optimize!(opt::ControlOpt, alg::DE, obj, dynamics, output)
 end
 
 #### state optimization ####
-function optimize!(opt::StateOpt, alg::DE, obj, dynamics, output)
+function optimize!(opt::StateOpt, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
-    if ismissing(ini_population)
+    if isnothing(ini_population)
         ini_population = ([opt.psi,],)
     end
     ini_population = ini_population[1]
-    dim = length(dynamics.data.ψ0)
-    populations = repeat(dynamics, p_num)
+    dim = length(scheme.data.ψ0)
+    populations = repeat(scheme, p_num)
     # initialization  
     initial_state!(ini_population, populations, p_num, opt.rng)
 
@@ -94,9 +94,9 @@ function optimize!(opt::StateOpt, alg::DE, obj, dynamics, output)
     end
 
     set_f!(output, p_out[1])
-    set_buffer!(output, dynamics.data.ψ0)
+    set_buffer!(output, scheme.data.ψ0)
     set_io!(output, p_out[1])
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode-1)
         for pj in 1:p_num
@@ -119,8 +119,8 @@ function optimize!(opt::StateOpt, alg::DE, obj, dynamics, output)
                 state_cross[cross_int] = state_mut[cross_int]
             end
             psi_cross = state_cross/norm(state_cross)
-            dynamics_cross = set_state!(populations[pj], psi_cross)
-            f_out, f_cross = objective(obj, dynamics_cross)
+            scheme_cross = set_state!(populations[pj], psi_cross)
+            f_out, f_cross = objective(obj, scheme_cross)
             #selection
             if f_cross > p_fit[pj]
                 p_fit[pj] = f_cross
@@ -140,14 +140,14 @@ function optimize!(opt::StateOpt, alg::DE, obj, dynamics, output)
 end
     
 #### projective measurement optimization ####
-function optimize!(opt::Mopt_Projection, alg::DE, obj, dynamics, output)
+function optimize!(opt::Mopt_Projection, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
-    if ismissing(ini_population)
+    if isnothing(ini_population)
         ini_population = ([opt.M], )
     end
     ini_population = ini_population[1]
 
-    dim = size(dynamics.data.ρ0)[1]
+    dim = get_dim(scheme)
     M_num = length(opt.M)
 
     populations = [[zeros(ComplexF64, dim) for j in 1:M_num] for i in 1:p_num]
@@ -158,17 +158,17 @@ function optimize!(opt::Mopt_Projection, alg::DE, obj, dynamics, output)
     for pj in 1:p_num
         M = [populations[pj][i]*(populations[pj][i])' for i in 1:M_num]
         obj_copy = set_M(obj, M)
-        p_out[pj], p_fit[pj] = objective(obj_copy, dynamics)
+        p_out[pj], p_fit[pj] = objective(obj_copy, scheme)
     end
 
     obj_QFIM = QFIM_obj(obj)
-    f_opt, f_comp = objective(obj_QFIM, dynamics)
+    f_opt, _ = objective(obj_QFIM, scheme)
 
     M = [populations[1][i]*(populations[1][i])' for i in 1:M_num]
     set_f!(output, p_out[1])
     set_buffer!(output, M)
     set_io!(output, p_out[1], f_opt)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode-1)
         for pj in 1:p_num
@@ -199,7 +199,7 @@ function optimize!(opt::Mopt_Projection, alg::DE, obj, dynamics, output)
             M_cross = gramschmidt(M_cross)
             M = [M_cross[i]*(M_cross[i])' for i in 1:M_num]
             obj_cross = set_M(obj, M)
-            f_out, f_cross = objective(obj_cross, dynamics)
+            f_out, f_cross = objective(obj_cross, scheme)
             #selection
             if f_cross > p_fit[pj]
                 p_fit[pj] = f_cross
@@ -222,14 +222,14 @@ function optimize!(opt::Mopt_Projection, alg::DE, obj, dynamics, output)
 end 
 
 #### find the optimal linear combination of a given set of POVM ####
-function optimize!(opt::Mopt_LinearComb, alg::DE, obj, dynamics, output)
+function optimize!(opt::Mopt_LinearComb, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
     (; B, POVM_basis, M_num) = opt
-    if ismissing(ini_population)
+    if isnothing(ini_population)
         ini_population = ( [B], )
     end
     ini_population = ini_population[1]
-    dim = size(dynamics.data.ρ0)[1]
+    dim = get_dim(scheme)
     basis_num = length(POVM_basis)
     populations = [[zeros(basis_num) for j in 1:M_num] for i in 1:p_num]
 
@@ -240,19 +240,19 @@ function optimize!(opt::Mopt_LinearComb, alg::DE, obj, dynamics, output)
     for pj in 1:p_num
         M = [sum([populations[pj][i][j]*POVM_basis[j] for j in 1:basis_num]) for i in 1:M_num]
         obj_copy = set_M(obj, M)
-        p_out[pj], p_fit[pj] = objective(obj_copy, dynamics)
+        p_out[pj], p_fit[pj] = objective(obj_copy, scheme)
     end
 
     obj_QFIM = QFIM_obj(obj)
-    f_opt, f_comp = objective(obj_QFIM, dynamics)
+    f_opt, f_comp = objective(obj_QFIM, scheme)
     obj_POVM = set_M(obj, POVM_basis)
-    f_povm, f_comp = objective(obj_POVM, dynamics)
+    f_povm, f_comp = objective(obj_POVM, scheme)
 
     M = [sum([populations[1][i][j]*POVM_basis[j] for j in 1:basis_num]) for i in 1:M_num]
     set_f!(output, p_out[1])
     set_buffer!(output, M)
     set_io!(output, p_out[1], f_povm, f_opt)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode-1)
         for pj in 1:p_num
@@ -283,7 +283,7 @@ function optimize!(opt::Mopt_LinearComb, alg::DE, obj, dynamics, output)
             bound_LC_coeff!(M_cross, opt.rng)
             M = [sum([M_cross[i][j]*POVM_basis[j] for j in 1:basis_num]) for i in 1:M_num]
             obj_cross = set_M(obj, M)
-            f_out, f_cross = objective(obj_cross, dynamics)
+            f_out, f_cross = objective(obj_cross, scheme)
             #selection
             if f_cross > p_fit[pj]
                 p_fit[pj] = f_cross
@@ -306,20 +306,20 @@ function optimize!(opt::Mopt_LinearComb, alg::DE, obj, dynamics, output)
 end
 
 #### find the optimal rotated measurement of a given set of POVM ####
-function optimize!(opt::Mopt_Rotation, alg::DE, obj, dynamics, output)
+function optimize!(opt::Mopt_Rotation, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
     (; s, POVM_basis, Lambda) = opt
-    if ismissing(ini_population)
+    if isnothing(ini_population)
         ini_population = ([s,],)
     end
     ini_population = ini_population[1]
-    dim = size(dynamics.data.ρ0)[1]
+    dim = get_dim(scheme)
     suN = suN_generator(dim)
     Lambda = Matrix{ComplexF64}[]
     append!(Lambda, [Matrix{ComplexF64}(I,dim,dim)])
     append!(Lambda, [suN[i] for i in eachindex(suN)])
 
-    # if ismissing(Lambda)
+    # if isnothing(Lambda)
     #     Lambda = Matrix{ComplexF64}[]
     #     append!(Lambda, [Matrix{ComplexF64}(I,dim,dim)])
     #     append!(Lambda, [suN[i] for i in eachindex(suN)])
@@ -335,20 +335,20 @@ function optimize!(opt::Mopt_Rotation, alg::DE, obj, dynamics, output)
         U = rotation_matrix(populations[pj], Lambda)
         M = [U*POVM_basis[i]*U' for i in 1:M_num]
         obj_copy = set_M(obj, M)
-        p_out[pj], p_fit[pj] = objective(obj_copy, dynamics)
+        p_out[pj], p_fit[pj] = objective(obj_copy, scheme)
     end
 
     obj_QFIM = QFIM_obj(obj)
-    f_opt, f_comp = objective(obj_QFIM, dynamics)
+    f_opt, f_comp = objective(obj_QFIM, scheme)
     obj_POVM = set_M(obj, POVM_basis)
-    f_povm, f_comp = objective(obj_POVM, dynamics)
+    f_povm, f_comp = objective(obj_POVM, scheme)
 
     U = rotation_matrix(populations[1], Lambda)
     M = [U*POVM_basis[i]*U' for i in 1:M_num]
     set_f!(output, p_out[1])
     set_buffer!(output, M)
     set_io!(output, p_out[1], f_povm, f_opt)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode-1)
         for pj in 1:p_num
@@ -377,7 +377,7 @@ function optimize!(opt::Mopt_Rotation, alg::DE, obj, dynamics, output)
             U = rotation_matrix(M_cross, Lambda)
             M = [U*POVM_basis[i]*U' for i in 1:M_num]
             obj_cross = set_M(obj, M)
-            f_out, f_cross = objective(obj_cross, dynamics)
+            f_out, f_cross = objective(obj_cross, scheme)
             #selection
             if f_cross > p_fit[pj]
                 p_fit[pj] = f_cross
@@ -399,16 +399,16 @@ function optimize!(opt::Mopt_Rotation, alg::DE, obj, dynamics, output)
 end
 
 #### state and control optimization ####
-function optimize!(opt::StateControlOpt, alg::DE, obj, dynamics, output)
+function optimize!(opt::StateControlOpt, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
-    if ismissing(ini_population)
+    if isnothing(ini_population)
         ini_population = ([opt.psi], [opt.ctrl,])
     end
     psi0, ctrl0 = ini_population
-    ctrl_length = length(dynamics.data.ctrl[1])
-    ctrl_num = length(dynamics.data.Hc)
-    dim = length(dynamics.data.ψ0)
-    populations = repeat(dynamics, p_num)
+    ctrl_length = get_ctrl_length(scheme)
+    ctrl_num = get_ctrl_num(scheme)
+    dim = get_dim(scheme)
+    populations = repeat(scheme, p_num)
 
     # initialization 
     initial_state!(psi0, populations, p_num, opt.rng)
@@ -419,13 +419,13 @@ function optimize!(opt::StateControlOpt, alg::DE, obj, dynamics, output)
         p_out[i], p_fit[i] = objective(obj, populations[i])
     end
 
-    dynamics_copy = set_ctrl!(dynamics, [zeros(ctrl_length) for i in 1:ctrl_num])
-    f_noctrl, f_comp = objective(obj, dynamics_copy)
+    scheme_copy = set_ctrl(scheme, [zeros(ctrl_length) for i in 1:ctrl_num])
+    f_noctrl, f_comp = objective(obj, scheme_copy)
 
     set_f!(output, p_out[1])
-    set_buffer!(output, populations[1].data.ψ0, populations[1].data.ctrl)
+    set_buffer!(output, state_data(populations[1]), param_data(populations[1]))
     set_io!(output, f_noctrl, p_out[1])
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode-1)
         for pj in 1:p_num
@@ -433,14 +433,12 @@ function optimize!(opt::StateControlOpt, alg::DE, obj, dynamics, output)
             mut_num = sample(opt.rng, 1:p_num, 3, replace = false)
             state_mut = zeros(ComplexF64, dim)
             for ci in 1:dim
-                state_mut[ci] = populations[mut_num[1]].data.ψ0[ci] + c * (populations[mut_num[2]].data.ψ0[ci] - populations[mut_num[3]].data.ψ0[ci])
+                state_mut[ci] = state_data(populations[mut_num[1]])[ci] + c * (state_data(populations[mut_num[2]])[ci] - state_data(populations[mut_num[3]])[ci])
             end
             ctrl_mut = [Vector{Float64}(undef, ctrl_length) for i in 1:ctrl_num]
             for ci in 1:ctrl_num
                 for ti in 1:ctrl_length
-                    ctrl_mut[ci][ti] = populations[mut_num[1]].data.ctrl[ci][ti] +
-                                       c * (populations[mut_num[2]].data.ctrl[ci][ti] -
-                                            populations[mut_num[3]].data.ctrl[ci][ti])
+                    ctrl_mut[ci][ti] = param_data(populations[mut_num[1]]).ctrl[ci][ti] + c * (param_data(populations[mut_num[2]]).ctrl[ci][ti] - param_data(populations[mut_num[3]]).ctrl[ci][ti])
                 end
             end
             #crossover
@@ -451,7 +449,7 @@ function optimize!(opt::StateControlOpt, alg::DE, obj, dynamics, output)
                 if rand_num <= cr
                     state_cross[cj] = state_mut[cj]
                 else
-                    state_cross[cj] = populations[pj].data.ψ0[cj]
+                    state_cross[cj] = state_data(populations[pj])[cj]
                 end
                 state_cross[cross_int1] = state_mut[cross_int1]
             end
@@ -464,33 +462,33 @@ function optimize!(opt::StateControlOpt, alg::DE, obj, dynamics, output)
                     if rand_num <= cr
                         ctrl_cross[cj][tj] = ctrl_mut[cj][tj]
                     else
-                        ctrl_cross[cj][tj] = populations[pj].data.ctrl[cj][tj]
+                        ctrl_cross[cj][tj] = param_data(populations[pj]).ctrl[cj][tj]
                     end
                 end
                 ctrl_cross[cj][cross_int2] = ctrl_mut[cj][cross_int2]
             end
             bound!(ctrl_cross, opt.ctrl_bound)
     
-            dynamics_copy = set_state!(populations[pj], psi_cross)
-            dynamics_copy = set_ctrl!(dynamics_copy, ctrl_cross)
-            f_out, f_cross = objective(obj, dynamics_copy)
+            scheme_copy = set_state!(populations[pj], psi_cross*psi_cross')
+            scheme_copy = set_ctrl(scheme_copy, ctrl_cross)
+            f_out, f_cross = objective(obj, scheme_copy)
             #selection
             if f_cross > p_fit[pj]
                 p_fit[pj] = f_cross
                 p_out[pj] = f_out
                 for ck in 1:dim
-                    populations[pj].data.ψ0[ck] = psi_cross[ck]
+                    populations[pj].StatePreparation.data[ck] = psi_cross[ck]
                 end
                 for ck in 1:ctrl_num
                     for tk in 1:ctrl_length
-                        populations[pj].data.ctrl[ck][tk] = ctrl_cross[ck][tk]
+                        populations[pj].Parameterization.data.ctrl[ck][tk] = ctrl_cross[ck][tk]
                     end
                 end
             end
         end
         idx = findmax(p_fit)[2]
         set_f!(output, p_out[idx])
-        set_buffer!(output, populations[idx].data.ψ0, populations[idx].data.ctrl)
+        set_buffer!(output, state_data(populations[idx]), param_data(populations[idx]))
         set_io!(output, p_out[idx], ei)
         show(output, obj)
     end
@@ -498,15 +496,15 @@ function optimize!(opt::StateControlOpt, alg::DE, obj, dynamics, output)
 end
 
 #### state and measurement optimization ####
-function optimize!(opt::StateMeasurementOpt, alg::DE, obj, dynamics, output)
+function optimize!(opt::StateMeasurementOpt, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
-    if ismissing(ini_population)
+    if isnothing(ini_population)
         ini_population = ([opt.psi], [opt.M,])
     end
     psi0, measurement0 = ini_population
-    dim = length(dynamics.data.ψ0)
+    dim = get_dim(scheme)
     M_num = length(opt.M)
-    populations = repeat(dynamics, p_num)
+    populations = repeat(scheme, p_num)
 
     # initialization 
     initial_state!(psi0, populations, p_num, opt.rng)
@@ -522,9 +520,9 @@ function optimize!(opt::StateMeasurementOpt, alg::DE, obj, dynamics, output)
 
     M = [C_all[1][i]*(C_all[1][i])' for i in 1:M_num]
     set_f!(output, p_out[1])
-    set_buffer!(output, populations[1].data.ψ0, M)
+    set_buffer!(output, state_data(populations[1]), M)
     set_io!(output, p_out[1])
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode-1)
         for pj in 1:p_num
@@ -532,14 +530,13 @@ function optimize!(opt::StateMeasurementOpt, alg::DE, obj, dynamics, output)
             mut_num = sample(opt.rng, 1:p_num, 3, replace = false)
             state_mut = zeros(ComplexF64, dim)
             for ci in 1:dim
-                state_mut[ci] = populations[mut_num[1]].data.ψ0[ci] + c * (populations[mut_num[2]].data.ψ0[ci] - populations[mut_num[3]].data.ψ0[ci])
+                state_mut[ci] = state_data(populations[mut_num[1]])[ci] + c * (state_data(populations[mut_num[2]])[ci] - state_data(populations[mut_num[3]])[ci])
             end
     
             M_mut = [Vector{ComplexF64}(undef, dim) for i in 1:M_num]
             for ci in 1:M_num
                 for ti in 1:dim
-                    M_mut[ci][ti] = C_all[mut_num[1]][ci][ti] + c * (C_all[mut_num[2]][ci][ti] -
-                                                                    C_all[mut_num[3]][ci][ti])
+                    M_mut[ci][ti] = C_all[mut_num[1]][ci][ti] + c * (C_all[mut_num[2]][ci][ti] - C_all[mut_num[3]][ci][ti])
                 end
             end
             #crossover
@@ -550,7 +547,7 @@ function optimize!(opt::StateMeasurementOpt, alg::DE, obj, dynamics, output)
                 if rand_num <= cr
                     state_cross[cj] = state_mut[cj]
                 else
-                    state_cross[cj] = populations[pj].data.ψ0[cj]
+                    state_cross[cj] = state_data(populations[pj])[cj]
                 end
                 state_cross[cross_int1] = state_mut[cross_int1]
             end
@@ -572,15 +569,15 @@ function optimize!(opt::StateMeasurementOpt, alg::DE, obj, dynamics, output)
             # orthogonality and normalization 
             M_cross = gramschmidt(M_cross)
             M = [M_cross[i] * (M_cross[i])' for i in 1:M_num]
-            dynamics_cross = set_state!(populations[pj], psi_cross)
+            scheme_cross = set_state!(populations[pj], psi_cross*psi_cross')
             obj_cross = set_M(obj, M)
-            f_out, f_cross = objective(obj_cross, dynamics_cross)
+            f_out, f_cross = objective(obj_cross, scheme_cross)
             #selection
             if f_cross > p_fit[pj]
                 p_fit[pj] = f_cross
                 p_out[pj] = f_out
                 for ck in 1:dim
-                    populations[pj].data.ψ0[ck] = psi_cross[ck]
+                    populations[pj].StatePreparation.data[ck] = psi_cross[ck]
                 end
     
                 for ck in 1:M_num
@@ -593,7 +590,7 @@ function optimize!(opt::StateMeasurementOpt, alg::DE, obj, dynamics, output)
         idx = findmax(p_fit)[2]
         M = [C_all[idx][i]*(C_all[idx][i])' for i in 1:M_num]
         set_f!(output, p_out[idx])
-        set_buffer!(output, populations[idx].data.ψ0, M)
+        set_buffer!(output, state_data(populations[idx]), M)
         set_io!(output, p_out[idx], ei)
         show(output, obj)
     end
@@ -601,17 +598,18 @@ function optimize!(opt::StateMeasurementOpt, alg::DE, obj, dynamics, output)
 end
 
 #### control and measurement optimization ####
-function optimize!(opt::ControlMeasurementOpt, alg::DE, obj, dynamics, output)
+function optimize!(opt::ControlMeasurementOpt, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
-    if ismissing(ini_population)
+    if isnothing(ini_population)
         ini_population = ([opt.ctrl,], [opt.M])
     end
     ctrl0, measurement0 = ini_population
-    dim = size(dynamics.data.ρ0)[1]
-    ctrl_length = length(dynamics.data.ctrl[1])
-    ctrl_num = length(dynamics.data.Hc)
+    dim = get_dim(scheme)
+    ctrl_length = get_ctrl_length(scheme)
+    ctrl_num = get_ctrl_num(scheme)
+
     M_num = length(opt.M)
-    populations = repeat(dynamics, p_num)
+    populations = repeat(scheme, p_num)
 
     # initialization 
     initial_ctrl!(opt, ctrl0, populations, p_num, opt.rng)
@@ -627,9 +625,9 @@ function optimize!(opt::ControlMeasurementOpt, alg::DE, obj, dynamics, output)
 
     M = [C_all[1][i]*(C_all[1][i])' for i in 1:M_num]
     set_f!(output, p_out[1])
-    set_buffer!(output, populations[1].data.ctrl, M)
+    set_buffer!(output, param_data(populations[1]).ctrl, M)
     set_io!(output, p_out[1])
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode-1)
         for pj in 1:p_num
@@ -638,17 +636,14 @@ function optimize!(opt::ControlMeasurementOpt, alg::DE, obj, dynamics, output)
             ctrl_mut = [Vector{Float64}(undef, ctrl_length) for i in 1:ctrl_num]
             for ci in 1:ctrl_num
                 for ti in 1:ctrl_length
-                    ctrl_mut[ci][ti] = populations[mut_num[1]].data.ctrl[ci][ti] +
-                                       c * (populations[mut_num[2]].data.ctrl[ci][ti] -
-                                            populations[mut_num[3]].data.ctrl[ci][ti])
+                    ctrl_mut[ci][ti] = param_data(populations[mut_num[1]]).ctrl[ci][ti] + c * (param_data(populations[mut_num[2]]).ctrl[ci][ti] - param_data(populations[mut_num[3]]).ctrl[ci][ti])
                 end
             end
     
             M_mut = [Vector{ComplexF64}(undef, dim) for i in 1:M_num]
             for ci in 1:M_num
                 for ti in 1:dim
-                    M_mut[ci][ti] = C_all[mut_num[1]][ci][ti] + c * (C_all[mut_num[2]][ci][ti] -
-                                                                C_all[mut_num[3]][ci][ti])
+                    M_mut[ci][ti] = C_all[mut_num[1]][ci][ti] + c * (C_all[mut_num[2]][ci][ti] - C_all[mut_num[3]][ci][ti])
                 end
             end
     
@@ -661,7 +656,7 @@ function optimize!(opt::ControlMeasurementOpt, alg::DE, obj, dynamics, output)
                     if rand_num <= cr
                         ctrl_cross[cj][tj] = ctrl_mut[cj][tj]
                     else
-                        ctrl_cross[cj][tj] = populations[pj].data.ctrl[cj][tj]
+                        ctrl_cross[cj][tj] = param_data(populations[pj]).ctrl[cj][tj]
                     end
                 end
                 ctrl_cross[cj][cross_int2] = ctrl_mut[cj][cross_int2]
@@ -684,16 +679,16 @@ function optimize!(opt::ControlMeasurementOpt, alg::DE, obj, dynamics, output)
             # orthogonality and normalization 
             M_cross = gramschmidt(M_cross)
             M = [M_cross[i] * (M_cross[i])' for i in 1:M_num]
-            dynamics_cross = set_ctrl!(populations[pj], ctrl_cross)
+            scheme_cross = set_ctrl(populations[pj], ctrl_cross)
             obj_cross = set_M(obj, M)
-            f_out, f_cross = objective(obj_cross, dynamics_cross)
+            f_out, f_cross = objective(obj_cross, scheme_cross)
             #selection
             if f_cross > p_fit[pj]
                 p_fit[pj] = f_cross
                 p_out[pj] = f_out
                 for ck in 1:ctrl_num
                     for tk in 1:ctrl_length
-                        populations[pj].data.ctrl[ck][tk] = ctrl_cross[ck][tk]
+                        param_data(populations[pj]).ctrl[ck][tk] = ctrl_cross[ck][tk]
                     end
                 end
     
@@ -707,7 +702,7 @@ function optimize!(opt::ControlMeasurementOpt, alg::DE, obj, dynamics, output)
         idx = findmax(p_fit)[2]
         M = [C_all[idx][i]*(C_all[idx][i])' for i in 1:M_num]
         set_f!(output, p_out[idx])
-        set_buffer!(output, populations[idx].data.ctrl, M)
+        set_buffer!(output, param_data(populations[idx]).ctrl, M)
         set_io!(output, p_out[idx], ei)
         show(output, obj)
     end
@@ -715,17 +710,17 @@ function optimize!(opt::ControlMeasurementOpt, alg::DE, obj, dynamics, output)
 end
 
 #### state, control and measurement optimization ####
-function optimize!(opt::StateControlMeasurementOpt, alg::DE, obj, dynamics, output)
+function optimize!(opt::StateControlMeasurementOpt, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
-    if ismissing(ini_population)
+    if isnothing(ini_population)
         ini_population = ([opt.psi], [opt.ctrl,], [opt.M])
     end
     psi0, ctrl0, measurement0 = ini_population
-    dim = length(dynamics.data.ψ0)
-    ctrl_length = length(dynamics.data.ctrl[1])
-    ctrl_num = length(dynamics.data.Hc)
+    dim = get_dim(scheme)
+    ctrl_length = get_ctrl_length(scheme)
+    ctrl_num = get_ctrl_num(scheme)
     M_num = length(opt.M)
-    populations = repeat(dynamics, p_num)
+    populations = repeat(scheme, p_num)
 
     # initialization 
     initial_state!(psi0, populations, p_num, opt.rng)
@@ -742,9 +737,9 @@ function optimize!(opt::StateControlMeasurementOpt, alg::DE, obj, dynamics, outp
 
     M = [C_all[1][i]*(C_all[1][i])' for i in 1:M_num]
     set_f!(output, p_out[1])
-    set_buffer!(output, populations[1].data.ψ0, populations[1].data.ctrl, M)
+    set_buffer!(output, state_data(populations[1]), param_data(populations[1]).ctrl, M)
     set_io!(output, p_out[1])
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode-1)
         for pj in 1:p_num
@@ -752,21 +747,18 @@ function optimize!(opt::StateControlMeasurementOpt, alg::DE, obj, dynamics, outp
             mut_num = sample(opt.rng, 1:p_num, 3, replace = false)
             state_mut = zeros(ComplexF64, dim)
             for ci in 1:dim
-                state_mut[ci] = populations[mut_num[1]].data.ψ0[ci] + c * (populations[mut_num[2]].data.ψ0[ci] - populations[mut_num[3]].data.ψ0[ci])
+                state_mut[ci] = state_data(populations[mut_num[1]])[ci] + c * (state_data(populations[mut_num[2]])[ci] - state_data(populations[mut_num[3]])[ci])
             end
             ctrl_mut = [Vector{Float64}(undef, ctrl_length) for i in 1:ctrl_num]
             for ci in 1:ctrl_num
                 for ti in 1:ctrl_length
-                    ctrl_mut[ci][ti] = populations[mut_num[1]].data.ctrl[ci][ti] +
-                                       c * (populations[mut_num[2]].data.ctrl[ci][ti] -
-                                            populations[mut_num[3]].data.ctrl[ci][ti])
+                    ctrl_mut[ci][ti] = param_data(populations[mut_num[1]]).ctrl[ci][ti] + c * (param_data(populations[mut_num[2]]).ctrl[ci][ti] - param_data(populations[mut_num[3]]).ctrl[ci][ti])
                 end
             end
             M_mut = [Vector{ComplexF64}(undef, dim) for i in 1:M_num]
             for ci in 1:M_num
                 for ti in 1:dim
-                    M_mut[ci][ti] = C_all[mut_num[1]][ci][ti] + c * (C_all[mut_num[2]][ci][ti] -
-                                                                C_all[mut_num[3]][ci][ti])
+                    M_mut[ci][ti] = C_all[mut_num[1]][ci][ti] + c * (C_all[mut_num[2]][ci][ti] - C_all[mut_num[3]][ci][ti])
                 end
             end
             #crossover
@@ -777,7 +769,7 @@ function optimize!(opt::StateControlMeasurementOpt, alg::DE, obj, dynamics, outp
                 if rand_num <= cr
                     state_cross[cj] = state_mut[cj]
                 else
-                    state_cross[cj] = populations[pj].data.ψ0[cj]
+                    state_cross[cj] = state_data(populations[pj])[cj]
                 end
                 state_cross[cross_int1] = state_mut[cross_int1]
             end
@@ -790,7 +782,7 @@ function optimize!(opt::StateControlMeasurementOpt, alg::DE, obj, dynamics, outp
                     if rand_num <= cr
                         ctrl_cross[cj][tj] = ctrl_mut[cj][tj]
                     else
-                        ctrl_cross[cj][tj] = populations[pj].data.ctrl[cj][tj]
+                        ctrl_cross[cj][tj] = param_data(populations[pj]).ctrl[cj][tj]
                     end
                 end
                 ctrl_cross[cj][cross_int2] = ctrl_mut[cj][cross_int2]
@@ -813,20 +805,20 @@ function optimize!(opt::StateControlMeasurementOpt, alg::DE, obj, dynamics, outp
             # orthogonality and normalization 
             M_cross = gramschmidt(M_cross)
             M = [M_cross[i] * (M_cross[i])' for i in 1:M_num]
-            dynamics_cross = set_state!(populations[pj], psi_cross)
-            dynamics_cross = set_ctrl!(dynamics_cross, ctrl_cross)
+            scheme_cross = set_state!(populations[pj], psi_cross*psi_cross')
+            scheme_cross = set_ctrl(scheme_cross, ctrl_cross)
             obj_cross = set_M(obj, M)
-            f_out, f_cross = objective(obj_cross, dynamics_cross)
+            f_out, f_cross = objective(obj_cross, scheme_cross)
             #selection
             if f_cross > p_fit[pj]
                 p_fit[pj] = f_cross
                 p_out[pj] = f_out
                 for ck in 1:dim
-                    populations[pj].data.ψ0[ck] = psi_cross[ck]
+                    populations[pj].StatePreparation.data[ck] = psi_cross[ck]
                 end
                 for ck in 1:ctrl_num
                     for tk in 1:ctrl_length
-                        populations[pj].data.ctrl[ck][tk] = ctrl_cross[ck][tk]
+                        populations[pj].Parameterization.data.ctrl[ck][tk] = ctrl_cross[ck][tk]
                     end
                 end
                 for ck in 1:M_num
@@ -839,7 +831,7 @@ function optimize!(opt::StateControlMeasurementOpt, alg::DE, obj, dynamics, outp
         idx = findmax(p_fit)[2]
         M = [C_all[idx][i]*(C_all[idx][i])' for i in 1:M_num]
         set_f!(output, p_out[idx])
-        set_buffer!(output, populations[idx].data.ψ0, populations[idx].data.ctrl, M)
+        set_buffer!(output, state_data(populations[idx]), param_data(populations[idx]).ctrl, M)
         set_io!(output, p_out[idx], ei)
         show(output, obj)
         end

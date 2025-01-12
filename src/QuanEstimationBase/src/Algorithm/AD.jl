@@ -11,7 +11,7 @@ function optimize!(opt::ControlOpt, alg::AbstractautoGRAPE, obj, scheme, output)
     set_f!(output, f_ini)
     set_buffer!(output, param_data(scheme).ctrl)
     set_io!(output, f_noctrl, f_ini)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei = 1:(max_episode-1)
         δ = Flux.gradient(() -> objective(obj, scheme)[2], Flux.Params([param_data(scheme).ctrl]))
@@ -43,13 +43,13 @@ function update_ctrl!(alg::autoGRAPE, obj, scheme, δ)
 end
 
 #### state optimization ####
-function optimize!(opt::StateOpt, alg::AbstractautoGRAPE, obj, scheme, output)
+function optimize!(opt::StateOpt, alg::AbstractAD, obj, scheme, output)
     (; max_episode) = alg
     f_ini, _ = objective(obj, scheme)
     set_f!(output, f_ini)
     set_buffer!(output,state_data(scheme))
     set_io!(output, f_ini)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
     for ei in 1:(max_episode-1)
         δ = Flux.gradient(() -> objective(obj, scheme)[2], Flux.Params([state_data(scheme)]))
         update_state!(alg, obj, scheme, δ[state_data(scheme)])
@@ -63,7 +63,7 @@ function optimize!(opt::StateOpt, alg::AbstractautoGRAPE, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-function update_state!(alg::autoGRAPE_Adam, obj, scheme, δ)
+function update_state!(alg::AD_Adam, obj, scheme, δ)
     (; epsilon, beta1, beta2) = alg
     mt, vt = 0.0, 0.0
     for ti in eachindex(δ)
@@ -71,7 +71,7 @@ function update_state!(alg::autoGRAPE_Adam, obj, scheme, δ)
     end
 end
 
-function update_state!(alg::autoGRAPE, obj, scheme, δ)
+function update_state!(alg::AD, obj, scheme, δ)
     scheme.StatePreparation.data += alg.epsilon*δ
 end
 
@@ -89,18 +89,18 @@ function optimize!(opt::Mopt_LinearComb, alg::AbstractAD, obj, scheme, output)
     obj_POVM = set_M(obj, POVM_basis)
     f_povm, f_comp = objective(obj_POVM, scheme)
     obj_copy = set_M(obj, M)
-    f_ini, f_comp = objective(obj_copy, dynamics)
+    f_ini, f_comp = objective(obj_copy, scheme)
     set_f!(output, f_ini)
     set_buffer!(output, M)
     set_io!(output, f_ini, f_povm, f_opt)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
     for ei in 1:(max_episode-1)
-        δ = Flux.gradient(() -> objective(opt, obj, dynamics)[2], Flux.Params([opt.B]))
+        δ = Flux.gradient(() -> objective(opt, obj, scheme)[2], Flux.Params([opt.B]))
         update_M!(opt, alg, obj, δ[opt.B])
         bound_LC_coeff!(opt.B, rng)
         M = [sum([opt.B[i][j]*POVM_basis[j] for j in 1:basis_num]) for i in 1:M_num]
         obj_copy = set_M(obj, M)
-        f_out, f_now = objective(obj_copy, dynamics)
+        f_out, f_now = objective(obj_copy, scheme)
         set_f!(output, f_out)
         set_buffer!(output, M)
         set_io!(output, f_out, ei)
@@ -124,17 +124,17 @@ function update_M!(opt::Mopt_LinearComb, alg::AD, obj, δ)
 end
 
 #### find the optimal rotated measurement of a given set of POVM ####
-function optimize!(opt::Mopt_Rotation, alg::AbstractAD, obj, dynamics, output)
+function optimize!(opt::Mopt_Rotation, alg::AbstractAD, obj, scheme, output)
     (; max_episode) = alg
     (; POVM_basis) = opt
-    dim = size(param_data(scheme).ρ0)[1]
+    dim = get_dim(scheme)
     M_num = length(POVM_basis)
     suN = suN_generator(dim)
     opt.Lambda = Matrix{ComplexF64}[]
     append!(opt.Lambda, [Matrix{ComplexF64}(I,dim,dim)])
     append!(opt.Lambda, [suN[i] for i in eachindex(suN)])
 
-    # if ismissing(Lambda)
+    # if isnothing(Lambda)
     #     opt.Lambda = Matrix{ComplexF64}[]
     #     append!(opt.Lambda, [Matrix{ComplexF64}(I,dim,dim)])
     #     append!(opt.Lambda, [suN[i] for i in eachindex(suN)])
@@ -143,23 +143,23 @@ function optimize!(opt::Mopt_Rotation, alg::AbstractAD, obj, dynamics, output)
     U = rotation_matrix(opt.s, opt.Lambda)
     M = [U*POVM_basis[i]*U' for i in 1:M_num]
     obj_QFIM = QFIM_obj(obj)
-    f_opt, f_comp = objective(obj_QFIM, dynamics)
+    f_opt, f_comp = objective(obj_QFIM, scheme)
     obj_POVM = set_M(obj, POVM_basis)
-    f_povm, f_comp = objective(obj_POVM, dynamics)
+    f_povm, f_comp = objective(obj_POVM, scheme)
     obj_copy = set_M(obj, M)
-    f_ini, f_comp = objective(obj_copy, dynamics)
+    f_ini, f_comp = objective(obj_copy, scheme)
     set_f!(output, f_ini)
     set_buffer!(output, M)
     set_io!(output, f_ini, f_povm, f_opt)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
     for ei in 1:(max_episode-1)
-        δ = Flux.gradient(() -> objective(opt, obj, dynamics)[2], Flux.Params([opt.s]))
+        δ = Flux.gradient(() -> objective(opt, obj, scheme)[2], Flux.Params([opt.s]))
         update_M!(opt, alg, obj, δ[opt.s])
         bound_rot_coeff!(opt.s)
         U = rotation_matrix(opt.s, opt.Lambda)
         M = [U*POVM_basis[i]*U' for i in 1:M_num]
         obj_copy = set_M(obj, M)
-        f_out, f_now = objective(obj_copy, dynamics)
+        f_out, f_now = objective(obj_copy, scheme)
         set_f!(output, f_out)
         set_buffer!(output, M)
         set_io!(output, f_out, ei)
@@ -181,27 +181,27 @@ function update_M!(opt::Mopt_Rotation, alg::AD, obj, δ)
 end
 
 #### state abd control optimization ####
-function optimize!(opt::StateControlOpt, alg::AbstractAD, obj, dynamics, output)
+function optimize!(opt::StateControlOpt, alg::AbstractAD, obj, scheme, output)
     (; max_episode) = alg
     ctrl_length = length(param_data(scheme).ctrl[1])
     ctrl_num = length(param_data(scheme).Hc)
 
-    dynamics_copy = set_ctrl(dynamics, [zeros(ctrl_length) for i = 1:ctrl_num])
-    f_noctrl, f_comp = objective(obj, dynamics_copy)
-    f_ini, f_comp = objective(obj, dynamics)
+    scheme_copy = set_ctrl(scheme, [zeros(ctrl_length) for i = 1:ctrl_num])
+    f_noctrl, f_comp = objective(obj, scheme_copy)
+    f_ini, f_comp = objective(obj, scheme)
 
     set_f!(output, f_ini)
     set_buffer!(output, param_data(scheme).ψ0, param_data(scheme).ctrl)
     set_io!(output, f_noctrl, f_ini)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei = 1:(max_episode-1)
-        δ = Flux.gradient(() -> objective(obj, dynamics)[2], Flux.Params([param_data(scheme).ψ0, param_data(scheme).ctrl]))
-        update_state!(alg, obj, dynamics, δ[param_data(scheme).ψ0])
-        update_ctrl!(alg, obj, dynamics, δ[param_data(scheme).ctrl])
+        δ = Flux.gradient(() -> objective(obj, scheme)[2], Flux.Params([param_data(scheme).ψ0, param_data(scheme).ctrl]))
+        update_state!(alg, obj, scheme, δ[param_data(scheme).ψ0])
+        update_ctrl!(alg, obj, scheme, δ[param_data(scheme).ctrl])
         bound!(param_data(scheme).ctrl, opt.ctrl_bound)
         param_data(scheme).ψ0 = param_data(scheme).ψ0/norm(param_data(scheme).ψ0)
-        f_out, f_now = objective(obj, dynamics)
+        f_out, f_now = objective(obj, scheme)
 
         set_f!(output, f_out)
         set_buffer!(output, param_data(scheme).ψ0, param_data(scheme).ctrl)
@@ -211,7 +211,7 @@ function optimize!(opt::StateControlOpt, alg::AbstractAD, obj, dynamics, output)
     set_io!(output, output.f_list[end])
 end
 
-function update_ctrl!(alg::AD_Adam, obj, dynamics, δ)
+function update_ctrl!(alg::AD_Adam, obj, scheme, δ)
     (; epsilon, beta1, beta2) = alg
     for ci in eachindex(δ)
         mt, vt = 0.0, 0.0
@@ -222,6 +222,6 @@ function update_ctrl!(alg::AD_Adam, obj, dynamics, δ)
     end
 end
 
-function update_ctrl!(alg::AD, obj, dynamics, δ)
+function update_ctrl!(alg::AD, obj, scheme, δ)
     param_data(scheme).ctrl += alg.epsilon*δ
 end

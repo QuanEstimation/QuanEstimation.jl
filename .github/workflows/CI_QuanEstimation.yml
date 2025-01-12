@@ -1,0 +1,63 @@
+name: CI (QuanEstimation)
+on:
+  pull_request:
+      branches:
+        - main
+      paths:
+        - "src/**"
+        - "ext/**"
+        - "test/**"
+        - "Project.toml"
+        - ".github/workflows/CI_QuanEstimation.yml"
+  push:
+    branches:
+      - main
+
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - "1"
+          - "lts"
+          - "pre"
+        os:
+          - ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+      - uses: actions/cache@v4
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
+      - name: "Install Dependencies and Run Tests"
+        run: |
+          import Pkg
+          Pkg.Registry.update()
+          # Install packages present in subdirectories
+          dev_pks = Pkg.PackageSpec[]
+          for path in ("src/QuanEstimationBase", "src/NVMagnetometer")
+              push!(dev_pks, Pkg.PackageSpec(; path))
+          end
+          Pkg.develop(dev_pks)
+          Pkg.instantiate()
+          Pkg.test(; coverage="user")
+        shell: julia --color=yes --code-coverage=user --depwarn=yes --project=. {0}

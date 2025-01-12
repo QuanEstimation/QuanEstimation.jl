@@ -13,7 +13,19 @@ end
 
 include("LindbladData.jl")
 include("LindbladDynamics.jl")
-# include("LindbladWrapper.jl")
+include("LindbladWrapper.jl")
+
+function get_param(scheme::Scheme{S, P, M, E}) where {S, P<:AbstractDynamics, M, E}
+    return param_data(scheme).hamiltonian.params
+end
+
+function set_param!(scheme::Scheme{S, P, M, E}, x) where {S, P<:AbstractDynamics, M, E}
+    param_data(scheme).hamiltonian.params = [x...]
+end
+
+function eachparam(scheme::Scheme{S, P, M, E}) where {S, P<:AbstractDynamics, M, E}
+    [p for p in zip(scheme.Parameterization.params...)]
+end
 
 function set_ctrl!(dynamics::Lindblad, ctrl)
     set_ctrl!(dynamics.data, ctrl)

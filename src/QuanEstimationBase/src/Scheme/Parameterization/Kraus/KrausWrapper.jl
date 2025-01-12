@@ -8,7 +8,7 @@ Initialize the parameterization described by the Kraus operators for the state o
 function Kraus(opt::StateOpt, K, dK)
     (;psi) = opt
     dim = size(K[1], 1)
-    if ismissing(psi)
+    if isnothing(psi)
         r_ini = 2*rand(opt.rng, dim) - ones(dim)
 		r = r_ini ./ norm(r_ini)
 		ϕ = 2pi*rand(opt.rng, dim)
@@ -47,7 +47,7 @@ Initialize the parameterization described by the Kraus operators for the compreh
 function Kraus(opt::CompOpt, K, dK; eps=GLOBAL_EPS)
     (;psi) = opt
     dim = size(K[1], 1)
-    if ismissing(psi)
+    if isnothing(psi)
         r_ini = 2*rand(opt.rng, dim) - ones(dim)
 		r = r_ini ./ norm(r_ini)
 		ϕ = 2pi*rand(opt.rng, dim)

@@ -63,7 +63,7 @@ function NVMagnetometerScheme(;
 	return NVMagnetometerScheme(data, io_hooks)
 end
 
-function scheme(nv::NVMagnetometerData;
+function getscheme(nv::NVMagnetometerData;
 	dynamics_hooks = nv_dynamics_hooks,
 	state_hooks = nv_state_hooks,
 	measurement_hooks = nv_measurement_hooks,
@@ -74,22 +74,13 @@ function scheme(nv::NVMagnetometerData;
 	return QuanEstimationBase.GeneralScheme(
 		probe = state_hooks(init_state),
 		param = dynamics_hooks(nv),
-		meassurment = measurement_hooks(M),
+		measurement = measurement_hooks(M),
 		kwargs...,
 	)
 end
 
 function nv_dynamics_hooks(nv::NVMagnetometerData)
 	@unpack D, gS, gI, A1, A2, B1, B2, B3, γ, init_state, ctrl, tspan, M = nv
-
-	# sx = [0.0 1.0; 1.0 0.0]
-	# sy = [0.0 -im; im 0.0]
-	# sz = [1.0 0.0; 0.0 -1.0]
-	# s1 = [0.0 1.0 0.0; 1.0 0.0 1.0; 0.0 1.0 0.0] / sqrt(2)
-	# s2 = [0.0 -im 0.0; im 0.0 -im; 0.0 im 0.0] / sqrt(2)
-	# s3 = [1.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 -1.0]
-	# Is = [kron(I(3), sx), kron(I(3), sy), kron(I(3), sz)]
-	# S = [kron(s1, I(2)), kron(s2, I(2)), kron(s3, I(2))]
 
 	B = [B1, B2, B3]
 	H0 = sum([D * kron(s3^2, I(2)), sum(gS * B .* S), sum(gI * B .* Is),
@@ -98,13 +89,14 @@ function nv_dynamics_hooks(nv::NVMagnetometerData)
 	# derivatives of the free Hamiltonian on B1, B2 and B3
 	dH = gS * S + gI * Is
 	# control Hamiltonians 
-	Hc = control_Hamiltonians_hook(ctrl)
+	Hc = control_Hamiltonians_hook()
 	# dissipation
 	decay_opt = S[3]
-	ρ0 = nv_state_hooks(init_state)
-	ctrl0 = nv_control_hooks(ctrl, tspan)
 
-	return Lindblad(H0, dH, Hc, ctrl0, ρ0, tspan, [decay_opt], [γ])
+	ctrl0 = nv_control_hooks(ctrl, tspan)
+	decay = [[decay_opt, γ]]
+
+	return Lindblad(H0, dH, tspan, Hc, decay; ctrl = ctrl0, dyn_method = :Expm)
 end
 
 function nv_state_hooks(init_state::Vector{T}) where {T <: Number}
@@ -124,7 +116,7 @@ function nv_control_hooks(ctrl, tspan)
 	return ctrl
 end
 
-function nv_measurement_hooks()
+function nv_measurement_hooks(::Nothing)
 	return QuanEstimationBase.SIC(6)
 end
 
@@ -145,9 +137,9 @@ function control_Hamiltonians_hook()
 end
 
 ## 
-QuanEstimationBase.QFIM(nv::NVMagnetometerScheme; kwargs...) = QFIM(scheme(nv.data); kwargs...)
-QuanEstimationBase.CFIM(nv::NVMagnetometerScheme; kwargs...) = CFIM(scheme(nv.data); kwargs...)
-QuanEstimationBase.HCRB(nv::NVMagnetometerScheme; kwargs...) = HCRB(scheme(nv.data); kwargs...)
+QuanEstimationBase.QFIM(nv::NVMagnetometerScheme; kwargs...) = QFIM(getscheme(nv.data); kwargs...)
+QuanEstimationBase.CFIM(nv::NVMagnetometerScheme; kwargs...) = CFIM(getscheme(nv.data); kwargs...)
+QuanEstimationBase.HCRB(nv::NVMagnetometerScheme; kwargs...) = HCRB(getscheme(nv.data); kwargs...)
 
 
 end # NVMagnetometer

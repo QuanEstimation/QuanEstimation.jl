@@ -5,9 +5,9 @@ destroy(N) = diagm(1 => [sqrt(n) + 0.0im for n in 1:N-1])
 
 bases(dim; T=ComplexF64) = [e for e in I(dim) .|> T |> eachrow]
 
-SigmaX() = complex([0 1; 1 0]) 
-SigmaY() = complex([0 -im; im 0])
-SigmaZ() = complex([1 0; 0 -1]) 
+σx = SigmaX = () -> complex([0.0 1; 1 0]) 
+σy = SigmaY = () -> complex([0.0 -im; im 0])
+σz = SigmaZ = () -> complex([1.0 0; 0 -1]) 
 
 function vec2mat(x::Vector{T}) where {T<:Number}
     reshape(x, x |> length |> sqrt |> Int, :)
@@ -288,19 +288,19 @@ function rotation_matrix(coefficients, Lambda)
 end
 
 #### initialization states for DE and PSO method ####
-function initial_state!(psi0, dynamics, p_num, rng)
-    dim = length(dynamics[1].data.ψ0)
+function initial_state!(psi0, scheme, p_num, rng)
+    dim = get_dim(scheme[1])
     if length(psi0) > p_num
         psi0 = [psi0[i] for i in 1:p_num]
     end
     for pj in eachindex(psi0)
-        dynamics[pj].data.ψ0 = [psi0[pj][i] for i in 1:dim]
+        scheme[pj].StatePreparation.data = [psi0[pj][i] for i in 1:dim] |> x -> x*x'
     end
     for pj in (length(psi0)+1):p_num
         r_ini = 2 * rand(rng, dim) - ones(dim)
         r = r_ini / norm(r_ini)
         phi = 2 * pi * rand(rng, dim)
-        dynamics[pj].data.ψ0 = [r[i] * exp(1.0im * phi[i]) for i in 1:dim]
+        scheme[pj].StatePreparation.data = [r[i] * exp(1.0im * phi[i]) for i in 1:dim] |> x -> x*x'
     end
 end
 

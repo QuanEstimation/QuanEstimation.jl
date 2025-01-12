@@ -1,6 +1,6 @@
 function optimize!(opt::StateOpt, alg::NM, obj, dynamics, output)
     (; max_episode, p_num, ini_state, ar, ae, ac, as0) = alg
-    if ismissing(ini_state)
+    if isnothing(ini_state)
         ini_state = [opt.psi]
     end
     dim = length(dynamics.data.ψ0)
@@ -29,7 +29,7 @@ function optimize!(opt::StateOpt, alg::NM, obj, dynamics, output)
     set_f!(output, p_out[1])
     set_buffer!(output, dynamics.data.ψ0)
     set_io!(output, p_out[1])
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     f_list = [p_out[1]]
     idx = 0

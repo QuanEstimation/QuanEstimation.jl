@@ -90,7 +90,7 @@ AD(;max_episode=300, epsilon=0.01, beta1=0.90, beta2=0.99, Adam::Bool=true) = Ad
 mutable struct PSO{T<:Number} <: AbstractAlgorithm
     max_episode::Union{Int,Vector{Int}} 
     p_num::Int
-    ini_particle::Union{Tuple, Missing}
+    ini_particle::Union{Tuple, Nothing}
     c0::T
     c1::T
     c2::T
@@ -98,7 +98,7 @@ end
 
 """
 
-    PSO(;max_episode::Union{T,Vector{T}} where {T<:Int}=[1000, 100], p_num::Number=10, ini_particle=missing, c0::Number=1.0, c1::Number=2.0, c2::Number=2.0, seed::Number=1234)
+    PSO(;max_episode::Union{T,Vector{T}} where {T<:Int}=[1000, 100], p_num::Number=10, ini_particle=nothing, c0::Number=1.0, c1::Number=2.0, c2::Number=2.0, seed::Number=1234)
 
 Optimization algorithm: PSO.
 - `max_episode`: The number of episodes, it accepts both integer and array with two elements.
@@ -108,20 +108,20 @@ Optimization algorithm: PSO.
 - `c1`: The exploitation weight that attracts the particle to its best previous position, also known as cognitive learning factor.
 - `c2`: The exploitation weight that attracts the particle to the best position in the neighborhood, also known as social learning factor. 
 """
-PSO(;max_episode::Union{T,Vector{T}} where {T<:Int}=[1000, 100], p_num::Number=10, ini_particle=missing, c0::Number=1.0, c1::Number=2.0, c2::Number=2.0) =
+PSO(;max_episode::Union{T,Vector{T}} where {T<:Int}=[1000, 100], p_num::Number=10, ini_particle=nothing, c0::Number=1.0, c1::Number=2.0, c2::Number=2.0) =
     PSO(max_episode, p_num, ini_particle, c0, c1, c2)
 
 mutable struct DE{T<:Number} <: AbstractAlgorithm
     max_episode::Int
     p_num::Int
-    ini_population::Union{Tuple, Missing}
+    ini_population::Union{Tuple, Nothing}
     c::T
     cr::T
 end
 
 """
 
-    DE(;max_episode::Number=1000, p_num::Number=10, ini_population=missing, c::Number=1.0, cr::Number=0.5, seed::Number=1234)
+    DE(;max_episode::Number=1000, p_num::Number=10, ini_population=nothing, c::Number=1.0, cr::Number=0.5, seed::Number=1234)
 
 Optimization algorithm: DE.
 - `max_episode`: The number of populations.
@@ -130,7 +130,7 @@ Optimization algorithm: DE.
 - `c`: Mutation constant.
 - `cr`: Crossover constant.
 """
-DE(;max_episode::Number=1000, p_num::Number=10, ini_population=missing, c::Number=1.0,cr::Number=0.5) = DE(max_episode, p_num, ini_population, c, cr)
+DE(;max_episode::Number=1000, p_num::Number=10, ini_population=nothing, c::Number=1.0,cr::Number=0.5) = DE(max_episode, p_num, ini_population, c, cr)
 
 struct DDPG{R<:AbstractRNG} <: AbstractAlgorithm
     max_episode::Int
@@ -159,7 +159,7 @@ DDPG(;max_episode::Int=500, layer_num::Int=3, layer_dim::Int=200, seed::Number=1
 struct NM{N<:Number} <: AbstractAlgorithm
     max_episode::Int
     p_num::Int
-    ini_state::Union{AbstractVector, Missing} 
+    ini_state::Union{AbstractVector, Nothing} 
     ar::N
     ae::N
     ac::N
@@ -168,7 +168,7 @@ end
 
 """
 
-    NM(;max_episode::Int=1000, p_num::Int=10, nelder_mead=missing, ar::Number=1.0, ae::Number=2.0, ac::Number=0.5, as0::Number=0.5, seed::Number=1234)
+    NM(;max_episode::Int=1000, p_num::Int=10, nelder_mead=nothing, ar::Number=1.0, ae::Number=2.0, ac::Number=0.5, as0::Number=0.5, seed::Number=1234)
 
 State optimization algorithm: NM.
 - `max_episode`: The number of populations.
@@ -179,7 +179,7 @@ State optimization algorithm: NM.
 - `ac`: Constraction constant.
 - `as0`: Shrink constant.
 """
-NM(;max_episode::Int=1000, p_num::Int=10, nelder_mead=missing, ar::Number=1.0, ae::Number=2.0, ac::Number=0.5, as0::Number=0.5) = NM(max_episode, p_num, nelder_mead, ar, ae, ac, as0)
+NM(;max_episode::Int=1000, p_num::Int=10, nelder_mead=nothing, ar::Number=1.0, ae::Number=2.0, ac::Number=0.5, as0::Number=0.5) = NM(max_episode, p_num, nelder_mead, ar, ae, ac, as0)
 
 struct RI <: AbstractAlgorithm
     max_episode::Int

@@ -4,7 +4,7 @@ function optimize!(opt::ControlOpt, alg::PSO, obj, scheme, output)
     
     pdata = param_data(scheme)
     
-    if ismissing(ini_particle)
+    if isnothing(ini_particle)
         ini_particle = ([opt.ctrl,],)
     end
     ini_particle = ini_particle[1]
@@ -33,7 +33,7 @@ function optimize!(opt::ControlOpt, alg::PSO, obj, scheme, output)
     set_f!(output, f_ini)
     set_buffer!(output, pdata.ctrl)
     set_io!(output, f_noctrl, f_ini)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei = 1:(max_episode[1]-1)
         for pj = 1:p_num
@@ -109,7 +109,7 @@ function optimize!(opt::StateOpt, alg::PSO, obj, scheme, output)
 
     sdata = state_data(scheme)
 
-    if ismissing(ini_particle)
+    if isnothing(ini_particle)
         ini_particle = ([opt.psi], )
     end
     ini_particle = ini_particle[1]
@@ -134,7 +134,7 @@ function optimize!(opt::StateOpt, alg::PSO, obj, scheme, output)
     set_f!(output, f_ini)
     set_buffer!(output, sdata)
     set_io!(output, f_ini)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode[1]-1)
         for pj in 1:p_num
@@ -189,7 +189,7 @@ function optimize!(opt::Mopt_Projection, alg::PSO, obj, scheme, output)
 
     sdata = state_data(scheme)
 
-    if ismissing(ini_particle)
+    if isnothing(ini_particle)
         ini_particle = ([opt.M], )
     end
     ini_particle = ini_particle[1]  
@@ -221,7 +221,7 @@ function optimize!(opt::Mopt_Projection, alg::PSO, obj, scheme, output)
     set_f!(output, f_ini)
     set_buffer!(output, M)
     set_io!(output, f_ini, f_opt)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode[1]-1)
         for pj in 1:p_num
@@ -284,7 +284,7 @@ function optimize!(opt::Mopt_LinearComb, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
     (; B, POVM_basis, M_num) = opt
     basis_num = length(POVM_basis)
-    if ismissing(ini_particle)
+    if isnothing(ini_particle)
         ini_particle = ( [B], )
     end
     ini_particle = ini_particle[1]
@@ -316,7 +316,7 @@ function optimize!(opt::Mopt_LinearComb, alg::PSO, obj, scheme, output)
     set_f!(output, f_ini)
     set_buffer!(output, M)
     set_io!(output, f_ini, f_povm, f_opt)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
     
     for ei in 1:(max_episode[1]-1)
         for pj in 1:p_num
@@ -377,7 +377,7 @@ end
 #### find the optimal rotated measurement of a given set of POVM ####
 function optimize!(opt::Mopt_Rotation, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
-    if ismissing(ini_particle)
+    if isnothing(ini_particle)
         ini_particle = ([opt.s], )
     end
     ini_particle = ini_particle[1]
@@ -389,7 +389,7 @@ function optimize!(opt::Mopt_Rotation, alg::PSO, obj, scheme, output)
     append!(Lambda, [Matrix{ComplexF64}(I,dim,dim)])
     append!(Lambda, [suN[i] for i in eachindex(suN)])
 
-    # if ismissing(Lambda)
+    # if isnothing(Lambda)
     #     Lambda = Matrix{ComplexF64}[]
     #     append!(Lambda, [Matrix{ComplexF64}(I,dim,dim)])
     #     append!(Lambda, [suN[i] for i in eachindex(suN)])
@@ -424,7 +424,7 @@ function optimize!(opt::Mopt_Rotation, alg::PSO, obj, scheme, output)
     set_f!(output, f_ini)
     set_buffer!(output, M)
     set_io!(output, f_ini, f_povm, f_opt)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode[1]-1)
         for pj in 1:p_num
@@ -480,7 +480,7 @@ end
 #### state and control optimization ####
 function optimize!(opt::StateControlOpt, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
-    if ismissing(ini_particle)
+    if isnothing(ini_particle)
         ini_particle = ([opt.psi], [opt.ctrl,])
     end
     psi0, ctrl0 = ini_particle
@@ -514,7 +514,7 @@ function optimize!(opt::StateControlOpt, alg::PSO, obj, scheme, output)
     set_f!(output, f_ini)
     set_buffer!(output, particles[1].data.ψ0, particles[1].data.ctrl)
     set_io!(output, f_noctrl, f_ini)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode[1]-1)
         for pj in 1:p_num
@@ -591,7 +591,7 @@ end
 #### state and measurement optimization ####
 function optimize!(opt::StateMeasurementOpt, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
-    if ismissing(ini_particle)
+    if isnothing(ini_particle)
         ini_particle = ([opt.psi], [opt.M])
     end
     psi0, measurement0 = ini_particle
@@ -625,7 +625,7 @@ function optimize!(opt::StateMeasurementOpt, alg::PSO, obj, scheme, output)
     set_f!(output, f_ini)
     set_buffer!(output, particles[1].data.ψ0, M)
     set_io!(output, f_ini)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode[1]-1)
         for pj in 1:p_num
@@ -706,7 +706,7 @@ end
 #### control and measurement optimization ####
 function optimize!(opt::ControlMeasurementOpt, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
-    if ismissing(ini_particle)
+    if isnothing(ini_particle)
         ini_particle = ([opt.ctrl,], [opt.M])
     end
     ctrl0, measurement0 = ini_particle
@@ -741,7 +741,7 @@ function optimize!(opt::ControlMeasurementOpt, alg::PSO, obj, scheme, output)
     set_f!(output, f_ini)
     set_buffer!(output, particles[1].data.ctrl, M)
     set_io!(output, f_ini)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
 
     for ei in 1:(max_episode[1]-1)
         for pj in 1:p_num
@@ -829,7 +829,7 @@ end
 #### state, control and measurement optimization ####
 function optimize!(opt::StateControlMeasurementOpt, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
-    if ismissing(ini_particle)
+    if isnothing(ini_particle)
         ini_particle = ([opt.psi], [opt.ctrl,], [opt.M])
     end
     psi0, ctrl0, measurement0 = ini_particle
@@ -869,7 +869,7 @@ function optimize!(opt::StateControlMeasurementOpt, alg::PSO, obj, scheme, outpu
     set_f!(output, f_ini)
     set_buffer!(output,  particles[1].data.ψ0, particles[1].data.ctrl, M)
     set_io!(output, f_ini)
-    show(opt, output, obj)
+    show(opt, output, obj, alg)
     
     for ei in 1:(max_episode[1]-1)
         for pj in 1:p_num

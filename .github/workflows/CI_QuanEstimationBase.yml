@@ -1,14 +1,11 @@
-name: CI
+name: CI (NVMagnetometer)
 on:
   pull_request:
       branches:
         - main
       paths:
-        - "src/**"
-        - "ext/**"
-        - "test/**"
-        - "Project.toml"
-        - ".github/workflows/CI_BoundaryValueDiffEq.yml"
+        - "src/NVMagnetometer/**"
+        - ".github/workflows/CI_NVMagnetometer.yml"
   push:
     branches:
       - main
@@ -52,12 +49,6 @@ jobs:
         run: |
           import Pkg
           Pkg.Registry.update()
-          # Install packages present in subdirectories
-          dev_pks = Pkg.PackageSpec[]
-          for path in ("src/QuanEstimationBase", "src/NVMagnetometer")
-              push!(dev_pks, Pkg.PackageSpec(; path))
-          end
-          Pkg.develop(dev_pks)
           Pkg.instantiate()
           Pkg.test(; coverage="user")
-        shell: julia --color=yes --code-coverage=user --depwarn=yes --project=. {0}
+        shell: julia --color=yes --code-coverage=user --depwarn=yes --project=src/NVMagnetometer {0}

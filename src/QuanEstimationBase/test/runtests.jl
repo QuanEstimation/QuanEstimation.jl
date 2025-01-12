@@ -5,6 +5,8 @@ using StableRNGs
 using LinearAlgebra
 using SparseArrays
 
+include("utils.jl")
+
 @testset verbose = true "Objective Functions" begin
     @testset "Fisher information" begin
         include("objective_functions/test_fisher_information_matrix.jl")
@@ -29,19 +31,19 @@ using SparseArrays
 end
 
 
-# @testset verbose = true "Dynamics" begin
-#     @testset "Lindblad Dynamics" begin
-#         include("dynamics/test_lindblad.jl")
-#     end
-#     @testset "Kraus Dynamics" begin
-#         include("dynamics/test_kraus.jl")
-#     end
+@testset verbose = true "Dynamics" begin
+    @testset "Lindblad Dynamics" begin
+        include("dynamics/test_lindblad.jl")
+    end
+    # @testset "Kraus Dynamics" begin
+    #     include("dynamics/test_kraus.jl")
+    # end
 
-#     # @testset "Lindblad Wrapper" begin
-#     #     include("dynamics/test_lindblad_wrapper.jl")
-#     # end
+    @testset "Lindblad Wrapper" begin
+        include("dynamics/test_lindblad_wrapper.jl")
+    end
     
-# end
+end
 
 
 @testset "Algorithm" begin

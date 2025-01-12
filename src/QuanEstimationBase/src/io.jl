@@ -192,19 +192,22 @@ const IO_final = Dict(
 )
 
 ## io info
-function Base.show(system::QuanEstSystem)
-    (; optim, algorithm, obj) = system
-    println(
-        (optim isa ControlOpt ? IO_obj[obj_type(obj)] : "") *
-        IO_opt[opt_target(optim)],
-    )
-    println(IO_para[para_type(obj)])
-    println(IO_alg[alg_type(algorithm)])
-end
+# function Base.show(system::QuanEstSystem)
+#     (; optim, algorithm, obj) = system
+#     println(
+#         (optim isa ControlOpt ? IO_obj[obj_type(obj)] : "") *
+#         IO_opt[opt_target(optim)],
+#     )
+#     println(IO_para[para_type(obj)])
+#     println(IO_alg[alg_type(algorithm)])
+# end
 
 ## io initialization
-function Base.show(opt::AbstractOpt, output::Output, obj::AbstractObj)
+function Base.show(opt::AbstractOpt, output::Output, obj::AbstractObj, alg::AbstractAlgorithm)
     (; io_buffer) = output
+    # println(IO_opt[opt])
+    println(IO_para[para_type(obj)])
+    println(IO_alg[alg_type(alg)])
     @eval @printf $(IO_ini[opt_target(opt), obj_type(obj), para_type(obj)]) $(io_buffer...)
     SaveCurrent(output)
 end

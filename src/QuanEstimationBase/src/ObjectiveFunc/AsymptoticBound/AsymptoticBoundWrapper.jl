@@ -1,37 +1,27 @@
-function Objective(dynamics::AbstractDynamics, obj::QFIM_obj{P,D}) where {P,D}
+function Objective(scheme, obj::QFIM_obj{P,D}) where {P,D}
     (;W, eps) = obj
-    if ismissing(W)
-        W = I(get_para_num(dynamics.data))|>Matrix
-    end
-    
-    d = LDtype(obj) |> eval
-    p = para_type(dynamics.data) |> eval
 
-    return QFIM_obj{p,d}(W,eps)
+    p = para_type(scheme.Parameterization) |> eval
+
+    return QFIM_obj{p,D}(W,eps)
 end  
 
-function Objective(dynamics::AbstractDynamics, obj::CFIM_obj{P}) where {P}
+function Objective(scheme, obj::CFIM_obj{P}) where {P}
     (;W, M, eps) = obj
-    if ismissing(W)
-        W = I(get_para_num(dynamics.data))|>Matrix
+    
+    if isnothing(M)
+        M = SIC(get_dim(scheme))
     end
     
-    if ismissing(M)
-        M = SIC(get_dim(dynamics.data))
-    end
-    
-    p = para_type(dynamics.data) |> eval
+    p = para_type(scheme.Parameterization) |> eval
 
     return CFIM_obj{p}(M,W,eps)
 end  
 
-function Objective(dynamics::AbstractDynamics, obj::HCRB_obj{P}) where {P}
+function Objective(scheme, obj::HCRB_obj{P}) where {P}
     (;W, eps) = obj
-    if ismissing(W)
-        W = I(get_para_num(dynamics.data))|>Matrix
-    end
 
-    p = para_type(dynamics.data) |> eval
+    p = para_type(scheme.Parameterization) |> eval
 
     return HCRB_obj{p}(W, eps)
 end  

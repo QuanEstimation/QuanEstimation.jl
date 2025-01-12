@@ -1,7 +1,10 @@
-function optimize!(scheme, opt; algorithm=autoGRAPE(), obj=QFIM_obj(), savefile=false, )
-    show(scheme) # io1
+function optimize!(scheme, opt; algorithm=autoGRAPE(), objective=QFIM_obj(), savefile=false, )
+    # show(scheme) # io1
+
+    opt = init_opt(opt, scheme)
+    objective = Objective(scheme, objective)
     output = Output(opt; save=savefile)
-    optimize!(opt, algorithm, obj, scheme, output)
-    show(obj, output) 
+    optimize!(opt, algorithm, objective, scheme, output)
+    show(objective, output) 
 end  
 

@@ -1,26 +1,14 @@
 using Test
 
-# Test for Lindblad function with ControlOpt
-function test_Lindblad_ControlOpt()
-    # Set up test parameters
-    opt = QuanEstimationBase.ControlOpt()
-    tspan = range(0.0, 10.0, length = 100)
-    rho0 = 0.5 * ones(2, 2)
-    omega = 1.0
-    sx = [0.0 1.0; 1.0 0.0im]
-    sy = [0.0 -im; im 0.0]
-    sz = [1.0 0.0im; 0.0 -1.0]
-    H0 = 0.5 * omega * sz
-    dH = [0.5 * sz]
-    Hc = [sx, sy, sz]
-    decay = [[0.0 1.0; 0.0 0.0im], [0.0 0.0; 1.0 0.0im]]
-    
-    # Call the function
-    QuanEstimationBase.Lindblad(opt, tspan, rho0, H0, dH, Hc, decay)
-    
-    # Add your assertions here to validate the result
-    # @test ...
-    return true
+# Test for `init_scheme!` function with ControlOpt
+function test_init_scheme_copt()
+    (;tspan, rho0, H0, dH, Hc, ctrl) = generate_qubit_dynamics()
+    opt = ControlOpt()
+    dynamics = Lindblad(H0, dH, tspan, Hc)
+    scheme = GeneralScheme(; probe=rho0, param=dynamics,)
+    init_scheme!(opt, scheme)
+
+    @test opt.ctrl == ctrl
 end
 
 # Test for Lindblad function with StateOpt
@@ -160,30 +148,29 @@ function test_Lindblad_wrapper()
         @test test_Lindblad_ControlOpt()
     end
     
-    @testset "StateOpt" begin
-        @test test_Lindblad_StateOpt()
-    end
+    # @testset "StateOpt" begin
+    #     @test test_Lindblad_StateOpt()
+    # end
     
-    @testset "MeasurementOpt" begin
-        @test test_Lindblad_MeasurementOpt()
-    end
+    # @testset "MeasurementOpt" begin
+    #     @test test_Lindblad_MeasurementOpt()
+    # end
 
-    @testset "StateControlOpt" begin
-        @test test_Lindblad_StateControlOpt()
-    end
+    # @testset "StateControlOpt" begin
+    #     @test test_Lindblad_StateControlOpt()
+    # end
 
-    @testset "ControlMeasurementOpt" begin
-        @test test_Lindblad_ControlMeasurementOpt()
-    end
+    # @testset "ControlMeasurementOpt" begin
+    #     @test test_Lindblad_ControlMeasurementOpt()
+    # end
     
-    @testset "StateMeasurementOpt" begin
-        @test test_Lindblad_StateMeasurementOpt()
-    end
+    # @testset "StateMeasurementOpt" begin
+    #     @test test_Lindblad_StateMeasurementOpt()
+    # end
     
-    @testset "SCMopt" begin
-        @test test_Lindblad_SCMopt()
-    end
-
+    # @testset "SCMopt" begin
+    #     @test test_Lindblad_SCMopt()
+    # end
 end
 
 

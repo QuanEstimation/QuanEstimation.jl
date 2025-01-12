@@ -1,5 +1,4 @@
-using QuanEstimation
-using LinearAlgebra
+using QuanEstimation, LinearAlgebra
 
 # initial state
 psi0 = [1., 0., 0., 1.]/sqrt(2)
@@ -24,14 +23,14 @@ W = one(zeros(2, 2))
 # time length for the evolution
 tspan = range(0., 5., length=200)
 # dynamics
-rho, drho = QuanEstimation.expm(tspan, rho0, H0, dH, decay)
+rho, drho = expm(tspan, rho0, H0, dH, decay)
 # calculation of the CFIM, QFIM and HCRB
 f_HCRB, f_NHB = [], []
 for ti in 2:length(tspan)
     # HCRB
-    f_tp1 = QuanEstimation.HCRB(rho[ti], drho[ti], W)
+    f_tp1 = HCRB(rho[ti], drho[ti], W)
     append!(f_HCRB, f_tp1)
     # NHB
-    f_tp2 = QuanEstimation.NHB(rho[ti], drho[ti], W)
+    f_tp2 = NHB(rho[ti], drho[ti], W)
     append!(f_NHB, f_tp2)
 end
