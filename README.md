@@ -4,7 +4,7 @@
 [![][action-img]][action-url]
 [![][codecov-img]][codecov-url]
 
-[action-img]: https://github.com/QuanEstimation/QuanEstimation.jl/actions/workflows/CI.yml/badge.svg
+[action-img]: https://github.com/QuanEstimation/QuanEstimation.jl/actions/workflows/CI_QuanEstimation.yml/badge.svg
 [action-url]: https://github.com/QuanEstimation/QuanEstimation.jl/actions
 [codecov-img]: https://codecov.io/gh/QuanEstimation/QuanEstimation.jl/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/QuanEstimation/QuanEstimation.jl?branch=test-codecov
