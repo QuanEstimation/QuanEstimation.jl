@@ -15,8 +15,13 @@ as``\partial_{a}\rho=\frac{1}{2}(\rho L_{a}+L_{a}\rho)``, where ``\rho`` is the 
 - `rep`: Representation of the SLD operator. Options can be: "original" (default) and "eigen" .
 - `eps`: Machine epsilon.
 """
-function SLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep="original", eps=GLOBAL_EPS) where {T<:Complex}
-    (x -> SLD(ρ, x; rep=rep, eps = eps)).(dρ)
+function SLD(
+    ρ::Matrix{T},
+    dρ::Vector{Matrix{T}};
+    rep = "original",
+    eps = GLOBAL_EPS,
+) where {T<:Complex}
+    (x -> SLD(ρ, x; rep = rep, eps = eps)).(dρ)
 end
 
 """
@@ -51,8 +56,8 @@ function SLD(
         SLD = vec * (SLD_eig * vec')
     elseif rep == "eigen"
         SLD = SLD_eig
-	else
-		throw(ArgumentError("The rep should be chosen in {'original', 'eigen'}."))
+    else
+        throw(ArgumentError("The rep should be chosen in {'original', 'eigen'}."))
     end
     SLD
 end
@@ -97,8 +102,13 @@ Calculate the right logarrithmic derivatives (RLDs). The RLD operator is defined
 - `rep`: Representation of the RLD operator. Options can be: "original" (default) and "eigen".
 - `eps`: Machine epsilon.
 """
-function RLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep="original", eps=GLOBAL_EPS) where {T<:Complex}
-(x -> RLD(ρ, x; rep=rep, eps = eps)).(dρ)
+function RLD(
+    ρ::Matrix{T},
+    dρ::Vector{Matrix{T}};
+    rep = "original",
+    eps = GLOBAL_EPS,
+) where {T<:Complex}
+    (x -> RLD(ρ, x; rep = rep, eps = eps)).(dρ)
 end
 
 """
@@ -108,10 +118,10 @@ end
 When applied to the case of single parameter.
 """
 function RLD(
-	ρ::Matrix{T},
-	dρ::Matrix{T};
-	rep = "original",
-	eps = GLOBAL_EPS,
+    ρ::Matrix{T},
+    dρ::Matrix{T};
+    rep = "original",
+    eps = GLOBAL_EPS,
 ) where {T<:Complex}
 
     dim = size(ρ)[1]
@@ -127,7 +137,11 @@ function RLD(
                 RLD_eig[fi, fj] = term_tp / val[fi]
             else
                 if term_tp < eps
-                    throw(ErrorException("The RLD does not exist. It only exist when the support of drho is contained in the support of rho."))
+                    throw(
+                        ErrorException(
+                            "The RLD does not exist. It only exist when the support of drho is contained in the support of rho.",
+                        ),
+                    )
                 end
             end
         end
@@ -153,8 +167,13 @@ Calculate the left logarrithmic derivatives (LLDs). The LLD operator is defined 
 - `rep`: Representation of the LLD operator. Options can be: "original" (default) and "eigen".
 - `eps`: Machine epsilon.
 """
-function LLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; rep="original", eps=GLOBAL_EPS) where {T<:Complex}
-    (x -> LLD(ρ, x; rep=rep, eps = eps)).(dρ)
+function LLD(
+    ρ::Matrix{T},
+    dρ::Vector{Matrix{T}};
+    rep = "original",
+    eps = GLOBAL_EPS,
+) where {T<:Complex}
+    (x -> LLD(ρ, x; rep = rep, eps = eps)).(dρ)
 end
 
 """
@@ -183,7 +202,11 @@ function LLD(
                 LLD_eig[fj, fi] = conj(term_tp / val[fj])
             else
                 if abs(term_tp) < eps
-                    throw(ErrorException("The LLD does not exist. It only exist when the support of drho is contained in the support of rho."))
+                    throw(
+                        ErrorException(
+                            "The LLD does not exist. It only exist when the support of drho is contained in the support of rho.",
+                        ),
+                    )
                 end
             end
         end
@@ -235,12 +258,14 @@ function QFIM_SLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = GLOBAL_EPS) where
     (
         [0.5 * ρ] .*
         (kron(LD_tp, reshape(LD_tp, 1, p_num)) + kron(reshape(LD_tp, 1, p_num), LD_tp))
-    ) .|> tr .|> real
+    ) .|>
+    tr .|>
+    real
 end
 
 function QFIM_RLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = GLOBAL_EPS) where {T<:Complex}
     p_num = length(dρ)
-    LD_tp = (x -> (pinv(ρ, rtol = eps) * x) ).(dρ)
+    LD_tp = (x -> (pinv(ρ, rtol = eps) * x)).(dρ)
     LD_dag = [LD_tp[i]' for i = 1:p_num]
     ([ρ] .* (kron(LD_tp, reshape(LD_dag, 1, p_num)))) .|> tr
 end
@@ -259,7 +284,9 @@ function QFIM_liouville(ρ, dρ)
     (
         [0.5 * ρ] .*
         (kron(LD_tp, reshape(LD_tp, 1, p_num)) + kron(reshape(LD_tp, 1, p_num), LD_tp))
-    ) .|> tr .|> real
+    ) .|>
+    tr .|>
+    real
 end
 
 function QFIM_pure(ρ::Matrix{T}, ∂ρ_∂x::Vector{Matrix{T}}) where {T<:Complex}
@@ -285,7 +312,7 @@ Calculate the classical Fisher information matrix (CFIM).
 - `M`: A set of positive operator-valued measure (POVM). The default measurement is a set of rank-one symmetric informationally complete POVM (SIC-POVM).
 - `eps`: Machine epsilon.
 """
-function CFIM(ρ::Matrix{T}, dρ::Vector{Matrix{T}}, M; eps=GLOBAL_EPS) where {T<:Complex}
+function CFIM(ρ::Matrix{T}, dρ::Vector{Matrix{T}}, M; eps = GLOBAL_EPS) where {T<:Complex}
     m_num = length(M)
     p_num = length(dρ)
     [
@@ -317,7 +344,7 @@ function CFIM(ρ::Matrix{T}, dρ::Matrix{T}, M; eps = GLOBAL_EPS) where {T<:Comp
         F += cadd
     end
     real(F)
-end 
+end
 
 """
 
@@ -325,7 +352,12 @@ end
 
 When the set of POVM is not given. Calculate the CFIM with SIC-POVM. The SIC-POVM is generated from the Weyl-Heisenberg covariant SIC-POVM fiducial state which can be downloaded from [here](http://www.physics.umb.edu/Research/QBism/solutions.html).
 """
-function CFIM(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; M=nothing, eps = GLOBAL_EPS) where {T<:Complex}
+function CFIM(
+    ρ::Matrix{T},
+    dρ::Vector{Matrix{T}};
+    M = nothing,
+    eps = GLOBAL_EPS,
+) where {T<:Complex}
     M = SIC(size(ρ)[1])
     m_num = length(M)
     p_num = length(dρ)
@@ -344,7 +376,7 @@ end
 
 When applied to the case of single parameter and the set of POVM is not given. Calculate the CFI with SIC-POVM. 
 """
-function CFIM(ρ::Matrix{T}, dρ::Matrix{T}; M=nothing, eps=GLOBAL_EPS) where {T<:Complex}
+function CFIM(ρ::Matrix{T}, dρ::Matrix{T}; M = nothing, eps = GLOBAL_EPS) where {T<:Complex}
     M = SIC(size(ρ)[1])
     m_num = length(M)
     F = 0.0
@@ -361,17 +393,18 @@ function CFIM(ρ::Matrix{T}, dρ::Matrix{T}; M=nothing, eps=GLOBAL_EPS) where {T
     real(F)
 end
 
-function CFIM(scheme::Scheme;
-    full_trajectory = false, 
-    LDtype = :SLD, 
-    exportLD ::Bool= false, 
+function CFIM(
+    scheme::Scheme;
+    full_trajectory = false,
+    LDtype = :SLD,
+    exportLD::Bool = false,
     eps = GLOBAL_EPS,
 )
     M = meas_data(scheme)
     if full_trajectory
         rho, drho = expm(scheme)
         return [CFIM(r, dr, M; eps = eps) for (r, dr) in zip(rho, drho)]
-    else 
+    else
         rho, drho = evolve(scheme)
         return CFIM(rho, drho, M; eps = eps)
     end
@@ -393,7 +426,7 @@ function QFIM(
     ρ::Matrix{T},
     dρ::Matrix{T};
     LDtype = :SLD,
-    exportLD ::Bool= false,
+    exportLD::Bool = false,
     eps = GLOBAL_EPS,
 ) where {T<:Complex}
 
@@ -416,7 +449,7 @@ function QFIM(
     ρ::Matrix{T},
     dρ::Vector{Matrix{T}};
     LDtype = :SLD,
-    exportLD ::Bool= false,
+    exportLD::Bool = false,
     eps = GLOBAL_EPS,
 ) where {T<:Complex}
 
@@ -429,7 +462,7 @@ function QFIM(
     else
         throw(ArgumentError("The LDtype should be chosen in {'SLD', 'RLD', 'LLD'}."))
     end
-    
+
     if exportLD == false
         return F
     else
@@ -441,16 +474,20 @@ end
 QFIM(sym::Symbol, args...; kwargs...) = QFIM(Val{sym}, args...; kwargs...)
 
 
-function QFIM(scheme::Scheme;
-    full_trajectory = false, 
-    LDtype = :SLD, 
-    exportLD ::Bool= false, 
+function QFIM(
+    scheme::Scheme;
+    full_trajectory = false,
+    LDtype = :SLD,
+    exportLD::Bool = false,
     eps = GLOBAL_EPS,
 )
     if full_trajectory
         rho, drho = expm(scheme)
-        return [QFIM(r, dr; LDtype = LDtype, exportLD = exportLD, eps = eps) for (r, dr) in zip(rho, drho)]
-    else 
+        return [
+            QFIM(r, dr; LDtype = LDtype, exportLD = exportLD, eps = eps) for
+            (r, dr) in zip(rho, drho)
+        ]
+    else
         rho, drho = evolve(scheme)
         return QFIM(rho, drho; LDtype = LDtype, exportLD = exportLD, eps = eps)
     end
@@ -470,15 +507,22 @@ Calculation of the quantum Fisher information (QFI) and quantum Fisher informati
 - `exportLD`: Whether or not to export the values of logarithmic derivatives. If set True then the the values of logarithmic derivatives will be exported.
 - `eps`: Machine epsilon.
 """
-function QFIM_Kraus(ρ0::AbstractMatrix, K::AbstractVector, dK::AbstractVector; LDtype=:SLD, exportLD::Bool=false, eps=GLOBAL_EPS)
+function QFIM_Kraus(
+    ρ0::AbstractMatrix,
+    K::AbstractVector,
+    dK::AbstractVector;
+    LDtype = :SLD,
+    exportLD::Bool = false,
+    eps = GLOBAL_EPS,
+)
     para_num = length(dK[1])
-    dK = [[dK[i][j] for i in eachindex(K)] for j in 1:para_num]
+    dK = [[dK[i][j] for i in eachindex(K)] for j = 1:para_num]
     ρ = [K * ρ0 * K' for K in K] |> sum
-    dρ = [[dK * ρ0 * K' + K * ρ0 * dK' for (K,dK) in zip(K,dK)] |> sum for dK in dK]
-    F = QFIM(ρ, dρ; LDtype=LDtype, exportLD=exportLD, eps=eps)
+    dρ = [[dK * ρ0 * K' + K * ρ0 * dK' for (K, dK) in zip(K, dK)] |> sum for dK in dK]
+    F = QFIM(ρ, dρ; LDtype = LDtype, exportLD = exportLD, eps = eps)
     if para_num == 1
         # single-parameter scenario
-        return F[1,1]
+        return F[1, 1]
     else
         # multiparameter scenario
         return F
@@ -495,7 +539,7 @@ Calculate the SLD based quantum Fisher information (QFI) or quantum Fisher infor
 - `eps`: Machine epsilon.
 """
 ## TODO: 👇 check type stability
-function QFIM_Bloch(r, dr; eps=GLOBAL_EPS)
+function QFIM_Bloch(r, dr; eps = GLOBAL_EPS)
     para_num = length(dr)
     QFIM_res = zeros(para_num, para_num)
 
@@ -513,9 +557,10 @@ function QFIM_Bloch(r, dr; eps=GLOBAL_EPS)
         else
             for para_i = 1:para_num
                 for para_j = para_i:para_num
-                    QFIM_res[para_i, para_j] =
-                        real(dr[para_i]' * dr[para_j] +
-                        (r' * dr[para_i]) * (r' * dr[para_j]) / (1 - r_norm))
+                    QFIM_res[para_i, para_j] = real(
+                        dr[para_i]' * dr[para_j] +
+                        (r' * dr[para_i]) * (r' * dr[para_j]) / (1 - r_norm),
+                    )
                     QFIM_res[para_j, para_i] = QFIM_res[para_i, para_j]
                 end
             end
@@ -554,7 +599,7 @@ end
 
 When applied to the case of single parameter and the set of POVM is not given. Calculate the classical Fisher information for classical scenarios. 
 """
-function FIM(p::Vector{R}, dp::Vector{R}; eps=GLOBAL_EPS) where {R<:Real}
+function FIM(p::Vector{R}, dp::Vector{R}; eps = GLOBAL_EPS) where {R<:Real}
     m_num = length(p)
     F = 0.0
     for i = 1:m_num
@@ -578,21 +623,21 @@ Calculation of the classical Fisher information matrix for classical scenarios.
 - `dp`: Derivatives of the probability distribution on the unknown parameters to be estimated. For example, dp[0] is the derivative vector on the first parameter.
 - `eps`: Machine epsilon.
 """
-function FIM(p::Vector{R}, dp::Vector{Vector{R}}; eps=GLOBAL_EPS) where {R<:Real}
+function FIM(p::Vector{R}, dp::Vector{Vector{R}}; eps = GLOBAL_EPS) where {R<:Real}
     m_num = length(p)
     para_num = length(dp[1])
 
     FIM_res = zeros(para_num, para_num)
-    for pj in 1:m_num
+    for pj = 1:m_num
         p_tp = p[pj]
         Cadd = zeros(para_num, para_num)
         if p_tp > eps
-            for para_i in 1:para_num
+            for para_i = 1:para_num
                 dp_i = dp[pj][para_i]
-                for para_j in para_i:para_num
+                for para_j = para_i:para_num
                     dp_j = dp[pj][para_j]
-                    Cadd[para_i,para_j] = real(dp_i * dp_j / p_tp)
-                    Cadd[para_j,para_i] = real(dp_i * dp_j / p_tp)
+                    Cadd[para_i, para_j] = real(dp_i * dp_j / p_tp)
+                    Cadd[para_j, para_i] = real(dp_i * dp_j / p_tp)
                 end
             end
             FIM_res += Cadd
@@ -600,12 +645,12 @@ function FIM(p::Vector{R}, dp::Vector{Vector{R}}; eps=GLOBAL_EPS) where {R<:Real
     end
     if length(dp[1]) == 1
         # single-parameter scenario
-        return FIM_res[1,1]
+        return FIM_res[1, 1]
     else
         # multiparameter scenario
         return FIM_res
     end
-    
+
 end
 
 """
@@ -618,32 +663,32 @@ Calculate the classical Fisher information (CFI) based on the experiment data.
 - `dx`: A known small drift of the parameter.
 - `ftype`: The distribution the data follows. Options are: norm, gamma, rayleigh, and poisson.
 """
-function FI_Expt(y1, y2, dx; ftype=:norm)
+function FI_Expt(y1, y2, dx; ftype = :norm)
     Fc = 0.0
     if ftype == :norm
         p1_norm = fit(Normal, y1)
         p2_norm = fit(Normal, y2)
-        f_norm(x) = sqrt(pdf(p1_norm, x)*pdf(p2_norm, x))
+        f_norm(x) = sqrt(pdf(p1_norm, x) * pdf(p2_norm, x))
         fidelity, err = quadgk(f_norm, -Inf, Inf)
-        Fc = 8*(1-fidelity)/dx^2
+        Fc = 8 * (1 - fidelity) / dx^2
     elseif ftype == :gamma
         p1_gamma = fit(Gamma, y1)
         p2_gamma = fit(Gamma, y2)
-        f_gamma(x) = sqrt(pdf(p1_gamma, x)*pdf(p2_gamma, x))
+        f_gamma(x) = sqrt(pdf(p1_gamma, x) * pdf(p2_gamma, x))
         fidelity, err = quadgk(f_gamma, 0.0, Inf)
-        Fc = 8*(1-fidelity)/dx^2
+        Fc = 8 * (1 - fidelity) / dx^2
     elseif ftype == :rayleigh
         p1_rayl = fit(Rayleigh, y1)
         p2_rayl = fit(Rayleigh, y2)
-        f_rayl(x) = sqrt(pdf(p1_rayl, x)*pdf(p2_rayl, x))
+        f_rayl(x) = sqrt(pdf(p1_rayl, x) * pdf(p2_rayl, x))
         fidelity, err = quadgk(f_rayl, 0.0, Inf)
-        Fc = 8*(1-fidelity)/dx^2
+        Fc = 8 * (1 - fidelity) / dx^2
     elseif ftype == :poisson
-        p1_pois = pdf.(fit(Poisson, y1), range(0, maximum(y1), step=1))
-        p2_pois = pdf.(fit(Poisson, y2), range(0, maximum(y2), step=1))
-        p1_pois, p2_pois = p1_pois/sum(p1_pois), p2_pois/sum(p2_pois)
-        fidelity = sum([sqrt(p1_pois[i]*p2_pois[i]) for i in eachindex(p1_pois)])
-        Fc = 8*(1-fidelity)/dx^2
+        p1_pois = pdf.(fit(Poisson, y1), range(0, maximum(y1), step = 1))
+        p2_pois = pdf.(fit(Poisson, y2), range(0, maximum(y2), step = 1))
+        p1_pois, p2_pois = p1_pois / sum(p1_pois), p2_pois / sum(p2_pois)
+        fidelity = sum([sqrt(p1_pois[i] * p2_pois[i]) for i in eachindex(p1_pois)])
+        Fc = 8 * (1 - fidelity) / dx^2
     else
         println("supported values for ftype are 'norm', 'poisson', 'gamma' and 'rayleigh'")
     end
@@ -668,7 +713,7 @@ function Williamson_form(A::AbstractMatrix)
     return S, c
 end
 
-const a_Gauss = [im*σ_y,σ_z,σ_x|>one, σ_x]
+const a_Gauss = [im * σ_y, σ_z, σ_x |> one, σ_x]
 
 function A_Gauss(m::Int)
     e = bases(m)
@@ -717,10 +762,7 @@ function QFIM_Gauss(R̄::V, dR̄::VV, D::M, dD::VM) where {V,VV,M,VM<:AbstractVe
     quad_num = length(R̄)
     C = [D[i, j] - R̄[i]R̄[j] for i = 1:quad_num, j = 1:quad_num]
     dC = [
-        [
-            dD[k][i, j] - dR̄[k][i]R̄[j] - R̄[i]dR̄[k][j] for
-            i = 1:quad_num, j = 1:quad_num
-        ] for k = 1:para_num
+        [dD[k][i, j] - dR̄[k][i]R̄[j] - R̄[i]dR̄[k][j] for i = 1:quad_num, j = 1:quad_num] for k = 1:para_num
     ]
 
     S, cs = Williamson_form(C)
@@ -731,7 +773,7 @@ function QFIM_Gauss(R̄::V, dR̄::VV, D::M, dD::VM) where {V,VV,M,VM<:AbstractVe
     ]
 
     if para_num == 1
-        return F[1,1] |> real
+        return F[1, 1] |> real
     else
         return F |> real
     end

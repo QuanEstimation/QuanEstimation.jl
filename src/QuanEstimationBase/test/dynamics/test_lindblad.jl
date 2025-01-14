@@ -2,10 +2,10 @@ using QuanEstimationBase
 using Random, LinearAlgebra
 
 function test_Lindblad_qubit_expm()
-    (;tspan, rho0, H0, dH, Hc, ctrl, decay) = generate_qubit_dynamics()
+    (; tspan, rho0, H0, dH, Hc, ctrl, decay) = generate_qubit_dynamics()
 
-    dynamics = Lindblad(H0, dH, tspan, Hc, decay; ctrl=ctrl,dyn_method=:Expm)
-    scheme = GeneralScheme(; probe=rho0, param=dynamics,)
+    dynamics = Lindblad(H0, dH, tspan, Hc, decay; ctrl = ctrl, dyn_method = :Expm)
+    scheme = GeneralScheme(; probe = rho0, param = dynamics)
 
     rho, drho = evolve(scheme)
     @test isposdef(rho) && ishermitian(rho)
@@ -13,10 +13,10 @@ function test_Lindblad_qubit_expm()
 end
 
 function test_Lindblad_qubit_ode()
-    (;tspan, rho0, H0, dH, Hc, ctrl, decay) = generate_qubit_dynamics()
+    (; tspan, rho0, H0, dH, Hc, ctrl, decay) = generate_qubit_dynamics()
 
-    dynamics = Lindblad(H0, dH, tspan, Hc, decay; ctrl=ctrl,dyn_method=:Ode)
-    scheme = GeneralScheme(; probe=rho0, param=dynamics,)
+    dynamics = Lindblad(H0, dH, tspan, Hc, decay; ctrl = ctrl, dyn_method = :Ode)
+    scheme = GeneralScheme(; probe = rho0, param = dynamics)
 
     rho, drho = evolve(scheme)
     @test isposdef(rho) && ishermitian(rho)

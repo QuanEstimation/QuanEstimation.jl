@@ -1,11 +1,11 @@
 abstract type EstimationStrategy end
 struct Strategy <: EstimationStrategy
-    x #ParameterRegion
-    p #PriorDistribution
-    dp #DistributionDerivative
+    x::Any #ParameterRegion
+    p::Any #PriorDistribution
+    dp::Any #DistributionDerivative
 end
 
-Strategy(;x=nothing, p=nothing, dp=nothing) = Strategy(x, p, dp)
+Strategy(; x = nothing, p = nothing, dp = nothing) = Strategy(x, p, dp)
 
 function GeneralEstimation(x, p, dp)
     return Strategy(x, p, dp)

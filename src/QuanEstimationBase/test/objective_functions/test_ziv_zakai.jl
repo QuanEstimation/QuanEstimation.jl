@@ -48,51 +48,45 @@ function test_helstrom_bound_pure()
 end
 
 function data_gen_zz()
-	# prior distribution
-	function p_func(x, mu, eta)
-		return exp(-(x - mu)^2 / (2 * eta^2)) / (eta * sqrt(2 * pi))
-	end
-	function dp_func(x, mu, eta)
-		return -(x - mu) * exp(-(x - mu)^2 / (2 * eta^2)) / (eta^3 * sqrt(2 * pi))
-	end
+    # prior distribution
+    function p_func(x, mu, eta)
+        return exp(-(x - mu)^2 / (2 * eta^2)) / (eta * sqrt(2 * pi))
+    end
+    function dp_func(x, mu, eta)
+        return -(x - mu) * exp(-(x - mu)^2 / (2 * eta^2)) / (eta^3 * sqrt(2 * pi))
+    end
 
-	B, omega0 = 0.5 * pi, 1.0
-	sx = [0.0 1.0; 1.0 0.0im]
-	sz = [1.0 0.0im; 0.0 -1.0]
-	# initial state
-	rho0 = 0.5 * ones(2, 2)
-	# prior distribution
-	x = range(-0.5 * pi, stop = 0.5 * pi, length = 10) |> Vector
-	mu, eta = 0.0, 0.2
-	p_tp = [p_func(x[i], mu, eta) for i in eachindex(x)]
-	dp_tp = [dp_func(x[i], mu, eta) for i in eachindex(x)]
-	# normalization of the distribution
-	c = trapz(x, p_tp)
-	p = p_tp / c
-	dp = dp_tp / c
-	# time length for the evolution
-	tspan = range(0.0, stop = 1.0, length = 10)
-	# dynamics
-	rho = Vector{Matrix{ComplexF64}}(undef, length(x))
-	drho = Vector{Vector{Matrix{ComplexF64}}}(undef, length(x))
-	for i in eachindex(x)
-		H0_tp = 0.5 * B * omega0 * (sx * cos(x[i]) + sz * sin(x[i]))
-		dH_tp = [0.5 * B * omega0 * (-sx * sin(x[i]) + sz * cos(x[i]))]
-		rho_tp, drho_tp = QuanEstimationBase.expm(tspan, rho0, H0_tp, dH_tp)
-		rho[i], drho[i] = rho_tp[end], drho_tp[end]
-	end
-	return (;
-		x = x,
-		p = p,
-		rho = rho,
-		drho = drho,
-		dp = dp,
-	)
+    B, omega0 = 0.5 * pi, 1.0
+    sx = [0.0 1.0; 1.0 0.0im]
+    sz = [1.0 0.0im; 0.0 -1.0]
+    # initial state
+    rho0 = 0.5 * ones(2, 2)
+    # prior distribution
+    x = range(-0.5 * pi, stop = 0.5 * pi, length = 10) |> Vector
+    mu, eta = 0.0, 0.2
+    p_tp = [p_func(x[i], mu, eta) for i in eachindex(x)]
+    dp_tp = [dp_func(x[i], mu, eta) for i in eachindex(x)]
+    # normalization of the distribution
+    c = trapz(x, p_tp)
+    p = p_tp / c
+    dp = dp_tp / c
+    # time length for the evolution
+    tspan = range(0.0, stop = 1.0, length = 10)
+    # dynamics
+    rho = Vector{Matrix{ComplexF64}}(undef, length(x))
+    drho = Vector{Vector{Matrix{ComplexF64}}}(undef, length(x))
+    for i in eachindex(x)
+        H0_tp = 0.5 * B * omega0 * (sx * cos(x[i]) + sz * sin(x[i]))
+        dH_tp = [0.5 * B * omega0 * (-sx * sin(x[i]) + sz * cos(x[i]))]
+        rho_tp, drho_tp = QuanEstimationBase.expm(tspan, rho0, H0_tp, dH_tp)
+        rho[i], drho[i] = rho_tp[end], drho_tp[end]
+    end
+    return (; x = x, p = p, rho = rho, drho = drho, dp = dp)
 end
 
 # Test for QZZB
 function test_QZZB()
-    (;x, p, rho) = data_gen_zz()
+    (; x, p, rho) = data_gen_zz()
     @test QZZB(x, p, rho) >= 0
 end
 

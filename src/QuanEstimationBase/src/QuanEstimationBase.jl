@@ -1,8 +1,19 @@
 module QuanEstimationBase
 
-export GeneralScheme, GeneralEstimation, GeneralMeasurement, GeneralState, GeneralParameterization, AbstractScheme
+export GeneralScheme,
+    GeneralEstimation,
+    GeneralMeasurement,
+    GeneralState,
+    GeneralParameterization,
+    AbstractScheme
 export optimize!, init_opt
-export ControlOpt, StateOpt, MeasurementOpt, StateMeasurementOpt, ControlMeasurementOpt,StateControlOpt, StateControlMeasurementOpt
+export ControlOpt,
+    StateOpt,
+    MeasurementOpt,
+    StateMeasurementOpt,
+    ControlMeasurementOpt,
+    StateControlOpt,
+    StateControlMeasurementOpt
 export Copt, Sopt, Mopt, SMopt, CMopt, SCopt, SCMopt
 export evolve
 export Lindblad, Hamiltonian

@@ -1,5 +1,5 @@
 function generate_qubit_dynamics()
-    tspan = range(0.0, 10.0, length=100)
+    tspan = range(0.0, 10.0, length = 100)
     rho0 = 0.5 * ones(2, 2)
     omega = 1.0
     sx = [0.0 1.0; 1.0 0.0im]
@@ -18,6 +18,15 @@ function generate_qubit_dynamics()
     ctrl = [zeros(cnum) for _ in eachindex(Hc)]
     ctrl_bound = [-2.0, 2.0]
 
-    return (; tspan=tspan, rho0=rho0, H0=H0, dH=dH, Hc=Hc, decay=decay, M=M, ctrl=ctrl, ctrl_bound=ctrl_bound)
+    return (;
+        tspan = tspan,
+        rho0 = rho0,
+        H0 = H0,
+        dH = dH,
+        Hc = Hc,
+        decay = decay,
+        M = M,
+        ctrl = ctrl,
+        ctrl_bound = ctrl_bound,
+    )
 end
-

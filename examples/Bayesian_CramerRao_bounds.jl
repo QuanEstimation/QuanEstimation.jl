@@ -24,7 +24,7 @@ sz = [1.0 0.0im; 0.0 -1.0]
 # initial state
 rho0 = 0.5 * ones(2, 2)
 # prior distribution
-x = range(-0.5 * pi, stop=0.5 * pi, length=100) |> Vector
+x = range(-0.5 * pi, stop = 0.5 * pi, length = 100) |> Vector
 mu, eta = 0.0, 0.2
 p_tp = [p_func(x[i], mu, eta) for i in eachindex(x)]
 dp_tp = [dp_func(x[i], mu, eta) for i in eachindex(x)]
@@ -33,21 +33,21 @@ c = trapz(x, p_tp)
 p = p_tp / c
 dp = dp_tp / c
 # time length for the evolution
-tspan = range(0.0, stop=1.0, length=1000)
+tspan = range(0.0, stop = 1.0, length = 1000)
 # dynamics
-dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method=:Expm)
-scheme = GeneralScheme(; probe=rho0, param=dynamics, x=x, p=p, dp=dp)
+dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method = :Expm)
+scheme = GeneralScheme(; probe = rho0, param = dynamics, x = x, p = p, dp = dp)
 
 # Classical Bayesian bounds
-f_BCRB1 = BCRB(scheme; btype=1)
-f_BCRB2 = BCRB(scheme; btype=2)
-f_BCRB3 = BCRB(scheme; btype=3)
+f_BCRB1 = BCRB(scheme; btype = 1)
+f_BCRB2 = BCRB(scheme; btype = 2)
+f_BCRB3 = BCRB(scheme; btype = 3)
 f_VTB = VTB(scheme)
 
 # Quantum Bayesian bounds
-f_BQCRB1 = BQCRB(scheme; btype=1)
-f_BQCRB2 = BQCRB(scheme; btype=2)
-f_BQCRB3 = BQCRB(scheme; btype=3)
+f_BQCRB1 = BQCRB(scheme; btype = 1)
+f_BQCRB2 = BQCRB(scheme; btype = 2)
+f_BQCRB3 = BQCRB(scheme; btype = 3)
 f_QVTB = QVTB(scheme)
 f_QZZB = QZZB(scheme)
 
