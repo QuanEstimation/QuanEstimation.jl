@@ -1,5 +1,7 @@
 # QuanEstimationBase
 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/QuanEstimation/QuanEstimation.jl/QuanEstimationBase)
+
 QuanEstimationBase is the base package for QuanEstimation.
 
 ## Installation
