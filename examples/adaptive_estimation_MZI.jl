@@ -1,5 +1,4 @@
-using QuanEstimation
-using SparseArrays
+using QuanEstimation, SparseArrays
 
 # the number of photons
 N = 8

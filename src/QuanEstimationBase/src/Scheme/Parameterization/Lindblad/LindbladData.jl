@@ -50,9 +50,9 @@ end
 
 
 mutable struct Hamiltonian{T1,T2,N} <: AbstractHamiltonian
-    H0::Any
-    dH::Any
-    params::Any
+    H0
+    dH
+    params
 end
 
 function Hamiltonian(H0::T, dH::Vector{T}) where {T}

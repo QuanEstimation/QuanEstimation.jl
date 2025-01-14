@@ -21,21 +21,21 @@ struct NVMagnetometerScheme <: AbstractScheme
 end
 
 struct NVMagnetometerData
-    D::Any ##coefficient_D
-    gS::Any ##coefficient_gS
-    gI::Any ##coefficient_gI
-    A1::Any ##coefficient_A1
-    A2::Any ##coefficient_A2
-    B1::Any ##magnetic_field_B1
-    B2::Any ##magnetic_field_B2
-    B3::Any ##magnetic_field_B3
-    γ::Any ##decay_rate_γ
-    decay_opt::Any ##decay_operator
-    init_state::Any ##ρ0
-    Hc::Any ##control_Hamiltonians
-    ctrl::Any ##control_coefficients
-    tspan::Any ##time_span
-    M::Any ##meassurments
+    D::Float64##coefficient_D
+    gS::Float64 ##coefficient_gS
+    gI::Float64##coefficient_gI
+    A1::Float64##coefficient_A1
+    A2::Float64 ##coefficient_A2
+    B1::Float64 ##magnetic_field_B1
+    B2::Float64 ##magnetic_field_B2
+    B3::Float64 ##magnetic_field_B3
+    γ::Float64 ##decay_rate_γ
+    decay_opt::Vector{Matrix{ComplexF64}}##decay_operator
+    init_state::Vector{ComplexF64}##ρ0
+    Hc::Vector{Matrix{ComplexF64}} ##control_Hamiltonians
+    ctrl::Union{Nothing, Vector{Vector{Float64}}} ##control_coefficients
+    tspan::Union{Vector{Float64}, StepRangeLen} ##time_span
+    M::Union{Nothing, Vector{Matrix{ComplexF64}}} ##meassurments
 end
 
 # Base.keys(t::NVMagnetometer{names...}) where {names...} = [names...]

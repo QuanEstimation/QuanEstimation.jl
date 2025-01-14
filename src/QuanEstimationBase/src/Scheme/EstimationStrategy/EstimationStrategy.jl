@@ -1,8 +1,8 @@
 abstract type EstimationStrategy end
 struct Strategy <: EstimationStrategy
-    x::Any #ParameterRegion
-    p::Any #PriorDistribution
-    dp::Any #DistributionDerivative
+    x::Union{Nothing, AbstractVector} #ParameterRegion
+    p::Union{Nothing, AbstractVector} #PriorDistribution
+    dp::Union{Nothing, AbstractVector} #DistributionDerivative
 end
 
 Strategy(; x = nothing, p = nothing, dp = nothing) = Strategy(x, p, dp)

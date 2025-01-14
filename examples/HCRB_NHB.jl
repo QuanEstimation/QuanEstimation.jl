@@ -26,7 +26,7 @@ tspan = range(0.0, 5.0, length = 200)
 rho, drho = expm(tspan, rho0, H0, dH, decay)
 # calculation of the CFIM, QFIM and HCRB
 f_HCRB, f_NHB = [], []
-for ti = 2:length(tspan)
+for ti = eachindex(tspan)[2:end]
     # HCRB
     f_tp1 = HCRB(rho[ti], drho[ti], W)
     append!(f_HCRB, f_tp1)
