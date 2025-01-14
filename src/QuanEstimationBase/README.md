@@ -1,5 +1,3 @@
-# QuanEstimationBase.jl
-
 # QuanEstimationBase
 
 QuanEstimationBase is the base package for QuanEstimation.
