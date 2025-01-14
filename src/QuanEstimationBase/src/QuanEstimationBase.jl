@@ -56,7 +56,6 @@ include("Scheme/Scheme.jl")
 include("ObjectiveFunc/ObjectiveFunc.jl")
 include("output.jl")
 include("Algorithm/Algorithm.jl")
-include("run.jl")
 include("io.jl")
 include("Resource/Resource.jl")
 
