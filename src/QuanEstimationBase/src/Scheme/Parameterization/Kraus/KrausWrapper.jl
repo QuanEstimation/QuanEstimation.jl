@@ -6,16 +6,16 @@ Initialize the parameterization described by the Kraus operators for the state o
 """
 
 function Kraus(opt::StateOpt, K, dK)
-    (;psi) = opt
+    (; psi) = opt
     dim = size(K[1], 1)
     if isnothing(psi)
-        r_ini = 2*rand(opt.rng, dim) - ones(dim)
-		r = r_ini ./ norm(r_ini)
-		ϕ = 2pi*rand(opt.rng, dim)
-		psi = [r*exp(im*ϕ) for (r, ϕ) in zip(r, ϕ)]
-		opt.psi = psi 
+        r_ini = 2 * rand(opt.rng, dim) - ones(dim)
+        r = r_ini ./ norm(r_ini)
+        ϕ = 2pi * rand(opt.rng, dim)
+        psi = [r * exp(im * ϕ) for (r, ϕ) in zip(r, ϕ)]
+        opt.psi = psi
     end
-    
+
     K = complex.(K)
     dK = [complex.(dk) for dk in dK]
     psi = complex(psi)
@@ -28,9 +28,9 @@ end
     
 Initialize the parameterization described by the Kraus operators for the measurement optimization. 
 """
-function Kraus(opt::AbstractMopt, ρ₀::AbstractMatrix, K, dK; eps=GLOBAL_EPS)
+function Kraus(opt::AbstractMopt, ρ₀::AbstractMatrix, K, dK; eps = GLOBAL_EPS)
     dim = size(ρ₀, 1)
-    _ini_measurement!(opt, dim; eps=eps)
+    _ini_measurement!(opt, dim; eps = eps)
 
     K = complex.(K)
     dK = [complex.(dk) for dk in dK]
@@ -44,18 +44,18 @@ end
     
 Initialize the parameterization described by the Kraus operators for the comprehensive optimization. 
 """
-function Kraus(opt::CompOpt, K, dK; eps=GLOBAL_EPS)
-    (;psi) = opt
+function Kraus(opt::CompOpt, K, dK; eps = GLOBAL_EPS)
+    (; psi) = opt
     dim = size(K[1], 1)
     if isnothing(psi)
-        r_ini = 2*rand(opt.rng, dim) - ones(dim)
-		r = r_ini ./ norm(r_ini)
-		ϕ = 2pi*rand(opt.rng, dim)
-		psi = [r*exp(im*ϕ) for (r, ϕ) in zip(r, ϕ)]
-		opt.psi = psi 
+        r_ini = 2 * rand(opt.rng, dim) - ones(dim)
+        r = r_ini ./ norm(r_ini)
+        ϕ = 2pi * rand(opt.rng, dim)
+        psi = [r * exp(im * ϕ) for (r, ϕ) in zip(r, ϕ)]
+        opt.psi = psi
     end
-    
-    _ini_measurement!(opt, dim; eps=eps)
+
+    _ini_measurement!(opt, dim; eps = eps)
     K = complex.(K)
     dK = [complex.(dk) for dk in dK]
     psi = complex(psi)

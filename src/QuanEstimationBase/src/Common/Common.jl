@@ -1,13 +1,13 @@
 include("mintime.jl")
 include("BayesEstimation.jl")
 
-destroy(N) = diagm(1 => [sqrt(n) + 0.0im for n in 1:N-1])
+destroy(N) = diagm(1 => [sqrt(n) + 0.0im for n = 1:N-1])
 
-bases(dim; T=ComplexF64) = [e for e in I(dim) .|> T |> eachrow]
+bases(dim; T = ComplexF64) = [e for e in I(dim) .|> T |> eachrow]
 
-σx = SigmaX = () -> complex([0.0 1; 1 0]) 
+σx = SigmaX = () -> complex([0.0 1; 1 0])
 σy = SigmaY = () -> complex([0.0 -im; im 0])
-σz = SigmaZ = () -> complex([1.0 0; 0 -1]) 
+σz = SigmaZ = () -> complex([1.0 0; 0 -1])
 
 function vec2mat(x::Vector{T}) where {T<:Number}
     reshape(x, x |> length |> sqrt |> Int, :)
@@ -24,7 +24,7 @@ end
 unzip(X) = map(x -> getfield.(X, x), fieldnames(eltype(X)))
 
 function Base.repeat(system, N)
-    [deepcopy(system) for i in 1:N]
+    [deepcopy(system) for i = 1:N]
 end
 
 function Base.repeat(system, M, N)
@@ -86,10 +86,12 @@ function suN_generator(n::Int64)
     idx = 2
     itr = 1
 
-    for i in 1:n-1
+    for i = 1:n-1
         idx_t = idx
         while idx_t > 0
-            result[itr] = iseven(idx_t) ? suN_generatorU(n, (i * (i - 1) + idx - idx_t + 2) / 2) : suN_generatorV(n, (i * (i - 1) + idx - idx_t + 1) / 2)
+            result[itr] =
+                iseven(idx_t) ? suN_generatorU(n, (i * (i - 1) + idx - idx_t + 2) / 2) :
+                suN_generatorV(n, (i * (i - 1) + idx - idx_t + 1) / 2)
             itr += 1
             idx_t -= 1
         end
@@ -114,10 +116,10 @@ function sic_povm(fiducial)
     """
     d = length(fiducial)
     w = exp(2.0 * pi * 1.0im / d)
-    Z = diagm([w^(i - 1) for i in 1:d])
+    Z = diagm([w^(i - 1) for i = 1:d])
     X = zeros(ComplexF64, d, d)
-    for i in 1:d
-        for j in 1:d
+    for i = 1:d
+        for j = 1:d
             if j != d
                 X += basis(d, j + 1) * basis(d, j)'
             else
@@ -127,9 +129,9 @@ function sic_povm(fiducial)
     end
     X = X / d
 
-    D = [[Matrix{ComplexF64}(undef, d, d) for i in 1:d] for j in 1:d]
-    for a in 1:d
-        for b in 1:d
+    D = [[Matrix{ComplexF64}(undef, d, d) for i = 1:d] for j = 1:d]
+    for a = 1:d
+        for b = 1:d
             X_a = X^(b - 1)
             Z_b = Z^(a - 1)
             D[a][b] = (-exp(1.0im * pi / d))^((a - 1) * (b - 1)) * X_a * Z_b
@@ -137,8 +139,8 @@ function sic_povm(fiducial)
     end
 
     res = Vector{Matrix{ComplexF64}}()
-    for m in 1:d
-        for n in 1:d
+    for m = 1:d
+        for n = 1:d
             res_tp = D[m][n] * fiducial
             res_tp = res_tp / norm(res_tp)
             push!(res, res_tp * res_tp' / d)
@@ -179,9 +181,9 @@ function BellState(n::Int)
     end
 end
 
-function BayesInput(x, func, dfunc; channel="dynamics")
+function BayesInput(x, func, dfunc; channel = "dynamics")
     para_num = length(x)
-    x_size = [x[i] for i in 1:para_num]
+    x_size = [x[i] for i = 1:para_num]
     x_list = Iterators.product(x...)
     if channel == "dynamics"
         H = [func(xi) for xi in x_list]
@@ -200,14 +202,23 @@ end
 function bound!(ctrl::Vector{Vector{Float64}}, ctrl_bound)
     for ck in eachindex(ctrl)
         for tk in eachindex(ctrl[1])
-            ctrl[ck][tk] = (x -> x < ctrl_bound[1] ? ctrl_bound[1] : x > ctrl_bound[2] ? ctrl_bound[2] : x)(ctrl[ck][tk])
+            ctrl[ck][tk] = (
+                x ->
+                    x < ctrl_bound[1] ? ctrl_bound[1] :
+                    x > ctrl_bound[2] ? ctrl_bound[2] : x
+            )(
+                ctrl[ck][tk],
+            )
         end
     end
 end
 
 function bound!(ctrl::Vector{Float64}, ctrl_bound)
     for ck in eachindex(ctrl)
-        ctrl[ck] = (x -> x < ctrl_bound[1] ? ctrl_bound[1] : x > ctrl_bound[2] ? ctrl_bound[2] : x)(ctrl[ck])
+        ctrl[ck] =
+            (x -> x < ctrl_bound[1] ? ctrl_bound[1] : x > ctrl_bound[2] ? ctrl_bound[2] : x)(
+                ctrl[ck],
+            )
     end
 end
 
@@ -225,31 +236,32 @@ end
 function bound_LC_coeff!(coefficients::Vector{Vector{Float64}}, rng)
     M_num = length(coefficients)
     basis_num = length(coefficients[1])
-    for ck in 1:M_num
-        for tk in 1:basis_num
-            coefficients[ck][tk] = (x -> x < 0.0 ? 0.0 : x > 1.0 ? 1.0 : x)(coefficients[ck][tk])
+    for ck = 1:M_num
+        for tk = 1:basis_num
+            coefficients[ck][tk] =
+                (x -> x < 0.0 ? 0.0 : x > 1.0 ? 1.0 : x)(coefficients[ck][tk])
         end
     end
 
-    Sum_col = [sum([coefficients[m][n] for m in 1:M_num]) for n in 1:basis_num]
-    for si in 1:basis_num
+    Sum_col = [sum([coefficients[m][n] for m = 1:M_num]) for n = 1:basis_num]
+    for si = 1:basis_num
         if Sum_col[si] == 0.0
-            int_num = sample(rng, 1:M_num, 1, replace=false)[1]
+            int_num = sample(rng, 1:M_num, 1, replace = false)[1]
             coefficients[int_num][si] = 1.0
         end
     end
 
-    Sum_row = [sum([coefficients[m][n] for n in 1:basis_num]) for m in 1:M_num]
-    for mi in 1:M_num
+    Sum_row = [sum([coefficients[m][n] for n = 1:basis_num]) for m = 1:M_num]
+    for mi = 1:M_num
         if Sum_row[mi] == 0.0
-            int_num = sample(rng, 1:basis_num, 1, replace=false)[1]
+            int_num = sample(rng, 1:basis_num, 1, replace = false)[1]
             coefficients[mi][int_num] = rand(rng)
         end
     end
 
-    Sum_col = [sum([coefficients[m][n] for m in 1:M_num]) for n in 1:basis_num]
-    for i in 1:M_num
-        for j in 1:basis_num
+    Sum_col = [sum([coefficients[m][n] for m = 1:M_num]) for n = 1:basis_num]
+    for i = 1:M_num
+        for j = 1:basis_num
             coefficients[i][j] = coefficients[i][j] / Sum_col[j]
         end
     end
@@ -258,7 +270,7 @@ end
 #### bound coefficients of rotation in Mopt ####
 function bound_rot_coeff!(coefficients::Vector{Float64})
     n = length(coefficients)
-    for tk in 1:n
+    for tk = 1:n
         coefficients[tk] = (x -> x < 0.0 ? 0.0 : x > 2 * pi ? 2 * pi : x)(coefficients[tk])
     end
 end
@@ -266,10 +278,10 @@ end
 function gramschmidt(A::Vector{Vector{ComplexF64}})
     n = length(A[1])
     m = length(A)
-    Q = [zeros(ComplexF64, n) for i in 1:m]
-    for j in 1:m
+    Q = [zeros(ComplexF64, n) for i = 1:m]
+    for j = 1:m
         q = A[j]
-        for i in 1:j
+        for i = 1:j
             rij = dot(Q[i], q)
             q = q - rij * Q[i]
         end
@@ -291,16 +303,17 @@ end
 function initial_state!(psi0, scheme, p_num, rng)
     dim = get_dim(scheme[1])
     if length(psi0) > p_num
-        psi0 = [psi0[i] for i in 1:p_num]
+        psi0 = [psi0[i] for i = 1:p_num]
     end
     for pj in eachindex(psi0)
-        scheme[pj].StatePreparation.data = [psi0[pj][i] for i in 1:dim] |> x -> x*x'
+        scheme[pj].StatePreparation.data = [psi0[pj][i] for i = 1:dim] |> x -> x * x'
     end
-    for pj in (length(psi0)+1):p_num
+    for pj = (length(psi0)+1):p_num
         r_ini = 2 * rand(rng, dim) - ones(dim)
         r = r_ini / norm(r_ini)
         phi = 2 * pi * rand(rng, dim)
-        scheme[pj].StatePreparation.data = [r[i] * exp(1.0im * phi[i]) for i in 1:dim] |> x -> x*x'
+        scheme[pj].StatePreparation.data =
+            [r[i] * exp(1.0im * phi[i]) for i = 1:dim] |> x -> x * x'
     end
 end
 
@@ -311,20 +324,21 @@ function initial_ctrl!(opt, ctrl0, scheme, p_num, rng)
     ctrl_num = get_ctrl_num(scheme[1])
 
     if length(ctrl0) > p_num
-        ctrl0 = [ctrl0[i] for i in 1:p_num]
+        ctrl0 = [ctrl0[i] for i = 1:p_num]
     end
     for pj in eachindex(ctrl0)
         all_ctrl[pj] = deepcopy(ctrl0[pj])
     end
     if opt.ctrl_bound[1] == -Inf || opt.ctrl_bound[2] == Inf
-        for pj in (length(ctrl0)+1):p_num
-            all_ctrl[pj] = [[2 * rand(rng) - 1.0 for j in 1:ctrl_length] for i in 1:ctrl_num]
+        for pj = (length(ctrl0)+1):p_num
+            all_ctrl[pj] = [[2 * rand(rng) - 1.0 for j = 1:ctrl_length] for i = 1:ctrl_num]
         end
     else
         a = opt.ctrl_bound[1]
         b = opt.ctrl_bound[2]
-        for pj in (length(ctrl0)+1):p_num
-            all_ctrl[pj] = [[(b - a) * rand(rng) + a for j in 1:ctrl_length] for i in 1:ctrl_num]
+        for pj = (length(ctrl0)+1):p_num
+            all_ctrl[pj] =
+                [[(b - a) * rand(rng) + a for j = 1:ctrl_length] for i = 1:ctrl_num]
         end
     end
 end
@@ -332,11 +346,19 @@ end
 #### initialization velocity for PSO ####
 function initial_velocity_ctrl(opt, ctrl_length, ctrl_num, p_num, rng)
     if opt.ctrl_bound[1] == -Inf || opt.ctrl_bound[2] == Inf
-        velocity = 0.1 * (2.0 * rand(rng, ctrl_num, ctrl_length, p_num) - ones(ctrl_num, ctrl_length, p_num))
+        velocity =
+            0.1 * (
+                2.0 * rand(rng, ctrl_num, ctrl_length, p_num) -
+                ones(ctrl_num, ctrl_length, p_num)
+            )
     else
         a = opt.ctrl_bound[1]
         b = opt.ctrl_bound[2]
-        velocity = 0.1 * ((b - a) * rand(rng, ctrl_num, ctrl_length, p_num) + a * ones(ctrl_num, ctrl_length, p_num))
+        velocity =
+            0.1 * (
+                (b - a) * rand(rng, ctrl_num, ctrl_length, p_num) +
+                a * ones(ctrl_num, ctrl_length, p_num)
+            )
     end
     velocity
 end
@@ -344,20 +366,20 @@ end
 #### initialization measurements for DE and PSO ####
 function initial_M!(measurement0, C_all, dim, p_num, M_num, rng)
     if length(measurement0) > p_num
-        measurement0 = [measurement0[i] for i in 1:p_num]
+        measurement0 = [measurement0[i] for i = 1:p_num]
     end
     for pj in eachindex(measurement0)
         C_all[pj] = deepcopy(measurement0[pj])
     end
-    for pj in (length(measurement0)+1):p_num
-        M_tp = [Vector{ComplexF64}(undef, dim) for i in 1:M_num]
-        for mi in 1:M_num
+    for pj = (length(measurement0)+1):p_num
+        M_tp = [Vector{ComplexF64}(undef, dim) for i = 1:M_num]
+        for mi = 1:M_num
             r_ini = 2 * rand(rng, dim) - ones(dim)
             r = r_ini / norm(r_ini)
             phi = 2 * pi * rand(rng, dim)
-            M_tp[mi] = [r[i] * exp(1.0im * phi[i]) for i in 1:dim]
+            M_tp[mi] = [r[i] * exp(1.0im * phi[i]) for i = 1:dim]
         end
-        C_all[pj] = [[M_tp[i][j] for j in 1:dim] for i in 1:M_num]
+        C_all[pj] = [[M_tp[i][j] for j = 1:dim] for i = 1:M_num]
         # orthogonality and normalization 
         C_all[pj] = gramschmidt(C_all[pj])
     end
@@ -365,28 +387,27 @@ end
 
 function initial_LinearComb!(measurement0, B_all, basis_num, M_num, p_num, rng)
     if length(measurement0) > p_num
-        measurement0 = [measurement0[i] for i in 1:p_num]
+        measurement0 = [measurement0[i] for i = 1:p_num]
     end
     for pj in eachindex(measurement0)
         B_all[pj] = deepcopy(measurement0[pj])
     end
 
-    for pj in (length(measurement0)+1):p_num
-        B_all[pj] = [rand(rng, basis_num) for i in 1:M_num]
+    for pj = (length(measurement0)+1):p_num
+        B_all[pj] = [rand(rng, basis_num) for i = 1:M_num]
         bound_LC_coeff!(B_all[pj], rng)
     end
 end
 
 function initial_Rotation!(measurement0, s_all, dim, p_num, rng)
     if length(measurement0) > p_num
-        measurement0 = [measurement0[i] for i in 1:p_num]
+        measurement0 = [measurement0[i] for i = 1:p_num]
     end
     for pj in eachindex(measurement0)
-        s_all[pj] = [measurement0[pj][i] for i in 1:dim*dim]
+        s_all[pj] = [measurement0[pj][i] for i = 1:dim*dim]
     end
 
-    for pj in (length(measurement0)+1):p_num
+    for pj = (length(measurement0)+1):p_num
         s_all[pj] = rand(rng, dim * dim)
     end
 end
-

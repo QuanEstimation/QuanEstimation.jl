@@ -60,21 +60,21 @@ function Hamiltonian(H0::T, dH::Vector{T}) where {T}
     return Hamiltonian{T,Vector{T},N}(H0, dH, nothing)
 end
 
-function Hamiltonian(H0::H, dH::D, params::NTuple{N,R}) where {H<:Function, D<:Function,N,R}
+function Hamiltonian(H0::H, dH::D, params::NTuple{N,R}) where {H<:Function,D<:Function,N,R}
     return Hamiltonian{typeof(H0),typeof(dH),N}(H0, dH, params)
 end
 
-function Hamiltonian(H0::H, dH::D, params::Vector{R}) where {H<:Function, D<:Function,R}
+function Hamiltonian(H0::H, dH::D, params::Vector{R}) where {H<:Function,D<:Function,R}
     N = length(params)
     return Hamiltonian{typeof(H0),typeof(dH),N}(H0, dH, params)
 end
 
-function Hamiltonian(H0::H, dH::D, params::Number) where {H<:Function, D<:Function}
+function Hamiltonian(H0::H, dH::D, params::Number) where {H<:Function,D<:Function}
     N = length(params)
     return Hamiltonian{typeof(H0),typeof(dH),N}(H0, dH, [params])
 end
 
-function Hamiltonian(H0::H, dH::D) where {H<:Function, D<:Function}
+function Hamiltonian(H0::H, dH::D) where {H<:Function,D<:Function}
     return Hamiltonian{H,D,Nothing}(H0, dH, nothing)
 end
 
@@ -88,78 +88,180 @@ mutable struct LindbladData <: AbstractDynamicsData
     reltol::Real
 end
 
-LindbladData(hamiltonian, tspan; decay=nothing, Hc=nothing, ctrl=nothing, abstol=1e-6, reltol=1e-3) = LindbladData(hamiltonian, tspan, decay, Hc, ctrl, abstol, reltol)
+LindbladData(
+    hamiltonian,
+    tspan;
+    decay = nothing,
+    Hc = nothing,
+    ctrl = nothing,
+    abstol = 1e-6,
+    reltol = 1e-3,
+) = LindbladData(hamiltonian, tspan, decay, Hc, ctrl, abstol, reltol)
 
 # Constructor of Lindblad dynamics
 # NonDecay, NonControl
-function Lindblad(ham::Hamiltonian, tspan::AbstractVector; dyn_method::Union{Symbol,String}=:Ode)
+function Lindblad(
+    ham::Hamiltonian,
+    tspan::AbstractVector;
+    dyn_method::Union{Symbol,String} = :Ode,
+)
     p = ham.params
-    return Lindblad{typeof(ham),NonDecay,NonControl,eval(Symbol(dyn_method)),Some}(LindbladData(ham, tspan), p)
+    return Lindblad{typeof(ham),NonDecay,NonControl,eval(Symbol(dyn_method)),Some}(
+        LindbladData(ham, tspan),
+        p,
+    )
 end
 
-function Lindblad(H0::T, dH::D, tspan::AbstractVector; dyn_method::Union{Symbol,String}=:Ode) where {T,D}
+function Lindblad(
+    H0::T,
+    dH::D,
+    tspan::AbstractVector;
+    dyn_method::Union{Symbol,String} = :Ode,
+) where {T,D}
     ham = Hamiltonian(H0, dH)
-    return Lindblad{typeof(ham),NonDecay,NonControl,eval(Symbol(dyn_method)),Nothing}(LindbladData(ham, tspan), nothing)
+    return Lindblad{typeof(ham),NonDecay,NonControl,eval(Symbol(dyn_method)),Nothing}(
+        LindbladData(ham, tspan),
+        nothing,
+    )
 end
 
 # Decay, NonControl,
 
-function Lindblad(ham::Hamiltonian, tspan::AbstractVector, decay::AbstractVector; dyn_method::Union{Symbol,String}=:Ode,)
+function Lindblad(
+    ham::Hamiltonian,
+    tspan::AbstractVector,
+    decay::AbstractVector;
+    dyn_method::Union{Symbol,String} = :Ode,
+)
     p = ham.params
-    return Lindblad{typeof(ham),Decay,NonControl,eval(Symbol(dyn_method)),Some}(LindbladData(ham, tspan; decay=decay), p)
+    return Lindblad{typeof(ham),Decay,NonControl,eval(Symbol(dyn_method)),Some}(
+        LindbladData(ham, tspan; decay = decay),
+        p,
+    )
 end
 
-function Lindblad(H0::H, dH::D, tspan::AbstractVector, decay::AbstractVector; dyn_method::Union{Symbol,String}=:Ode,) where {H,D}
+function Lindblad(
+    H0::H,
+    dH::D,
+    tspan::AbstractVector,
+    decay::AbstractVector;
+    dyn_method::Union{Symbol,String} = :Ode,
+) where {H,D}
     ham = Hamiltonian(H0, dH)
-    return Lindblad{typeof(ham),Decay,NonControl,eval(Symbol(dyn_method)),Nothing}(LindbladData(ham, tspan; decay=decay), nothing)
+    return Lindblad{typeof(ham),Decay,NonControl,eval(Symbol(dyn_method)),Nothing}(
+        LindbladData(ham, tspan; decay = decay),
+        nothing,
+    )
 end
 
 # NonDecay, Control
-function Lindblad(H0::H, dH::D, tspan::AbstractVector, Hc::Vector{M}; ctrl=ZeroCTRL(), dyn_method::Union{Symbol,String}=:Ode,) where {H,D,M<:AbstractMatrix}
+function Lindblad(
+    H0::H,
+    dH::D,
+    tspan::AbstractVector,
+    Hc::Vector{M};
+    ctrl = ZeroCTRL(),
+    dyn_method::Union{Symbol,String} = :Ode,
+) where {H,D,M<:AbstractMatrix}
     ham = Hamiltonian(H0, dH)
-    return Lindblad{typeof(ham),NonDecay,Control,eval(Symbol(dyn_method)),Nothing}(LindbladData(
-            ham, tspan; Hc=complex.(Hc), ctrl=init_ctrl(Hc, tspan, ctrl),
-        ), nothing)
+    return Lindblad{typeof(ham),NonDecay,Control,eval(Symbol(dyn_method)),Nothing}(
+        LindbladData(ham, tspan; Hc = complex.(Hc), ctrl = init_ctrl(Hc, tspan, ctrl)),
+        nothing,
+    )
 end
 
-function Lindblad(ham::Hamiltonian, tspan::AbstractVector, Hc::Vector{M}; ctrl=ZeroCTRL(), dyn_method::Union{Symbol,String}=:Ode,) where {M<:AbstractMatrix}
+function Lindblad(
+    ham::Hamiltonian,
+    tspan::AbstractVector,
+    Hc::Vector{M};
+    ctrl = ZeroCTRL(),
+    dyn_method::Union{Symbol,String} = :Ode,
+) where {M<:AbstractMatrix}
     p = ham.params
-    return Lindblad{typeof(ham),NonDecay,Control,eval(Symbol(dyn_method)),Some}(LindbladData(
-            ham, tspan; Hc=complex.(Hc), ctrl=init_ctrl(Hc, tspan, ctrl),
-        ), p)
+    return Lindblad{typeof(ham),NonDecay,Control,eval(Symbol(dyn_method)),Some}(
+        LindbladData(ham, tspan; Hc = complex.(Hc), ctrl = init_ctrl(Hc, tspan, ctrl)),
+        p,
+    )
 end
 
 # Decay, Control
-function Lindblad(H0::H, dH::D, tspan::AbstractVector, Hc::Vector{M}, decay::AbstractVector; ctrl=ZeroCTRL(), dyn_method::Union{Symbol,String}=:Ode,) where {H,D,M<:AbstractMatrix}
+function Lindblad(
+    H0::H,
+    dH::D,
+    tspan::AbstractVector,
+    Hc::Vector{M},
+    decay::AbstractVector;
+    ctrl = ZeroCTRL(),
+    dyn_method::Union{Symbol,String} = :Ode,
+) where {H,D,M<:AbstractMatrix}
     ham = Hamiltonian(H0, dH)
-    return Lindblad{typeof(ham),Decay,Control,eval(Symbol(dyn_method)),Nothing}(LindbladData(
-            ham, tspan; decay=decay, Hc=complex.(Hc), ctrl=init_ctrl(Hc, tspan, ctrl),
-        ), nothing)
+    return Lindblad{typeof(ham),Decay,Control,eval(Symbol(dyn_method)),Nothing}(
+        LindbladData(
+            ham,
+            tspan;
+            decay = decay,
+            Hc = complex.(Hc),
+            ctrl = init_ctrl(Hc, tspan, ctrl),
+        ),
+        nothing,
+    )
 end
 
 
-function Lindblad(ham::Hamiltonian, tspan::AbstractVector, Hc::Vector{M}, decay::AbstractVector; ctrl=ZeroCTRL(), dyn_method::Union{Symbol,String}=:Ode,) where {M<:AbstractMatrix}
+function Lindblad(
+    ham::Hamiltonian,
+    tspan::AbstractVector,
+    Hc::Vector{M},
+    decay::AbstractVector;
+    ctrl = ZeroCTRL(),
+    dyn_method::Union{Symbol,String} = :Ode,
+) where {M<:AbstractMatrix}
     p = ham.params
-    return Lindblad{typeof(ham),Decay,Control,eval(Symbol(dyn_method)),Some}(LindbladData(
-            ham, tspan; decay=decay,Hc=complex.(Hc), ctrl=init_ctrl(Hc, tspan, ctrl),
-        ), p)
+    return Lindblad{typeof(ham),Decay,Control,eval(Symbol(dyn_method)),Some}(
+        LindbladData(
+            ham,
+            tspan;
+            decay = decay,
+            Hc = complex.(Hc),
+            ctrl = init_ctrl(Hc, tspan, ctrl),
+        ),
+        p,
+    )
 end
 
 init_ctrl(Hc, tspan, ctrl::AbstractVector) = ctrl
 init_ctrl(Hc, tspan, ::ZeroCTRL) = [zero(tspan[1:end-1]) for _ in eachindex(Hc)]
-init_ctrl(Hc, tspan, ctrl::LinearCTRL) = [[ctrl.k * t .+ ctrl.c0 for t in tspan[1:end-1]] for _ in eachindex(Hc)]
-init_ctrl(Hc, tspan, ctrl::SineCTRL) = [[ctrl.A * sin(ctrl.ω * t .+ ctrl.ϕ) for t in tspan[1:end-1]] for _ in eachindex(Hc)]
+init_ctrl(Hc, tspan, ctrl::LinearCTRL) =
+    [[ctrl.k * t .+ ctrl.c0 for t in tspan[1:end-1]] for _ in eachindex(Hc)]
+init_ctrl(Hc, tspan, ctrl::SineCTRL) =
+    [[ctrl.A * sin(ctrl.ω * t .+ ctrl.ϕ) for t in tspan[1:end-1]] for _ in eachindex(Hc)]
 function init_ctrl(Hc, tspan, ctrl::SawCTRL)
     ramp = (tspan[end] - tspan[1]) / ctrl.n
-    return [[2 * ctrl.k * (t / ramp - floor(1 / 2 + t / ramp)) for t in tspan[1:end-1]] for _ in eachindex(Hc)]
+    return [
+        [2 * ctrl.k * (t / ramp - floor(1 / 2 + t / ramp)) for t in tspan[1:end-1]] for
+        _ in eachindex(Hc)
+    ]
 end
 function init_ctrl(Hc, tspan, ctrl::TriangleCTRL)
     ramp = (tspan[end] - tspan[1]) / ctrl.n
-    return [[2*abs(2 * ctrl.k * (t / ramp - floor(1 / 2 + t / ramp)))-1 for t in tspan[1:end-1]] for _ in eachindex(Hc)]
+    return [
+        [
+            2 * abs(2 * ctrl.k * (t / ramp - floor(1 / 2 + t / ramp))) - 1 for
+            t in tspan[1:end-1]
+        ] for _ in eachindex(Hc)
+    ]
 end
 
-init_ctrl(Hc, tspan, ctrl::GaussianCTRL) = [[ctrl.A * exp(-((t - ctrl.μ)^2) / (2 * ctrl.σ)) for t in tspan[1:end-1]] for _ in eachindex(Hc)]
-init_ctrl(Hc, tspan, ctrl::GaussianEdgeCTRL) = [[ctrl.A * (1- exp(-t^2 / ctrl.σ)- exp(-(t-(tspan[end]-tspan[1]))^2 / ctrl.σ)) for t in tspan[1:end-1]] for _ in eachindex(Hc)]
+init_ctrl(Hc, tspan, ctrl::GaussianCTRL) = [
+    [ctrl.A * exp(-((t - ctrl.μ)^2) / (2 * ctrl.σ)) for t in tspan[1:end-1]] for
+    _ in eachindex(Hc)
+]
+init_ctrl(Hc, tspan, ctrl::GaussianEdgeCTRL) = [
+    [
+        ctrl.A * (1 - exp(-t^2 / ctrl.σ) - exp(-(t - (tspan[end] - tspan[1]))^2 / ctrl.σ)) for
+        t in tspan[1:end-1]
+    ] for _ in eachindex(Hc)
+]
 
 
 para_type(::Lindblad{Hamiltonian{T,D,1},TS}) where {T,D,TS} = :single_para

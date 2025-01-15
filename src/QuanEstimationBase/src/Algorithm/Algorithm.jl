@@ -3,11 +3,11 @@ abstract type AbstractAlgorithm end
 abstract type AbstractGRAPE <: AbstractAlgorithm end
 
 struct GRAPE{T<:Number} <: AbstractGRAPE
-    max_episode::Int 
+    max_episode::Int
     epsilon::T
 end
 
-struct GRAPE_Adam{T<:Number, N<:Number} <: AbstractGRAPE
+struct GRAPE_Adam{T<:Number,N<:Number} <: AbstractGRAPE
     max_episode::Int
     epsilon::T
     beta1::N
@@ -28,7 +28,8 @@ Control optimization algorithm: GRAPE.
 - `beta2`: The exponential decay rate for the second moment estimates.
 - `Adam`: Whether or not to use Adam for updating control coefficients.   
 """
-GRAPE(;max_episode=300, epsilon=0.01, beta1=0.90, beta2=0.99, Adam::Bool=true) = Adam ? GRAPE_Adam(max_episode, epsilon, beta1, beta2) : GRAPE(max_episode, epsilon)
+GRAPE(; max_episode = 300, epsilon = 0.01, beta1 = 0.90, beta2 = 0.99, Adam::Bool = true) =
+    Adam ? GRAPE_Adam(max_episode, epsilon, beta1, beta2) : GRAPE(max_episode, epsilon)
 
 abstract type AbstractautoGRAPE <: AbstractAlgorithm end
 struct autoGRAPE{T<:Number} <: AbstractautoGRAPE
@@ -36,14 +37,15 @@ struct autoGRAPE{T<:Number} <: AbstractautoGRAPE
     epsilon::T
 end
 
-struct autoGRAPE_Adam{T<:Number, N<:Number} <: AbstractautoGRAPE
+struct autoGRAPE_Adam{T<:Number,N<:Number} <: AbstractautoGRAPE
     max_episode::Int
     epsilon::T
     beta1::N
     beta2::N
 end
 
-autoGRAPE(max_episode, epsilon, beta1, beta2) = autoGRAPE_Adam(max_episode, epsilon, beta1, beta2)
+autoGRAPE(max_episode, epsilon, beta1, beta2) =
+    autoGRAPE_Adam(max_episode, epsilon, beta1, beta2)
 
 """
 
@@ -56,15 +58,23 @@ Control optimization algorithm: auto-GRAPE.
 - `beta2`: The exponential decay rate for the second moment estimates.
 - `Adam`: Whether or not to use Adam for updating control coefficients.   
 """
-autoGRAPE(;max_episode=300, epsilon=0.01, beta1=0.90, beta2=0.99, Adam::Bool=true) = Adam ? autoGRAPE_Adam(max_episode, epsilon, beta1, beta2) : autoGRAPE(max_episode, epsilon)
+autoGRAPE(;
+    max_episode = 300,
+    epsilon = 0.01,
+    beta1 = 0.90,
+    beta2 = 0.99,
+    Adam::Bool = true,
+) =
+    Adam ? autoGRAPE_Adam(max_episode, epsilon, beta1, beta2) :
+    autoGRAPE(max_episode, epsilon)
 
-abstract type AbstractAD <:  AbstractAlgorithm end
+abstract type AbstractAD <: AbstractAlgorithm end
 struct AD{T<:Number} <: AbstractAD
     max_episode::Number
     epsilon::T
 end
 
-struct AD_Adam{T<:Number, N<:Number} <: AbstractAD
+struct AD_Adam{T<:Number,N<:Number} <: AbstractAD
     max_episode::Number
     epsilon::T
     beta1::N
@@ -83,14 +93,15 @@ Optimization algorithm: AD.
 - `beta2`: The exponential decay rate for the second moment estimates.
 - `Adam`: Whether or not to use Adam for updating control coefficients.
 """
-AD(;max_episode=300, epsilon=0.01, beta1=0.90, beta2=0.99, Adam::Bool=true) = Adam ? AD_Adam(max_episode, epsilon, beta1, beta2) : AD(max_episode, epsilon)
+AD(; max_episode = 300, epsilon = 0.01, beta1 = 0.90, beta2 = 0.99, Adam::Bool = true) =
+    Adam ? AD_Adam(max_episode, epsilon, beta1, beta2) : AD(max_episode, epsilon)
 
 ## TODO: try using immutable struct here. Consider [Accesors.jl](https://github.com/JuliaObjects/Accessors.jl) or Setfield.jl for update. 
 
 mutable struct PSO{T<:Number} <: AbstractAlgorithm
-    max_episode::Union{Int,Vector{Int}} 
+    max_episode::Union{Int,Vector{Int}}
     p_num::Int
-    ini_particle::Union{Tuple, Nothing}
+    ini_particle::Union{Tuple,Nothing}
     c0::T
     c1::T
     c2::T
@@ -108,13 +119,19 @@ Optimization algorithm: PSO.
 - `c1`: The exploitation weight that attracts the particle to its best previous position, also known as cognitive learning factor.
 - `c2`: The exploitation weight that attracts the particle to the best position in the neighborhood, also known as social learning factor. 
 """
-PSO(;max_episode::Union{T,Vector{T}} where {T<:Int}=[1000, 100], p_num::Number=10, ini_particle=nothing, c0::Number=1.0, c1::Number=2.0, c2::Number=2.0) =
-    PSO(max_episode, p_num, ini_particle, c0, c1, c2)
+PSO(;
+    max_episode::Union{T,Vector{T}} where {T<:Int} = [1000, 100],
+    p_num::Number = 10,
+    ini_particle = nothing,
+    c0::Number = 1.0,
+    c1::Number = 2.0,
+    c2::Number = 2.0,
+) = PSO(max_episode, p_num, ini_particle, c0, c1, c2)
 
 mutable struct DE{T<:Number} <: AbstractAlgorithm
     max_episode::Int
     p_num::Int
-    ini_population::Union{Tuple, Nothing}
+    ini_population::Union{Tuple,Nothing}
     c::T
     cr::T
 end
@@ -130,7 +147,13 @@ Optimization algorithm: DE.
 - `c`: Mutation constant.
 - `cr`: Crossover constant.
 """
-DE(;max_episode::Number=1000, p_num::Number=10, ini_population=nothing, c::Number=1.0,cr::Number=0.5) = DE(max_episode, p_num, ini_population, c, cr)
+DE(;
+    max_episode::Number = 1000,
+    p_num::Number = 10,
+    ini_population = nothing,
+    c::Number = 1.0,
+    cr::Number = 0.5,
+) = DE(max_episode, p_num, ini_population, c, cr)
 
 struct DDPG{R<:AbstractRNG} <: AbstractAlgorithm
     max_episode::Int
@@ -153,13 +176,17 @@ Optimization algorithm: DE.
 - `layer_dim`: The number of neurons in the hidden layer.
 - `seed`: Random seed.
 """
-DDPG(;max_episode::Int=500, layer_num::Int=3, layer_dim::Int=200, seed::Number=1234) =
-    DDPG(max_episode, layer_num, layer_dim, StableRNG(seed))
+DDPG(;
+    max_episode::Int = 500,
+    layer_num::Int = 3,
+    layer_dim::Int = 200,
+    seed::Number = 1234,
+) = DDPG(max_episode, layer_num, layer_dim, StableRNG(seed))
 
 struct NM{N<:Number} <: AbstractAlgorithm
     max_episode::Int
     p_num::Int
-    ini_state::Union{AbstractVector, Nothing} 
+    ini_state::Union{AbstractVector,Nothing}
     ar::N
     ae::N
     ac::N
@@ -179,7 +206,15 @@ State optimization algorithm: NM.
 - `ac`: Constraction constant.
 - `as0`: Shrink constant.
 """
-NM(;max_episode::Int=1000, p_num::Int=10, nelder_mead=nothing, ar::Number=1.0, ae::Number=2.0, ac::Number=0.5, as0::Number=0.5) = NM(max_episode, p_num, nelder_mead, ar, ae, ac, as0)
+NM(;
+    max_episode::Int = 1000,
+    p_num::Int = 10,
+    nelder_mead = nothing,
+    ar::Number = 1.0,
+    ae::Number = 2.0,
+    ac::Number = 0.5,
+    as0::Number = 0.5,
+) = NM(max_episode, p_num, nelder_mead, ar, ae, ac, as0)
 
 struct RI <: AbstractAlgorithm
     max_episode::Int
@@ -192,7 +227,7 @@ end
 State optimization algorithm: RI.
 - `max_episode`: The number of episodes.
 """
-RI(;max_episode::Int=300) = RI(max_episode)
+RI(; max_episode::Int = 300) = RI(max_episode)
 
 alg_type(::AD) = :AD
 alg_type(::AD_Adam) = :AD

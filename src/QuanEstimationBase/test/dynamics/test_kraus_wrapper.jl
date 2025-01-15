@@ -34,11 +34,11 @@ function test_KrausWrapper()
     @testset "Kraus_StateOpt" begin
         @test test_Kraus_StateOpt()
     end
-    
+
     @testset "Kraus_AbstractMopt" begin
         @test test_Kraus_AbstractMopt()
     end
-    
+
     @testset "Kraus_CompOpt" begin
         @test test_Kraus_CompOpt()
     end

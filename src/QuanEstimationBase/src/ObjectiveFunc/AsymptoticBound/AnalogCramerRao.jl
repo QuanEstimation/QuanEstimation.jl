@@ -5,12 +5,12 @@ function decomposition(A)
     return R
 end
 
-function HCRB(scheme::AbstractScheme; C=nothing, eps=GLOBAL_EPS)
+function HCRB(scheme::AbstractScheme; C = nothing, eps = GLOBAL_EPS)
     if isnothing(C)
-        C = I(get_param_num(param_data(scheme).hamiltonian|>typeof))
+        C = I(get_param_num(param_data(scheme).hamiltonian |> typeof))
     end
     rho, drho = evolve(scheme)
-    return HCRB(rho, drho, C;eps =eps)
+    return HCRB(rho, drho, C; eps = eps)
 end
 
 """
@@ -23,24 +23,19 @@ Caltulate the Holevo Cramer-Rao bound (HCRB) via the semidefinite program (SDP).
 - `W`: Weight matrix.
 - `eps`: Machine epsilon.
 """
-function HCRB(
-    ρ::AbstractMatrix,
-    dρ::AbstractVector,
-    C::AbstractMatrix;
-    eps=GLOBAL_EPS,
-) 
+function HCRB(ρ::AbstractMatrix, dρ::AbstractVector, C::AbstractMatrix; eps = GLOBAL_EPS)
     if length(dρ) == 1
         println(
             "In the single-parameter scenario, the HCRB is equivalent to the QFI. This function will return the value of the QFI.",
         )
-        f = QFIM_SLD(ρ, dρ[1]; eps=eps)
+        f = QFIM_SLD(ρ, dρ[1]; eps = eps)
         return f
     elseif rank(C) == 1
         println(
-            "For rank-one wight matrix, the HCRB is equivalent to QFIM. This function will return the value of Tr(WF^{-1})."
+            "For rank-one wight matrix, the HCRB is equivalent to QFIM. This function will return the value of Tr(WF^{-1}).",
         )
-        F = QFIM_SLD(ρ, dρ; eps=eps)
-        return tr(C*pinv(F))
+        F = QFIM_SLD(ρ, dρ; eps = eps)
+        return tr(C * pinv(F))
     else
         Holevo_bound(ρ, dρ, C; eps = eps)
     end
@@ -51,7 +46,7 @@ function Holevo_bound(
     dρ::AbstractVector,
     C::AbstractMatrix;
     eps = GLOBAL_EPS,
-) 
+)
 
     dim = size(ρ)[1]
     num = dim * dim
@@ -91,7 +86,7 @@ function Holevo_bound(
         end
     end
     problem = minimize(tr(C * V), constraints)
-    Convex.solve!(problem, SCS.Optimizer, silent_solver=true)
+    Convex.solve!(problem, SCS.Optimizer, silent_solver = true)
     return evaluate(tr(C * V))
 end
 
@@ -113,28 +108,28 @@ Nagaoka-Hayashi bound (NHB) via the semidefinite program (SDP).
 - `dρ`: Derivatives of the density matrix on the unknown parameters to be estimated. For example, drho[0] is the derivative vector on the first parameter.
 - `W`: Weight matrix.
 """
-function NHB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix) 
+function NHB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix)
 
     dim = size(ρ)[1]
     para_num = length(dρ)
 
     #=========optimization variables===========#
-    L_tp = [[Variable() for i in 1:para_num] for j in 1:para_num]
-    for para_i in 1:para_num
-        for para_j in para_i:para_num
+    L_tp = [[Variable() for i = 1:para_num] for j = 1:para_num]
+    for para_i = 1:para_num
+        for para_j = para_i:para_num
             L_tp[para_i][para_j] = ComplexVariable(dim, dim)
             constraints = [transpose(conj(L_tp[para_i][para_j])) == L_tp[para_i][para_j]]
             L_tp[para_j][para_i] = L_tp[para_i][para_j]
         end
     end
-    L = vcat([hcat(L_tp[i]...) for i in 1:para_num]...)
-    X = [ComplexVariable(dim, dim) for j in 1:para_num]
+    L = vcat([hcat(L_tp[i]...) for i = 1:para_num]...)
+    X = [ComplexVariable(dim, dim) for j = 1:para_num]
 
     #============add constraints===============#
-    constraints += [[L vcat(X...); hcat(X...) Matrix{Float64}(I, dim, dim)] ⪰ 0]         
+    constraints += [[L vcat(X...); hcat(X...) Matrix{Float64}(I, dim, dim)] ⪰ 0]
     for i = 1:para_num
         constraints += [tr(X[i] * ρ[i]) == 0]
-        constraints += [transpose(conj(X[i])) == X[i]]  
+        constraints += [transpose(conj(X[i])) == X[i]]
         for j = 1:para_num
             if i == j
                 constraints += [tr(X[i] * dρ[j]) == 1]
@@ -144,6 +139,6 @@ function NHB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix)
         end
     end
     problem = minimize(real(tr(kron(W, ρ) * L)), constraints)
-    Convex.solve!(problem, SCS.Optimizer, silent_solver=true)
+    Convex.solve!(problem, SCS.Optimizer, silent_solver = true)
     return evaluate(real(tr(kron(W, ρ) * L)))
 end

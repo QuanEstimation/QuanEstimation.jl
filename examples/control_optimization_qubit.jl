@@ -22,7 +22,7 @@ M1 = 0.5 * [1.0+0.0im 1.0; 1.0 1.0]
 M2 = 0.5 * [1.0+0.0im -1.0; -1.0 1.0]
 M = [M1, M2]
 # time length for the evolution
-tspan = range(0.0, 10.0, length=2500)
+tspan = range(0.0, 10.0, length = 2500)
 # guessed control coefficients
 cnum = length(tspan) - 1
 ctrl = [zeros(cnum) for _ in eachindex(Hc)]
@@ -30,7 +30,7 @@ ctrl_bound = [-2.0, 2.0]
 
 ##==========choose measurement optimization algorithm==========##
 ##-------------algorithm: auto-GRAPE---------------------##
-alg = autoGRAPE(Adam=true, max_episode=300, epsilon=0.01, beta1=0.90, beta2=0.99)
+alg = autoGRAPE(Adam = true, max_episode = 300, epsilon = 0.01, beta1 = 0.90, beta2 = 0.99)
 
 ##-------------algorithm: GRAPE---------------------##
 # alg = GRAPE(Adam=true, max_episode=300, epsilon=0.01, beta1=0.90, beta2=0.99)
@@ -51,14 +51,14 @@ alg = autoGRAPE(Adam=true, max_episode=300, epsilon=0.01, beta1=0.90, beta2=0.99
 # objective function: QFI
 obj = QFIM_obj()
 # input the dynamics data
-dynamics = Lindblad(H0, dH, tspan, Hc, decay; dyn_method=:Expm)
-scheme = GeneralScheme(; probe=rho0, param=dynamics,)
+dynamics = Lindblad(H0, dH, tspan, Hc, decay; dyn_method = :Expm)
+scheme = GeneralScheme(; probe = rho0, param = dynamics)
 
 # choose the optimization type
-opt = ControlOpt(ctrl=ctrl, ctrl_bound=ctrl_bound, seed=1234)
+opt = ControlOpt(ctrl = ctrl, ctrl_bound = ctrl_bound, seed = 1234)
 
 # run the control optimization problem
-optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=true)
+optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = true)
 
 ##-------------objective function: CFI---------------------##
 # # objective function: CFI
