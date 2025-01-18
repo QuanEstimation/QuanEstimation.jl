@@ -15,6 +15,7 @@ abstract type AbstractParameterization end
 
 include("Lindblad/Lindblad.jl")
 include("Kraus/Kraus.jl")
+include("QubitDynamics.jl")
 
 function get_parameter_region_length(scheme::AbstractScheme)
     x = scheme.EstimationStrategy.x

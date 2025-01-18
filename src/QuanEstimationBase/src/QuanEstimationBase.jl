@@ -16,7 +16,7 @@ export ControlOpt,
     StateControlMeasurementOpt
 export Copt, Sopt, Mopt, SMopt, CMopt, SCopt, SCMopt
 export evolve
-export Lindblad, Hamiltonian
+export Lindblad, Hamiltonian, QubitDephasing
 export QFIM, CFIM, HCRB, NHB
 export QFIM_obj, CFIM_obj, HCRB_obj
 export VTB, QVTB, QZZB, BCRB, BQCRB
