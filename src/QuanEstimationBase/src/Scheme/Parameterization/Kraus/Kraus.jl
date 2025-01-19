@@ -1,13 +1,14 @@
+abstract type AbstractKraus <: AbstractParameterization end
 abstract type AbstractKrausData end
 
-mutable struct Kraus{KT,DKT,NK,NP} <: AbstractParameterization
+
+mutable struct Kraus{KT,DKT,NK,NP} <: AbstractKraus
     data::AbstractKrausData
     params::Union{Nothing,AbstractVector}
 end
 
 include("KrausData.jl")
 include("KrausParamerization.jl")
-# include("KrausWrapper.jl")
 
 # function set_state(dynamics::Kraus, state::AbstractVector)
 #     temp = deepcopy(dynamics)

@@ -271,7 +271,7 @@ function expm(
 end
 
 function expm(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,NonDecay,NonControl,S},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,NonControl,S},M,E},
 ) where {HT,M,E,S}
     (; hamiltonian, tspan) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -281,7 +281,7 @@ function expm(
 end
 
 function expm(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,Decay,NonControl,S},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,NonControl,S},M,E},
 ) where {HT,M,E,S}
     (; hamiltonian, tspan, decay) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -291,7 +291,7 @@ function expm(
 end
 
 function expm(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,NonDecay,Control,S},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,Control,S},M,E},
 ) where {HT,M,E,S}
     (; hamiltonian, tspan, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -301,7 +301,7 @@ function expm(
 end
 
 function expm(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,Decay,Control,S},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,Control,S},M,E},
 ) where {HT,M,E,S}
     (; hamiltonian, tspan, decay, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -625,7 +625,7 @@ ode(tspan, ρ0, H0, dH, decay, Hc, ctrl) =
     ode(tspan, ρ0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
 
 function ode(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,NonDecay,NonControl,S},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,NonControl,S},M,E},
 ) where {HT,M,E,S}
     (; hamiltonian, tspan) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -635,7 +635,7 @@ function ode(
 end
 
 function ode(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,Decay,NonControl,S},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,NonControl,S},M,E},
 ) where {HT,M,E,S}
     (; hamiltonian, tspan, decay) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -645,7 +645,7 @@ function ode(
 end
 
 function ode(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,NonDecay,Control,S},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,Control,S},M,E},
 ) where {HT,M,E,S}
     (; hamiltonian, tspan, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -655,7 +655,7 @@ function ode(
 end
 
 function ode(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,Decay,Control,S},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,Control,S},M,E},
 ) where {HT,M,E,S}
     (; hamiltonian, tspan, decay, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -755,7 +755,7 @@ end
 
 
 function evaluate_hamiltonian(
-    scheme::Scheme{S,Lindblad{HT,DT,CT,ST,Nothing},TS},
+    scheme::Scheme{S,LindbladDynamics{HT,DT,CT,ST,Nothing},TS},
 ) where {S,HT,DT,CT,ST,TS}
     (; hamiltonian,) = param_data(scheme)
     return evaluate_hamiltonian(hamiltonian)
@@ -784,7 +784,7 @@ end
 
 #### evolution of pure states under time-independent Hamiltonian without noise and controls ####
 function evolve(
-    scheme::Scheme{Ket,Lindblad{HT,NonDecay,NonControl,Expm,P},M,E},
+    scheme::Scheme{Ket,LindbladDynamics{HT,NonDecay,NonControl,Expm,P},M,E},
 ) where {HT,M,E,P}
     (; tspan) = param_data(scheme)
     ψ0 = state_data(scheme)
@@ -805,7 +805,7 @@ function evolve(
 end
 
 function evolve(
-    scheme::Scheme{Ket,Lindblad{HT,NonDecay,NonControl,Ode,P},M,E},
+    scheme::Scheme{Ket,LindbladDynamics{HT,NonDecay,NonControl,Ode,P},M,E},
 ) where {HT,M,E,P}
     (; tspan) = param_data(scheme)
     ψ0 = state_data(scheme)
@@ -833,7 +833,7 @@ end
 
 #### evolution of density matrix under time-independent Hamiltonian without noise and controls ####
 function evolve(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,NonDecay,NonControl,Expm,P},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,NonControl,Expm,P},M,E},
 ) where {HT,M,E,P}
     (; tspan) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -856,7 +856,7 @@ end
 
 
 function evolve(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,NonDecay,NonControl,Ode,P},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,NonControl,Ode,P},M,E},
 ) where {HT,M,E,P}
     (; tspan) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -884,7 +884,7 @@ end
 #### evolution of pure states under time-independent Hamiltonian  
 #### with noise but without controls
 function evolve(
-    scheme::Scheme{Ket,Lindblad{HT,Decay,NonControl,Expm,P},M,E},
+    scheme::Scheme{Ket,LindbladDynamics{HT,Decay,NonControl,Expm,P},M,E},
 ) where {HT,M,E,P}
     (; tspan, decay) = param_data(scheme)
     ψ0 = state_data(scheme)
@@ -907,7 +907,7 @@ end
 
 
 function evolve(
-    scheme::Scheme{Ket,Lindblad{HT,Decay,NonControl,Ode,P},M,E},
+    scheme::Scheme{Ket,LindbladDynamics{HT,Decay,NonControl,Ode,P},M,E},
 ) where {HT,M,E,P}
     (; tspan, decay) = param_data(scheme)
     ψ0 = state_data(scheme)
@@ -948,7 +948,7 @@ end
 #### evolution of density matrix under time-independent Hamiltonian  
 #### with noise but without controls
 function evolve(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,Decay,NonControl,Expm,P},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,NonControl,Expm,P},M,E},
 ) where {HT,M,E,P}
     (; tspan, decay) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -969,7 +969,7 @@ function evolve(
 end
 
 function evolve(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,Decay,NonControl,Ode,P},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,NonControl,Ode,P},M,E},
 ) where {HT,M,E,P}
     (; tspan, decay) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -1011,7 +1011,7 @@ end
 #### evolution of density matrix under time-independent Hamiltonian 
 #### with controls but without noise #### 
 function evolve(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,NonDecay,Control,Expm,P},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,Control,Expm,P},M,E},
 ) where {HT,M,E,P}
     (; tspan, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -1038,7 +1038,7 @@ function evolve(
 end
 
 function evolve(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,NonDecay,Control,Ode,P},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,Control,Ode,P},M,E},
 ) where {HT,M,E,P}
     (; tspan, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -1070,7 +1070,7 @@ end
 
 #### evolution of density matrix under time-independent Hamiltonian with noise and controls #### 
 function evolve(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,Decay,Control,Expm,P},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,Control,Expm,P},M,E},
 ) where {HT,M,E,P}
     (; tspan, decay, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -1096,7 +1096,7 @@ function evolve(
 end
 
 function evolve(
-    scheme::Scheme{DensityMatrix,Lindblad{HT,Decay,Control,Ode,P},M,E},
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,Control,Ode,P},M,E},
 ) where {HT,M,E,P}
     (; tspan, decay, Hc, ctrl, abstol, reltol) = param_data(scheme)
     ρ0 = state_data(scheme)
@@ -1144,10 +1144,8 @@ function evolve(
     ρt[end], ∂ρt_∂x
 end
 
-evolve(scheme::Scheme) = evolve(scheme.data)
-
 #### evolution of state under time-independent Hamiltonian with noise and controls #### 
-function evolve(scheme::Scheme{Ket,Lindblad{HT,Decay,Control,Expm,P},M,E}) where {HT,M,E,P}
+function evolve(scheme::Scheme{Ket,LindbladDynamics{HT,Decay,Control,Expm,P},M,E}) where {HT,M,E,P}
     (; tspan, decay, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(scheme)
@@ -1171,7 +1169,7 @@ function evolve(scheme::Scheme{Ket,Lindblad{HT,Decay,Control,Expm,P},M,E}) where
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
-function evolve(scheme::Scheme{Ket,Lindblad{HT,Decay,Control,Ode,P},M,E}) where {HT,M,E,P}
+function evolve(scheme::Scheme{Ket,LindbladDynamics{HT,Decay,Control,Ode,P},M,E}) where {HT,M,E,P}
     (; tspan, decay, Hc, ctrl) = param_data(scheme)
     ψ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(scheme)
@@ -1215,7 +1213,7 @@ function evolve(scheme::Scheme{Ket,Lindblad{HT,Decay,Control,Ode,P},M,E}) where 
     ρt[end], ∂ρt_∂x
 end
 # #### evolution of pure states under time-dependent Hamiltonian without noise and controls ####
-# function evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Vector{Matrix{T}}, Vector{Vector{Matrix{T}}}, N},NonDecay, NonControl, Expm, P}, M, E}) where {T, N, M, E} 
+# function evolve(scheme::Scheme{Ket, LindbladDynamics{Hamiltonian{Vector{Matrix{T}}, Vector{Vector{Matrix{T}}}, N},NonDecay, NonControl, Expm, P}, M, E}) where {T, N, M, E} 
 #     (; hamiltonian, tspan) = param_data(scheme)
 #     ψ0 = state_data(scheme)
 #     H0, dH = evaluate_hamiltonian(hamiltonian)
@@ -1233,7 +1231,7 @@ end
 #     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 # end
 
-# function evolve(scheme::Scheme{Ket, Lindblad{Hamiltonian{Vector{Matrix{T}}, Vector{Vector{Matrix{T}}}, N},NonDecay, NonControl, Ode, P}, M, E}) where {T, N, M, E} 
+# function evolve(scheme::Scheme{Ket, LindbladDynamics{Hamiltonian{Vector{Matrix{T}}, Vector{Vector{Matrix{T}}}, N},NonDecay, NonControl, Ode, P}, M, E}) where {T, N, M, E} 
 #     (; hamiltonian, tspan) = param_data(scheme)
 #     ψ0 = state_data(scheme)
 #     H0, dH = evaluate_hamiltonian(hamiltonian)
@@ -1377,7 +1375,7 @@ end
 # end
 
 # function propagate(
-#     dynamics::Lindblad{noisy,controlled,dm,P},
+#     dynamics::LindbladDynamics{noisy,controlled,dm,P},
 #     ρₜ::AbstractMatrix,
 #     dρₜ::AbstractVector,
 #     a::Vector{R},
@@ -1402,7 +1400,7 @@ end
 # end
 
 # function propagate(
-#     dynamics::Lindblad{noiseless,controlled,dm,P},
+#     dynamics::LindbladDynamics{noiseless,controlled,dm,P},
 #     ρₜ::AbstractMatrix,
 #     dρₜ::AbstractVector,
 #     a::Vector{R},

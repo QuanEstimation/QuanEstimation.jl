@@ -19,7 +19,7 @@ function error_evaluation(
 end
 
 function param_error_evaluation(
-    scheme::Scheme{S,Lindblad{HT,DT,CT,Expm,P},M,E},
+    scheme::Scheme{S,LindbladDynamics{HT,DT,CT,Expm,P},M,E},
     input_error_scaling;
     verbose::Bool = true,
     abstol = 1e-6,
@@ -44,7 +44,7 @@ function param_error_evaluation(
 end
 
 function param_error_evaluation(
-    scheme::Scheme{S,Lindblad{HT,DT,CT,Ode,P},M,E},
+    scheme::Scheme{S,LindbladDynamics{HT,DT,CT,Ode,P},M,E},
     input_error_scaling;
     verbose::Bool = true,
     abstol = 1e-6,

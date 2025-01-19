@@ -4,12 +4,12 @@ abstract type AbstractDynamics <: AbstractParameterization end
 
 abstract type AbstractDynamicsData end
 
-mutable struct Lindblad{H,D,C,S,P} <: AbstractDynamics
+mutable struct LindbladDynamics{H,D,C,S,P} <: AbstractDynamics
     data::AbstractDynamicsData
     params::Union{Nothing,AbstractVector}
 end
 
-# Lindblad(data::D) where D = Lindblad{D, Nothing}(data, nothing)
+# Lindblad(data::D) where D = LindbladDynamics{D, Nothing}(data, nothing)
 
 include("LindbladData.jl")
 include("LindbladDynamics.jl")
@@ -27,7 +27,7 @@ function eachparam(scheme::Scheme{S,P,M,E}) where {S,P<:AbstractDynamics,M,E}
     [p for p in zip(scheme.Parameterization.params...)]
 end
 
-function set_ctrl!(dynamics::Lindblad, ctrl)
+function set_ctrl!(dynamics::LindbladDynamics, ctrl)
     set_ctrl!(dynamics.data, ctrl)
     dynamics
 end
@@ -43,13 +43,13 @@ function set_ctrl(dynamics::Scheme, ctrl)
     temp
 end
 
-function set_state(dynamics::Lindblad, state::AbstractVector)
+function set_state(dynamics::LindbladDynamics, state::AbstractVector)
     temp = deepcopy(dynamics)
     setfield!(temp.data, :ψ0, state)
     temp
 end
 
-function set_state(dynamics::Lindblad, state::AbstractMatrix)
+function set_state(dynamics::LindbladDynamics, state::AbstractMatrix)
     temp = deepcopy(dynamics)
     setfield!(temp.data, :ρ0, state)
     temp

@@ -1,4 +1,4 @@
-abstract type AbstractParameterization end
+abstract type AbstractParameterization <: AbstractScheme end
 
 # evolve(scheme::AbstractScheme) = evolve(scheme.Parameterization)
 # evolve(param::AbstractParameterization) = _evolve(param.data)

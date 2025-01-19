@@ -1,11 +1,11 @@
-function evaluate_kraus(scheme::Scheme{S,Kraus,M,E}) where {S,M,E}
+function evaluate_kraus(scheme::Scheme{S,Kraus{KT,DKT,NK,NP},M,E}) where {S,KT,DKT,NK,NP,M,E}
     (; K, dK) = param_data(scheme)
     return K, dK
 end
 
 function evaluate_kraus(
-    scheme::Scheme{S,Kraus{F1,F2,N},M,E},
-) where {S,N,M,E,F1<:Function,F2<:Function}
+    scheme::Scheme{S,Kraus{F1,F2,NK,NP},M,E},
+) where {S,M,E,F1<:Function,F2<:Function,NK,NP}
     (; K, dK) = param_data(scheme)
     params = scheme.Parameterization.params
     KM = K([params...])
@@ -20,8 +20,8 @@ end
 
 Evolution of pure states under time-independent Hamiltonian without noise and controls
 """
-function evolve(scheme::Scheme{Ket,Kraus,M,E}) where {M,E}
-    (; ψ0) = state_data(scheme)
+function evolve(scheme::Scheme{Ket,Kraus{KT,DKT,NK,NP},M,E}) where {KT,DKT,NK,NP,M,E}
+    ψ0 = state_data(scheme)
     K, dK = evaluate_kraus(scheme)
     ρ0 = ψ0 * ψ0'
 
@@ -43,8 +43,8 @@ end
 
 Evolution of density matrix under time-independent Hamiltonian without noise and controls.
 """
-function evolve(scheme::Scheme{DensityMatrix,Kraus,M,E}) where {M,E}
-    (; ρ0) = state_data(scheme)
+function evolve(scheme::Scheme{DensityMatrix,Kraus{KT,DKT,NK,NP},M,E}) where {KT,DKT,NK,NP,M,E}
+    ρ0 = state_data(scheme)
     K, dK = evaluate_kraus(scheme)
     K_num = length(K)
     para_num = length(dK[1])

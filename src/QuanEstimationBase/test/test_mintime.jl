@@ -1,5 +1,4 @@
 using Test
-include("/home/hmyuuu/.julia/dev/QuanEstimation/src/Common/mintime.jl")
 
 # Test mintime function with binary algorithm
 @testset "mintime with binary algorithm" begin
