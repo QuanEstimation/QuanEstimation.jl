@@ -21,7 +21,7 @@ end
 function test_Mopt_Projection()
     M = QuanEstimationBase.SIC(2)
     seed = 1234
-    opt = Mopt_Projection(; M = M, seed = seed)
+    opt = MeasurementOpt(; mtype = :Projection, M = M, seed = seed)
     @test opt.M == M
     @test opt.rng == MersenneTwister(seed)
 end
@@ -31,7 +31,7 @@ function test_Mopt_LinearComb()
     POVM_basis = QuanEstimationBase.SIC(2)
     M_num = 2
     seed = 1234
-    opt = Mopt_LinearComb(POVM_basis = POVM_basis, M_num = M_num, seed = seed)
+    opt = MeasurementOpt(; mtype = :LC,POVM_basis = POVM_basis, M_num = M_num, seed = seed)
     @test opt.POVM_basis == POVM_basis
     @test opt.M_num == M_num
     @test opt.rng == MersenneTwister(seed)
@@ -41,7 +41,7 @@ end
 function test_Mopt_Rotation()
     POVM_basis = QuanEstimationBase.SIC(2)
     seed = 1234
-    opt = Mopt_Rotation(POVM_basis = POVM_basis, seed = seed)
+    opt = MeasurementOpt(; mtype = :Rotation, POVM_basis = POVM_basis, seed = seed)
     @test opt.POVM_basis == POVM_basis
     @test opt.rng == MersenneTwister(seed)
 end

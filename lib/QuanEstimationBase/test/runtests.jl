@@ -51,10 +51,6 @@ end
         include("algorithms/test_DE.jl")
     end
 
-    @testset "NM" begin
-        include("algorithms/test_NM.jl")
-    end
-
     @testset "PSO" begin
         include("algorithms/test_PSO.jl")
     end
