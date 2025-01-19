@@ -1,5 +1,4 @@
-using QuanEstimation
-using Trapz
+using QuanEstimation, Trapz
 
 # free Hamiltonian
 function H0_func(x)
@@ -51,24 +50,3 @@ f_BQCRB3 = BQCRB(scheme; btype = 3)
 f_QVTB = QVTB(scheme)
 f_QZZB = QZZB(scheme)
 
-# rho = Vector{Matrix{ComplexF64}}(undef, length(x))
-# drho = Vector{Vector{Matrix{ComplexF64}}}(undef, length(x))
-# for i in eachindex(x) 
-#     H0_tp = H0_func(x[i])
-#     dH_tp = dH_func(x[i])
-#     rho_tp, drho_tp = QuanEstimation.expm(tspan, rho0, H0_tp, dH_tp)
-#     rho[i], drho[i] = rho_tp[end], drho_tp[end]
-# end
-
-# # Classical Bayesian bounds
-# f_BCRB1 = BCRB([x], p, [], rho, drho, btype=1)
-# f_BCRB2 = BCRB([x], p, [], rho, drho, btype=2)
-# f_BCRB3 = BCRB([x], p, dp, rho, drho, btype=3)
-# f_VTB = VTB([x], p, dp, rho, drho)
-
-# # Quantum Bayesian bounds
-# f_BQCRB1 = BQCRB([x], p, [], rho, drho, btype=1)
-# f_BQCRB2 = BQCRB([x], p, [], rho, drho, btype=2)
-# f_BQCRB3 = BQCRB([x], p, dp, rho, drho, btype=3)
-# f_QVTB = QVTB([x], p, dp, rho, drho)
-# f_QZZB = QZZB([x], p, rho)

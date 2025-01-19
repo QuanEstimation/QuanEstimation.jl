@@ -1,4 +1,4 @@
-abstract type AbstractMeasurement end
+abstract type AbstractMeasurement <: AbstractScheme end
 abstract type AbstractPOVM end
 abstract type SIC_POVM <: AbstractPOVM end
 abstract type POVM <: AbstractPOVM end

@@ -1,4 +1,5 @@
-abstract type EstimationStrategy end
+abstract type EstimationStrategy <: AbstractScheme end
+# abstract type ParameterRegion end
 struct Strategy <: EstimationStrategy
     x::Union{Nothing, AbstractVector} #ParameterRegion
     p::Union{Nothing, AbstractVector} #PriorDistribution

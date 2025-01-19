@@ -16,6 +16,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
+env:
+  RETESTITEMS_NWORKERS: 4
+  RETESTITEMS_NWORKER_THREADS: 2
+
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
@@ -47,6 +51,4 @@ jobs:
         run: |
           import Pkg
           Pkg.Registry.update()
-          Pkg.instantiate()
-          Pkg.test(; coverage="user")
         shell: julia --color=yes --code-coverage=user --depwarn=yes --project=src/QuanEstimationBase {0}

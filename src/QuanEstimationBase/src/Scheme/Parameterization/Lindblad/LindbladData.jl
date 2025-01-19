@@ -106,7 +106,7 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 )
     p = ham.params
-    return Lindblad{typeof(ham),NonDecay,NonControl,eval(Symbol(dyn_method)),Some}(
+    return LindbladDynamics{typeof(ham),NonDecay,NonControl,eval(Symbol(dyn_method)),Some}(
         LindbladData(ham, tspan),
         p,
     )
@@ -119,7 +119,7 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 ) where {T,D}
     ham = Hamiltonian(H0, dH)
-    return Lindblad{typeof(ham),NonDecay,NonControl,eval(Symbol(dyn_method)),Nothing}(
+    return LindbladDynamics{typeof(ham),NonDecay,NonControl,eval(Symbol(dyn_method)),Nothing}(
         LindbladData(ham, tspan),
         nothing,
     )
@@ -134,7 +134,7 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 )
     p = ham.params
-    return Lindblad{typeof(ham),Decay,NonControl,eval(Symbol(dyn_method)),Some}(
+    return LindbladDynamics{typeof(ham),Decay,NonControl,eval(Symbol(dyn_method)),Some}(
         LindbladData(ham, tspan; decay = decay),
         p,
     )
@@ -148,7 +148,7 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 ) where {H,D}
     ham = Hamiltonian(H0, dH)
-    return Lindblad{typeof(ham),Decay,NonControl,eval(Symbol(dyn_method)),Nothing}(
+    return LindbladDynamics{typeof(ham),Decay,NonControl,eval(Symbol(dyn_method)),Nothing}(
         LindbladData(ham, tspan; decay = decay),
         nothing,
     )
@@ -164,7 +164,7 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 ) where {H,D,M<:AbstractMatrix}
     ham = Hamiltonian(H0, dH)
-    return Lindblad{typeof(ham),NonDecay,Control,eval(Symbol(dyn_method)),Nothing}(
+    return LindbladDynamics{typeof(ham),NonDecay,Control,eval(Symbol(dyn_method)),Nothing}(
         LindbladData(ham, tspan; Hc = complex.(Hc), ctrl = init_ctrl(Hc, tspan, ctrl)),
         nothing,
     )
@@ -178,7 +178,7 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 ) where {M<:AbstractMatrix}
     p = ham.params
-    return Lindblad{typeof(ham),NonDecay,Control,eval(Symbol(dyn_method)),Some}(
+    return LindbladDynamics{typeof(ham),NonDecay,Control,eval(Symbol(dyn_method)),Some}(
         LindbladData(ham, tspan; Hc = complex.(Hc), ctrl = init_ctrl(Hc, tspan, ctrl)),
         p,
     )
@@ -195,7 +195,7 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 ) where {H,D,M<:AbstractMatrix}
     ham = Hamiltonian(H0, dH)
-    return Lindblad{typeof(ham),Decay,Control,eval(Symbol(dyn_method)),Nothing}(
+    return LindbladDynamics{typeof(ham),Decay,Control,eval(Symbol(dyn_method)),Nothing}(
         LindbladData(
             ham,
             tspan;
@@ -217,7 +217,7 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 ) where {M<:AbstractMatrix}
     p = ham.params
-    return Lindblad{typeof(ham),Decay,Control,eval(Symbol(dyn_method)),Some}(
+    return LindbladDynamics{typeof(ham),Decay,Control,eval(Symbol(dyn_method)),Some}(
         LindbladData(
             ham,
             tspan;
@@ -264,22 +264,21 @@ init_ctrl(Hc, tspan, ctrl::GaussianEdgeCTRL) = [
 ]
 
 
-para_type(::Lindblad{Hamiltonian{T,D,1},TS}) where {T,D,TS} = :single_para
-para_type(::Lindblad{Hamiltonian{T,D,N},TS}) where {T,D,N,TS} = :multi_para
+para_type(::LindbladDynamics{Hamiltonian{T,D,1},DC,C,S,P}) where {T,D,DC,C,S,P} = :single_para
+para_type(::LindbladDynamics{Hamiltonian{T,D,N},DC,C,S,P}) where {T,D,N,DC,C,S,P} = :multi_para
 
-get_param_num(::Type{Lindblad{H,TS}}) where {H,TS} = get_param_num(H)
+get_param_num(::Type{LindbladDynamics{H,D,C,S,P}}) where {H,D,C,S,P} = get_param_num(H)
 get_param_num(::Type{Hamiltonian{H,D,N}}) where {H,D,N} = N
-# get_param_num(::Scheme{S,L,M,E}) where {S,L,M,E} = get_param_num(L)
-# get_param_num(::Type{T}) where {T} = get_param_num(T)
+get_param_num(::Scheme{S,L,M,E}) where {S,L<:AbstractDynamics,M,E} = get_param_num(L)
 
 get_dim(ham::Hamiltonian) = size(ham.H0, 1)
 get_dim(data::LindbladData) = get_dim(data.hamiltonian)
-get_dim(dynamics::Lindblad) = get_dim(dynamics.data.hamiltonian)
+get_dim(dynamics::LindbladDynamics) = get_dim(dynamics.data.hamiltonian)
 
 get_ctrl_num(data::LindbladData) = length(data.Hc)
-get_ctrl_num(dynamics::Lindblad) = get_ctrl_num(dynamics.data)
+get_ctrl_num(dynamics::LindbladDynamics) = get_ctrl_num(dynamics.data)
 get_ctrl_num(scheme::Scheme) = get_ctrl_num(scheme.Parameterization)
 
 get_ctrl_length(data::LindbladData) = length(data.ctrl[1])
-get_ctrl_length(dynamics::Lindblad) = get_ctrl_length(dynamics.data)
+get_ctrl_length(dynamics::LindbladDynamics) = get_ctrl_length(dynamics.data)
 get_ctrl_length(scheme::Scheme) = get_ctrl_length(scheme.Parameterization)

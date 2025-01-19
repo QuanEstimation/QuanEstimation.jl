@@ -4,7 +4,9 @@ authors = ["Jing Liu <liujingphys@hust.edu.cn>", "Huaiming Yu <Huaimingyuuu@gmai
 version = "0.1.0"
 
 [deps]
+AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 Convex = "f65535da-76fb-5f13-bab9-19810c17039a"
+Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
@@ -32,7 +34,9 @@ PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
 QuanEstimationBasePyExt = "PythonCall"
 
 [compat]
+AbstractTrees = "0.4.5"
 Convex = "0.15"
+Crayons = "4.1.1"
 DelimitedFiles = "1"
 Distributions = "0.25"
 Flux = "0.12, 0.13, 0.14"

@@ -7,7 +7,7 @@ end
 
 function HCRB(scheme::AbstractScheme; C = nothing, eps = GLOBAL_EPS)
     if isnothing(C)
-        C = I(get_param_num(param_data(scheme).hamiltonian |> typeof))
+        C = I(get_param_num(scheme))
     end
     rho, drho = evolve(scheme)
     return HCRB(rho, drho, C; eps = eps)

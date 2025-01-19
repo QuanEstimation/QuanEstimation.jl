@@ -1,5 +1,5 @@
 
-abstract type AbstractStatePreparation end
+abstract type AbstractStatePreparation <: AbstractScheme end
 abstract type AbstractState end
 abstract type DensityMatrix <: AbstractState end
 abstract type Ket <: AbstractState end

@@ -15,4 +15,8 @@ include("utils.jl")
     @testset "Measurement Optimization" begin
         include("optimization/test_measurement_optimization.jl")
     end
+
+    @testset "Adaptive Estimation" begin
+        include("test_adaptive_estimation.jl")
+    end
 end
