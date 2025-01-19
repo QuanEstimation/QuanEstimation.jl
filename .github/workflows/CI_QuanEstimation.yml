@@ -59,7 +59,7 @@ jobs:
           Pkg.Registry.update()
           # Install packages present in subdirectories
           dev_pks = Pkg.PackageSpec[]
-          for path in ("src/QuanEstimationBase", "src/NVMagnetometer")
+          for path in ("lib/QuanEstimationBase", "lib/NVMagnetometer")
               push!(dev_pks, Pkg.PackageSpec(; path))
           end
           Pkg.develop(dev_pks)
