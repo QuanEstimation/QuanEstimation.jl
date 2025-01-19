@@ -1,17 +1,3 @@
-using Test
-using Random
-using QuanEstimationBase:
-    ControlOpt,
-    StateOpt,
-    Mopt_Projection,
-    Mopt_LinearComb,
-    Mopt_Rotation,
-    StateControlOpt,
-    ControlMeasurementOpt,
-    StateMeasurementOpt,
-    StateControlMeasurementOpt
-
-# Test for ControlOpt
 function test_ControlOpt()
     ctrl = [[1, 2, 3]]
     ctrl_bound = [-1, 1]

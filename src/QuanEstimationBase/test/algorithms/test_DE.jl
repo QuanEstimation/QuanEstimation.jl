@@ -1,17 +1,3 @@
-using Test
-using Random
-using QuanEstimationBase:
-    ControlOpt,
-    StateOpt,
-    Mopt_Projection,
-    Mopt_LinearComb,
-    Mopt_Rotation,
-    StateControlOpt,
-    ControlMeasurementOpt,
-    StateMeasurementOpt,
-    StateControlMeasurementOpt
-
-# Test for ControlOpt
 function test_ControlOpt()
     ctrl = [[1, 2, 3]]
     ctrl_bound = [-1, 1]
@@ -22,7 +8,6 @@ function test_ControlOpt()
     @test opt.rng == MersenneTwister(seed)
 end
 
-# Test for StateOpt
 function test_StateOpt()
     psi = [0.5, 0.5]
     seed = 1234
@@ -31,7 +16,6 @@ function test_StateOpt()
     @test opt.rng == MersenneTwister(seed)
 end
 
-# Test for Mopt_Projection
 function test_Mopt_Projection()
     M = QuanEstimationBase.SIC(2)
     seed = 1234
@@ -40,7 +24,6 @@ function test_Mopt_Projection()
     @test opt.rng == MersenneTwister(seed)
 end
 
-# Test for Mopt_LinearComb
 function test_Mopt_LinearComb()
     POVM_basis = QuanEstimationBase.SIC(2)
     M_num = 2
@@ -51,7 +34,6 @@ function test_Mopt_LinearComb()
     @test opt.rng == MersenneTwister(seed)
 end
 
-# Test for Mopt_Rotation
 function test_Mopt_Rotation()
     POVM_basis = QuanEstimationBase.SIC(2)
     seed = 1234
@@ -60,7 +42,6 @@ function test_Mopt_Rotation()
     @test opt.rng == MersenneTwister(seed)
 end
 
-# Run the tests
 function test_OptScenario()
     @testset "ControlOpt" begin
         test_ControlOpt()
@@ -83,5 +64,4 @@ function test_OptScenario()
     end
 end
 
-# Call the test function
 test_OptScenario()
