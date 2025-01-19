@@ -4,7 +4,7 @@ on:
       branches:
         - main
       paths:
-        - "src/QuanEstimationBase/**"
+        - "lib/QuanEstimationBase/**"
         - ".github/workflows/CI_QuanEstimationBase.yml"
   push:
     branches:
@@ -51,4 +51,4 @@ jobs:
         run: |
           import Pkg
           Pkg.Registry.update()
-        shell: julia --color=yes --code-coverage=user --depwarn=yes --project=src/QuanEstimationBase {0}
+        shell: julia --color=yes --code-coverage=user --depwarn=yes --project=lib/QuanEstimationBase {0}

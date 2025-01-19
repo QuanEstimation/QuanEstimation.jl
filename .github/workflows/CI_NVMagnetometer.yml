@@ -4,7 +4,7 @@ on:
       branches:
         - main
       paths:
-        - "src/NVMagnetometer/**"
+        - "lib/NVMagnetometer/**"
         - ".github/workflows/CI_NVMagnetometer.yml"
   push:
     branches:
@@ -53,10 +53,10 @@ jobs:
           Pkg.Registry.update()
           # Install packages present in subdirectories
           dev_pks = Pkg.PackageSpec[]
-          for path in ("src/QuanEstimationBase",)
+          for path in ("lib/QuanEstimationBase",)
               push!(dev_pks, Pkg.PackageSpec(; path))
           end
           Pkg.develop(dev_pks)
           Pkg.instantiate()
           Pkg.test(; coverage="user")
-        shell: julia --color=yes --code-coverage=user --depwarn=yes --project=src/NVMagnetometer {0}
+        shell: julia --color=yes --code-coverage=user --depwarn=yes --project=lib/NVMagnetometer {0}
