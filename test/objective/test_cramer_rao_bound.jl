@@ -61,10 +61,10 @@ end  # function test_qfim_bloch
 
 function test_qfim_gauss()
     R = ones(4)
-    dR = [zeros(4)]
+    dR = [R/2]
     D = I(4).|>Float64
     dD=[zeros(4,4)]
-    @test QFIM_Gauss(R, dR, D, dD) ≈ 0
+    @test QFIM_Gauss(R, dR, D, dD) > 0
 end  # function test_qfim_gauss
 
 function test_fim()
