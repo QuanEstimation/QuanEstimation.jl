@@ -16,6 +16,10 @@ include("utils.jl")
         include("optimization/test_measurement_optimization.jl")
     end
 
+    @testset "Comprehensive Optimization" begin
+        include("optimization/test_comprehensive_optimization.jl")
+    end
+
     @testset "Adaptive Estimation" begin
         include("test_adaptive_estimation.jl")
     end
