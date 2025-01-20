@@ -522,7 +522,7 @@ function optimize!(opt::StateControlOpt, alg::PSO, obj, scheme, output)
     initial_state!(psi0, particles, p_num, opt.rng)
     initial_ctrl!(opt, ctrl0, particles, p_num, opt.rng)
 
-    scheme_copy = set_ctrl!(scheme, [zeros(ctrl_length) for i = 1:ctrl_num])
+    scheme_copy = set_ctrl(scheme, [zeros(ctrl_length) for i = 1:ctrl_num])
     f_noctrl, f_comp = objective(obj, scheme_copy)
     f_ini, f_comp = objective(obj, scheme)
 
