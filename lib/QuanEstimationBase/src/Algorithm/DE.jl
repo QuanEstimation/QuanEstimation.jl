@@ -5,8 +5,8 @@ function optimize!(opt::ControlOpt, alg::DE, obj, scheme, output)
         ini_population = ([opt.ctrl],)
     end
     ini_population = ini_population[1]
-    ctrl_length = length(scheme.data.ctrl[1])
-    ctrl_num = length(scheme.data.Hc)
+    ctrl_length = get_ctrl_length(scheme)
+    ctrl_num = get_ctrl_num(scheme)
     populations = repeat(scheme, p_num)
 
     # initialization
@@ -20,7 +20,7 @@ function optimize!(opt::ControlOpt, alg::DE, obj, scheme, output)
     end
 
     set_f!(output, p_out[1])
-    set_buffer!(output, scheme.data.ctrl)
+    set_buffer!(output, param_data(scheme).ctrl)
     set_io!(output, f_noctrl, p_out[1])
     show(opt, output, obj, alg)
 
@@ -32,10 +32,10 @@ function optimize!(opt::ControlOpt, alg::DE, obj, scheme, output)
             for ci = 1:ctrl_num
                 for ti = 1:ctrl_length
                     ctrl_mut[ci][ti] =
-                        populations[mut_num[1]].data.ctrl[ci][ti] +
+                        param_data(populations[mut_num[1]]).ctrl[ci][ti] +
                         c * (
-                            populations[mut_num[2]].data.ctrl[ci][ti] -
-                            populations[mut_num[3]].data.ctrl[ci][ti]
+                            param_data(populations[mut_num[2]]).ctrl[ci][ti] -
+                            param_data(populations[mut_num[3]]).ctrl[ci][ti]
                         )
                 end
             end
@@ -48,7 +48,7 @@ function optimize!(opt::ControlOpt, alg::DE, obj, scheme, output)
                     if rand_num <= cr
                         ctrl_cross[cj][tj] = ctrl_mut[cj][tj]
                     else
-                        ctrl_cross[cj][tj] = populations[pj].data.ctrl[cj][tj]
+                        ctrl_cross[cj][tj] = param_data(populations[pj]).ctrl[cj][tj]
                     end
                 end
                 ctrl_cross[cj][cross_int] = ctrl_mut[cj][cross_int]
@@ -62,14 +62,14 @@ function optimize!(opt::ControlOpt, alg::DE, obj, scheme, output)
                 p_out[pj] = f_out
                 for ck = 1:ctrl_num
                     for tk = 1:ctrl_length
-                        populations[pj].data.ctrl[ck][tk] = ctrl_cross[ck][tk]
+                        param_data(populations[pj]).ctrl[ck][tk] = ctrl_cross[ck][tk]
                     end
                 end
             end
         end
         idx = findmax(p_fit)[2]
         set_f!(output, p_out[idx])
-        set_buffer!(output, populations[idx].data.ctrl)
+        set_buffer!(output, param_data(populations[idx]).ctrl)
         set_io!(output, p_out[idx], ei)
         show(output, obj)
     end
@@ -83,7 +83,7 @@ function optimize!(opt::StateOpt, alg::DE, obj, scheme, output)
         ini_population = ([opt.psi],)
     end
     ini_population = ini_population[1]
-    dim = length(scheme.data.ψ0)
+    dim = get_dim(scheme)
     populations = repeat(scheme, p_num)
     # initialization  
     initial_state!(ini_population, populations, p_num, opt.rng)
@@ -94,7 +94,7 @@ function optimize!(opt::StateOpt, alg::DE, obj, scheme, output)
     end
 
     set_f!(output, p_out[1])
-    set_buffer!(output, scheme.data.ψ0)
+    set_buffer!(output, scheme.StatePreparation.data)
     set_io!(output, p_out[1])
     show(opt, output, obj, alg)
 
@@ -105,10 +105,10 @@ function optimize!(opt::StateOpt, alg::DE, obj, scheme, output)
             state_mut = zeros(ComplexF64, dim)
             for ci = 1:dim
                 state_mut[ci] =
-                    populations[mut_num[1]].data.ψ0[ci] +
+                    populations[mut_num[1]].StatePreparation.data[ci] +
                     c * (
-                        populations[mut_num[2]].data.ψ0[ci] -
-                        populations[mut_num[3]].data.ψ0[ci]
+                        populations[mut_num[2]].StatePreparation.data[ci] -
+                        populations[mut_num[3]].StatePreparation.data[ci]
                     )
             end
             #crossover
@@ -119,25 +119,25 @@ function optimize!(opt::StateOpt, alg::DE, obj, scheme, output)
                 if rand_num <= cr
                     state_cross[cj] = state_mut[cj]
                 else
-                    state_cross[cj] = populations[pj].data.ψ0[cj]
+                    state_cross[cj] = populations[pj].StatePreparation.data[cj]
                 end
                 state_cross[cross_int] = state_mut[cross_int]
             end
             psi_cross = state_cross / norm(state_cross)
-            scheme_cross = set_state!(populations[pj], psi_cross)
-            f_out, f_cross = objective(obj, scheme_cross)
+            populations[pj].StatePreparation.data = psi_cross
+            f_out, f_cross = objective(obj, populations[pj])
             #selection
             if f_cross > p_fit[pj]
                 p_fit[pj] = f_cross
                 p_out[pj] = f_out
                 for ck = 1:dim
-                    populations[pj].data.ψ0[ck] = psi_cross[ck]
+                    populations[pj].StatePreparation.data[ck] = psi_cross[ck]
                 end
             end
         end
         idx = findmax(p_fit)[2]
         set_f!(output, p_out[idx])
-        set_buffer!(output, populations[idx].data.ψ0)
+        set_buffer!(output, state_data(populations[idx]))
         set_io!(output, p_out[idx], ei)
         show(output, obj)
     end

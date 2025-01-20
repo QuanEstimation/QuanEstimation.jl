@@ -20,8 +20,8 @@ export Lindblad, Hamiltonian, LindbladDynamics, Kraus, QubitDephasing
 export QFIM, CFIM, HCRB, NHB
 export QFIM_obj, CFIM_obj, HCRB_obj
 export VTB, QVTB, QZZB, BCRB, BQCRB
-export basis, SIC
-export autoGRAPE, GRAPE, PSO, DE, AD
+export basis, SIC, SpinSqueezing
+export autoGRAPE, GRAPE, PSO, DE, AD, NM
 export Scheme, DensityMatrix, Decay, Control, Expm, Ode, Strategy, POVM
 export error_evaluation, error_control, error_control_param, error_control_eps
 export state_data, param_data, meas_data, strat_data

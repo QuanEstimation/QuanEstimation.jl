@@ -16,7 +16,7 @@ function dp_func(x, mu, eta)
     return -(x - mu) * exp(-(x - mu)^2 / (2 * eta^2)) / (eta^3 * sqrt(2 * pi))
 end
 
-B, omega0 = 0.5 * pi, 1.0
+B, omega0 = 1.0, 0.5 * pi
 sx = [0.0 1.0; 1.0 0.0im]
 sy = [0.0 -im; im 0.0]
 sz = [1.0 0.0im; 0.0 -1.0]

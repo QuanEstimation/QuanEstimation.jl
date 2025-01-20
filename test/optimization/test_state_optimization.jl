@@ -1,4 +1,4 @@
-function test_sopt_autogrape_qfi(; savefile = false)
+function test_sopt_qfi(; savefile = false)
     (; tspan, psi, H0, dH, decay) = generate_LMG1_dynamics()
 
     dynamics = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
@@ -15,9 +15,24 @@ function test_sopt_autogrape_qfi(; savefile = false)
     @test f1 >= f0
     rm("f.csv")
     rm("states.dat")
+
+    alg = PSO(p_num=3, max_episode=[10, 10])
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
+
+    alg = DE(p_num=3, max_episode=10)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
+
+    alg = NM(p_num=5, max_episode=10)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
 end
 
-function test_sopt_autogrape_qfim(; savefile = false)
+function test_sopt_qfim(; savefile = false)
     (; tspan, psi, H0, dH, decay, W) = generate_LMG2_dynamics()
 
     dynamics = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
@@ -34,9 +49,24 @@ function test_sopt_autogrape_qfim(; savefile = false)
     @test f1 <= f0
     rm("f.csv")
     rm("states.dat")
+
+    alg = PSO(p_num=3, max_episode=[10, 10])
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
+
+    alg = DE(p_num=3, max_episode=10)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
+
+    alg = NM(p_num=5, max_episode=10)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
 end
 
-function test_sopt_autogrape_cfi(; savefile = false)
+function test_sopt_cfi(; savefile = false)
     (; tspan, psi, H0, dH, decay) = generate_LMG1_dynamics()
 
     dynamics = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
@@ -54,9 +84,25 @@ function test_sopt_autogrape_cfi(; savefile = false)
 
     rm("f.csv")
     rm("states.dat")
+
+    alg = PSO(p_num=3, max_episode=[10, 10])
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
+
+    alg = DE(p_num=3, max_episode=10)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
+
+
+    alg = NM(p_num=5, max_episode=10)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
 end
 
-function test_sopt_autogrape_cfim(; savefile = false)
+function test_sopt_cfim(; savefile = false)
     (; tspan, psi, H0, dH, decay, W) = generate_LMG2_dynamics()
 
     dynamics = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
@@ -73,22 +119,38 @@ function test_sopt_autogrape_cfim(; savefile = false)
     @test f1 <= f0
     rm("f.csv")
     rm("states.dat")
+
+    alg = PSO(p_num=3, max_episode=[10, 10])
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
+
+    alg = DE(p_num=3, max_episode=10)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
+
+
+    alg = NM(p_num=5, max_episode=10)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
 end
 
 
 function test_sopt()
-    @testset "State Optimization AD QFIM" begin
-        test_sopt_autogrape_qfi()
-        test_sopt_autogrape_qfi(savefile = true)
-        test_sopt_autogrape_qfim()
-        test_sopt_autogrape_qfim(savefile = true)
+    @testset "State Optimization QFIM" begin
+        test_sopt_qfi()
+        test_sopt_qfi(savefile = true)
+        test_sopt_qfim()
+        test_sopt_qfim(savefile = true)
     end
 
-    @testset "State Optimization AD CFIM" begin
-        test_sopt_autogrape_cfi()
-        test_sopt_autogrape_cfi(savefile = true)
-        test_sopt_autogrape_cfim()
-        test_sopt_autogrape_cfim(savefile = true)
+    @testset "State Optimization CFIM" begin
+        test_sopt_cfi()
+        test_sopt_cfi(savefile = true)
+        test_sopt_cfim()
+        test_sopt_cfim(savefile = true)
     end
 end
 
