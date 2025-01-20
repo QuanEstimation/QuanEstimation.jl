@@ -132,8 +132,7 @@ function test_mopt_rotation_pso_cfi(; savefile = false)
 
     obj = CFIM_obj()
     opt = MeasurementOpt(mtype = :Rotation, POVM_basis = POVM_basis, seed = 1234)
-    alg =
-        alg = PSO(
+    alg = PSO(
             p_num = 3,
             ini_particle = nothing,
             max_episode = [10, 10],
