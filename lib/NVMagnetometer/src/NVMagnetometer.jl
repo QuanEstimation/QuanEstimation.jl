@@ -165,6 +165,16 @@ QuanEstimationBase.CFIM(nv::NVMagnetometerScheme; kwargs...) =
     CFIM(getscheme(nv.data); kwargs...)
 QuanEstimationBase.HCRB(nv::NVMagnetometerScheme; kwargs...) =
     HCRB(getscheme(nv.data); kwargs...)
+    
+function QuanEstimationBase.optimize!(
+    nv::NVMagnetometerScheme,
+    opt;
+    algorithm = autoGRAPE(),
+    objective = QFIM_obj(),
+    savefile = false,
+)
+    QuanEstimationBase.optimize!(getscheme(nv.data), opt; algorithm = algorithm, objective = objective, savefile = savefile)
+end
 
 
 end # NVMagnetometer
