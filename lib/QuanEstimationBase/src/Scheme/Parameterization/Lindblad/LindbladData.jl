@@ -271,7 +271,8 @@ get_param_num(::Type{LindbladDynamics{H,D,C,S,P}}) where {H,D,C,S,P} = get_param
 get_param_num(::Type{Hamiltonian{H,D,N}}) where {H,D,N} = N
 get_param_num(::Scheme{S,L,M,E}) where {S,L<:AbstractDynamics,M,E} = get_param_num(L)
 
-get_dim(ham::Hamiltonian) = size(ham.H0, 1)
+get_dim(ham::Hamiltonian{H,DH,N}) where {H<:AbstractMatrix,DH,N} = size(ham.H0, 1)
+get_dim(data::Hamiltonian{F,DF,N}) where {F<:Function,DF,N}= size(data.H0(0.0), 1)
 get_dim(data::LindbladData) = get_dim(data.hamiltonian)
 get_dim(dynamics::LindbladDynamics) = get_dim(dynamics.data.hamiltonian)
 
