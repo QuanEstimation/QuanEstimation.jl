@@ -29,5 +29,12 @@ end
     @testset "Bayesian Cramer-Rao Bounds" begin
         include("objective/test_bayesian_cramer_rao_bound.jl")
     end
+end
 
+@testset "Resource" begin
+    include("test_resource.jl")
+end
+
+@testset "NV" begin
+    include("test_nv.jl")
 end

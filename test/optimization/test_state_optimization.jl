@@ -25,6 +25,11 @@ function test_sopt_qfi(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     rm("f.csv")
     rm("states.dat")
+
+    alg = NM(p_num=5, max_episode=10)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
 end
 
 function test_sopt_qfim(; savefile = false)
@@ -51,6 +56,11 @@ function test_sopt_qfim(; savefile = false)
     rm("states.dat")
 
     alg = DE(p_num=3, max_episode=10)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
+
+    alg = NM(p_num=5, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     rm("f.csv")
     rm("states.dat")
@@ -84,6 +94,12 @@ function test_sopt_cfi(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     rm("f.csv")
     rm("states.dat")
+
+
+    alg = NM(p_num=5, max_episode=10)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
 end
 
 function test_sopt_cfim(; savefile = false)
@@ -113,18 +129,24 @@ function test_sopt_cfim(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     rm("f.csv")
     rm("states.dat")
+
+
+    alg = NM(p_num=5, max_episode=10)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
 end
 
 
 function test_sopt()
-    @testset "State Optimization AD QFIM" begin
+    @testset "State Optimization QFIM" begin
         test_sopt_qfi()
         test_sopt_qfi(savefile = true)
         test_sopt_qfim()
         test_sopt_qfim(savefile = true)
     end
 
-    @testset "State Optimization AD CFIM" begin
+    @testset "State Optimization CFIM" begin
         test_sopt_cfi()
         test_sopt_cfi(savefile = true)
         test_sopt_cfim()
