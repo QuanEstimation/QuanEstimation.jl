@@ -454,11 +454,11 @@ function QFIM(
 ) where {T<:Complex}
 
     if LDtype == :SLD
-        return QFIM_SLD(ρ, dρ; eps = eps)
+        F = QFIM_SLD(ρ, dρ; eps = eps)
     elseif LDtype == :RLD
-        return QFIM_RLD(ρ, dρ; eps = eps)
+        F = QFIM_RLD(ρ, dρ; eps = eps)
     elseif LDtype == :LLD
-        return QFIM_LLD(ρ, dρ; eps = eps)
+        F = QFIM_LLD(ρ, dρ; eps = eps)
     else
         throw(ArgumentError("The LDtype should be chosen in {'SLD', 'RLD', 'LLD'}."))
     end
@@ -470,9 +470,6 @@ function QFIM(
         return F, LD
     end
 end
-
-QFIM(sym::Symbol, args...; kwargs...) = QFIM(Val{sym}, args...; kwargs...)
-
 
 function QFIM(
     scheme::Scheme;

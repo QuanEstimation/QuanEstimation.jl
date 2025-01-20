@@ -28,3 +28,6 @@ get_dim(k::Kraus) = get_dim(k.data)
 
 get_param_num(::Type{Kraus{KT,DKT,NK,NP}}) where {KT,DKT,NK,NP} = NP
 get_param_num(::Scheme{S,K,M,E}) where {S,K<:AbstractKraus,M,E} = get_param_num(K)
+
+para_type(::Kraus{KT,DKT,NK,NP}) where {KT,DKT,NK,NP} = NP == 1 ? :single_para : :multi_para
+para_type(::Scheme{S,K,M,E}) where {S,K<:AbstractKraus,M,E} = para_type(K)
