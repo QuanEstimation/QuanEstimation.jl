@@ -23,10 +23,10 @@ Online adaptive phase estimation in the MZI.
 """
 function online(apt::Adapt_MZI; target::String = "sharpness", output::String = "phi", res=nothing)
     (; x, p, rho0) = apt
-    adaptMZI_online(x, p, rho0, Symbol(output), target; res=res)
+    adaptMZI_online(x, p, rho0, Symbol(output),  Symbol(target); res=res)
 end
 
-function adaptMZI_online(x, p, rho0, output, target::Symbol; res=nothing)
+function adaptMZI_online(x, p, rho0, output, target; res=nothing)
     N = Int(sqrt(size(rho0, 1))) - 1
     a = destroy(N + 1) |> sparse
     exp_ix = [exp(1.0im * xi) for xi in x]
