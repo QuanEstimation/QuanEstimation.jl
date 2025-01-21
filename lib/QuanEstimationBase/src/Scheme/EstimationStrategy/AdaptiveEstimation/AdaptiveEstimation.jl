@@ -1,14 +1,14 @@
 struct AdaptiveStrategy <: EstimationStrategy
-    x::Any #ParameterRegion
-    p::Any #PriorDistribution
-    online::Bool
+    x #ParameterRegion
+    p #PriorDistribution
+    dp
 end
 
-AdaptiveStrategy(x::AbstractVector, p::AbstractArray; online = true) =
-    AdaptiveStrategy(x, p, online)
+AdaptiveStrategy(;x::AbstractVector=nothing, p::AbstractArray=nothing,dp::AbstractArray=nothing) =
+    AdaptiveStrategy(x, p, dp)
 
 function adapt_param!(scheme::Scheme{S,P,M,AdaptiveStrategy}, x) where {S,P,M}
-    scheme.Parameterization.params = [x...]
+    scheme.Parameterization.data.hamiltonian.params = [x...]
 end
 
 function adapt_scheme!(
@@ -23,8 +23,8 @@ function adapt_scheme!(
         adapt_param!(scheme, x)
         ρ, dρ = evolve(scheme)
         F_tp = CFIM(ρ, dρ, M; eps = eps)
-        append!(F_all, abs(det(F_tp)) < eps ? eps : 1.0 / real(tr(W * inv(F_tp))))
-        append!(ρ_all, [ρ])
+        push!(F_all, abs(det(F_tp)) < eps ? eps : 1.0 / real(tr(W * pinv(F_tp))))
+        push!(ρ_all, ρ)
     end
     return ρ_all, F_all
 end
@@ -35,18 +35,22 @@ function adapt!(
     savefile = false,
     max_episode::Int = 1000,
     W = nothing,
+    res = nothing,
     eps = GLOBAL_EPS,
 ) where {ST,PT,MT}
     (; x, p) = strat_data(scheme)
+
+    x_tmp = typeof(x) == Vector{Float64} ? [x] : x
     M = meas_data(scheme)
-    para_num = length(x)
+    para_num = length(x_tmp)
     if isnothing(W)
-        W = I(para_num)
+        W = I(para_num) |> Matrix
     end
 
     p_num = length(p |> vec)
 
-    x_list = [(Iterators.product(x...))...]
+
+    x_list =  [(Iterators.product(x_tmp...))...]
     rho_all, F_all = adapt_scheme!(scheme, x_list, M, W, eps)
     rho_all = reshape(rho_all, size(p))
     u = zeros(para_num)
@@ -54,31 +58,32 @@ function adapt!(
     if method == "FOP"
         F = reshape(F_all, size(p))
         idx = findmax(F)[2]
-        x_opt = [x[i][idx[i]] for i = 1:para_num]
+        x_opt = [x_tmp[i][idx[i]] for i = 1:para_num]
         println("The optimal parameter are $x_opt")
         if savefile == false
             y, xout = Int64[], Float64[]
             for ei = 1:max_episode
-                p, x_out, res_exp, u = iter_FOP_multipara(
+                p, x_out, res_exp, u = iter_FOP(
                     p,
                     p_num,
                     para_num,
-                    x,
+                    x_tmp,
                     x_list,
                     u,
                     rho_all,
                     M,
                     x_opt,
+                    res,
                     ei,
                 )
-                append!(xout, [x_out])
+                append!(xout, x_out)
                 append!(y, Int(res_exp + 1))
             end
             savefile_false(p, xout, y)
         else
             for ei = 1:max_episode
                 p, x_out, res_exp, u =
-                    iter_FOP(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, ei)
+                    iter_FOP(p, p_num, para_num, x_tmp, x_list, u, rho_all, M, x_opt, res, ei)
                 savefile_true(p, x_out, Int(res_exp + 1))
             end
         end
@@ -87,33 +92,38 @@ function adapt!(
             y, xout = Int64[], Float64[]
             for ei = 1:max_episode
                 p, x_out, res_exp, u =
-                    iter_MI(p, p_num, para_num, x, x_list, u, rho_all, M, ei)
-                append!(xout, [x_out])
+                    iter_MI(p, p_num, para_num, x_tmp, x_list, u, rho_all, M, res, ei)
+                append!(xout, x_out)
                 append!(y, Int(res_exp + 1))
             end
             savefile_false(p, xout, y)
         else
             for ei = 1:max_episode
                 p, x_out, res_exp, u =
-                    iter_MI(p, p_num, para_num, x, x_list, u, rho_all, M, ei)
+                    iter_MI(p, p_num, para_num, x_tmp, x_list, u, rho_all, M, res, ei)
                 savefile_true(p, x_out, Int(res_exp + 1))
             end
         end
     end
 end
 
-function iter_FOP(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, ei)
+function iter_FOP(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, res, ei)
     rho = Array{Matrix{ComplexF64}}(undef, p_num)
     for hj = 1:p_num
         x_idx = [findmin(abs.(x[k] .- (x_list[hj][k] + u[k])))[2] for k = 1:para_num]
         rho[hj] = rho_all[x_idx...]
     end
 
-    println("The tunable parameter are $u")
-    print("Please enter the experimental result: ")
-    enter = readline()
-    res_exp = parse(Int64, enter)
-    res_exp = Int(res_exp + 1)
+    if isnothing(res)
+        println("The tunable parameter are $u")
+        print("Please enter the experimental result: ")
+        enter = readline()
+        res_exp = parse(Int64, enter)
+        res_exp = Int(res_exp + 1)
+    else
+        res_exp = res[ei]
+        res_exp = Int(res_exp + 1)
+    end
 
     pyx_list = real.(tr.(rho .* [M[res_exp]]))
     pyx = reshape(pyx_list, size(p))
@@ -151,18 +161,23 @@ function iter_FOP(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, ei)
 end
 
 
-function iter_MI(p, p_num, para_num, x, x_list, u, rho_all, M, ei)
+function iter_MI(p, p_num, para_num, x, x_list, u, rho_all, M, res, ei)
     rho = Array{Matrix{ComplexF64}}(undef, p_num)
     for hj = 1:p_num
         x_idx = [findmin(abs.(x[k] .- (x_list[hj][k] + u[k])))[2] for k = 1:para_num]
         rho[hj] = rho_all[x_idx...]
     end
 
-    println("The tunable parameter are $u")
-    print("Please enter the experimental result: ")
-    enter = readline()
-    res_exp = parse(Int64, enter)
-    res_exp = Int(res_exp + 1)
+    if isnothing(res)
+        println("The tunable parameter are $u")
+        print("Please enter the experimental result: ")
+        enter = readline()
+        res_exp = parse(Int64, enter)
+        res_exp = Int(res_exp + 1)
+    else
+        res_exp = res[ei]
+        res_exp = Int(res_exp + 1)
+    end
 
     pyx_list = real.(tr.(rho .* [M[res_exp]]))
     pyx = reshape(pyx_list, size(p))
