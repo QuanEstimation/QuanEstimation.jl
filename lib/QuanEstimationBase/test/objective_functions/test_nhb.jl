@@ -24,7 +24,7 @@ W = one(zeros(2, 2))
 # time length for the evolution
 tspan = range(0.0, 5.0, length = 20)
 # dynamics
-rho, drho = QuanEstimationBase.expm(tspan, rho0, H0, dH, decay)
+rho, drho = QuanEstimationBase.expm(tspan, rho0, H0, dH; decay=decay)
 # calculation of the NHB
 f_HCRB, f_NHB = [], []
 for ti = 2:length(tspan)

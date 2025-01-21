@@ -24,7 +24,7 @@ M = [M1, M2]
 # time length for the evolution
 tspan = range(0.0, 50.0, length = 200)
 # dynamics
-rho, drho = expm(tspan, rho0, H0, dH, decay)
+rho, drho = expm(tspan, rho0, H0, dH;decay=decay)
 # calculation of the CFI and QFI
 Im, F = Matrix{Float64}[], Matrix{Float64}[]
 for ti in eachindex(tspan)
@@ -60,7 +60,7 @@ U = exp(im * pi / 8 * sx)
 
 # convexity
 p = 0.3
-@test (QuanEstimationBase.QFIM(
+@test (QFIM(
     p * ρ_0 + (1 - p) * ρ_1,
     [p * dr + (1 - p) * U * dr * U' for dr in drho[end]],
 )) |> x -> tr(x) >= 0

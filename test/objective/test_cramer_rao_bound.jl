@@ -2,7 +2,7 @@ using QuanEstimationBase:QFIM_RLD, QFIM_LLD, QFIM_pure
 function test_cramer_rao_bound_single_param()
     (; tspan, rho0, H0, dH, Hc, decay, ctrl, M) = generate_qubit_dynamics()
 
-    rho, drho = expm(tspan, rho0, H0, dH, decay=decay, Hc=Hc, ctrl=ctrl)
+    rho, drho = expm(tspan, rho0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
     # calculation of the CFI and QFI
     Im, F, H = Float64[], Float64[], Float64[]
     for ti = 2:length(tspan)

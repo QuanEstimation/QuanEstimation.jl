@@ -20,7 +20,7 @@ M = [M1, M2]
 # time length for the evolution
 tspan = range(0.0, 50.0, length = 200)
 # dynamics
-rho, drho = QuanEstimationBase.expm(tspan, rho0, H0, dH, decay)
+rho, drho = QuanEstimationBase.expm(tspan, rho0, H0, dH; decay=decay)
 
 # calculation of the CFI and QFI
 Im, F = Float64[], Float64[]
