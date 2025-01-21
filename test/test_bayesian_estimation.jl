@@ -1,14 +1,7 @@
+using QuanEstimationBase:BCB
 function test_bayes()
-    function H0_func(x)
-        return 0.5 * pi/2 * (σx() * cos(x) + σz() * sin(x))
-    end
-    function dH_func(x)
-        return [0.5 * pi/2 * (-σx() * sin(x) + σz() * cos(x))]
-    end
-
-    rho0 = 0.5 * ones(2, 2)
-    x = range(0.0, stop = 0.5 * pi, length = 100) |> Vector
-    p = (1.0 / (x[end] - x[1])) * ones(length(x))
+    (; rho0, x, p, dp, H0_func, dH_func) = generate_bayes()
+    M = SIC(2)
     tspan = range(0.0, stop = 1.0, length = 1000)
     rho = Vector{Matrix{ComplexF64}}(undef, length(x))
     for i in eachindex(x)
@@ -23,11 +16,16 @@ function test_bayes()
     y = [rand() > 0.7 ? 1 : 0 for _ = 1:500]
 
     #===============Maximum a posteriori estimation===============#
+    pout, xout = Bayes([x], p, rho, y; M = M, savefile = false)
+    pout, xout = Bayes([x], p, rho, y; M = M, savefile = true)
     pout, xout = Bayes([x], p, rho, y; M = M, estimator = "MAP", savefile = false)
+    pout, xout = Bayes([x], p, rho, y; M = M, estimator = "MAP", savefile = true)
 
     #===============Maximum likelihood estimation===============#
     Lout, xout = MLE([x], rho, y, M = M; savefile = false)
+    Lout, xout = MLE([x], rho, y, M = M; savefile = true)
 
+    BCB([x], p, rho)
     rm("bayes.dat")
     rm("MLE.dat")
 end

@@ -21,12 +21,12 @@ Online adaptive phase estimation in the MZI.
 - `target`: Setting the target function for calculating the tunable phase. Options are: "sharpness" and "MI".
 - `output`: Choose the output variables. Options are: "phi" and "dphi".
 """
-function online(apt::Adapt_MZI; target::Symbol = :sharpness, output::String = "phi")
+function online(apt::Adapt_MZI; target::Symbol = :sharpness, output::String = "phi", res=nothing)
     (; x, p, rho0) = apt
-    adaptMZI_online(x, p, rho0, Symbol(output), target)
+    adaptMZI_online(x, p, rho0, Symbol(output), target; res=res)
 end
 
-function adaptMZI_online(x, p, rho0, output, target::Symbol)
+function adaptMZI_online(x, p, rho0, output, target::Symbol; res=nothing)
     N = Int(sqrt(size(rho0, 1))) - 1
     a = destroy(N + 1) |> sparse
     exp_ix = [exp(1.0im * xi) for xi in x]
@@ -39,10 +39,14 @@ function adaptMZI_online(x, p, rho0, output, target::Symbol)
 
     if output == :phi
         for ei = 1:N-1
-            println("The tunable phase is $phi ($ei episodes)")
-            print("Please enter the experimental result: ")
-            enter = readline()
-            u = parse(Int64, enter)
+            if isnothing(res)
+                println("The tunable phase is $phi ($ei episodes)")
+                print("Please enter the experimental result: ")
+                enter = readline()
+                u = parse(Int64, enter)
+            else
+                u = Int64(res[ei])
+            end
             pyx = zeros(length(x)) |> sparse
             for xi in eachindex(x)
                 a_res_tp = a_res[xi] * a_u(a, x[xi], phi, u)
@@ -74,9 +78,14 @@ function adaptMZI_online(x, p, rho0, output, target::Symbol)
     else
         println("The initial tunable phase is $phi")
         for ei = 1:N-1
-            print("Please enter the experimental result: ")
-            enter = readline()
-            u = parse(Int64, enter)
+            if isnothing(res)
+                println("The tunable phase is $phi ($ei episodes)")
+                print("Please enter the experimental result: ")
+                enter = readline()
+                u = parse(Int64, enter)
+            else
+                u = Int64(res[ei])
+            end
 
             pyx = zeros(length(x)) |> sparse
             for xi in eachindex(x)

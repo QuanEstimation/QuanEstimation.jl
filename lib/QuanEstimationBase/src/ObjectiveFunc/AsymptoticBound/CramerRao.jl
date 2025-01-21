@@ -277,18 +277,6 @@ function QFIM_LLD(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = GLOBAL_EPS) where
     ([ρ] .* (kron(LD_tp, reshape(LD_dag, 1, p_num)))) .|> tr
 end
 
-function QFIM_liouville(ρ, dρ)
-    p_num = length(dρ)
-    LD_tp = SLD_lio
-    uville(ρ, dρ)
-    (
-        [0.5 * ρ] .*
-        (kron(LD_tp, reshape(LD_tp, 1, p_num)) + kron(reshape(LD_tp, 1, p_num), LD_tp))
-    ) .|>
-    tr .|>
-    real
-end
-
 function QFIM_pure(ρ::Matrix{T}, ∂ρ_∂x::Vector{Matrix{T}}) where {T<:Complex}
     p_num = length(∂ρ_∂x)
     sld = [2 * ∂ρ_∂x[i] for i = 1:p_num]
