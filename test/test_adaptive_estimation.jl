@@ -31,4 +31,15 @@ function test_adaptive_estimation_MZI()
     return true
 end
 
+function test_adaptive_estimation()
+    scheme=generate_scheme_adaptive()
+
+    adapt!(scheme; res=zeros(10), method="FOP", max_episode=10)
+    adapt!(scheme; res=zeros(10), method="MI", max_episode=10)
+
+    rm("adaptive.dat")
+    return true
+end
+
+
 @test test_adaptive_estimation_MZI()

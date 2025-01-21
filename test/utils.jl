@@ -158,6 +158,34 @@ function generate_scheme_bayes()
     return scheme
 end 
 
+function generate_scheme_adaptive()
+    function H0_func(x)
+        return 0.5 * pi/2 * (σx() * cos(x) + σz() * sin(x))
+    end
+    function dH_func(x)
+        return [0.5 * pi/2 * (-σx() * sin(x) + σz() * cos(x))]
+    end
+    function p_func(x, mu, eta)
+        return exp(-(x - mu)^2 / (2 * eta^2)) / (eta * sqrt(2 * pi))
+    end
+    function dp_func(x, mu, eta)
+        return -(x - mu) * exp(-(x - mu)^2 / (2 * eta^2)) / (eta^3 * sqrt(2 * pi))
+    end
+
+    rho0 = 0.5 * ones(2, 2)
+    x = range(-0.5 * pi, stop = 0.5 * pi, length = 100) |> Vector
+    mu, eta = 0.0, 0.2
+    p_tp = [p_func(x[i], mu, eta) for i in eachindex(x)]
+    dp_tp = [dp_func(x[i], mu, eta) for i in eachindex(x)]
+    c = trapz(x, p_tp)
+    p = p_tp / c
+    dp = dp_tp / c
+    tspan = range(0.0, stop = 1.0, length = 100)
+    dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method = :Expm)
+    strategy = AdaptiveStrategy(x=x, p=p, dp=dp)
+    scheme = GeneralScheme(; probe = rho0, param = dynamics, strat = strategy)
+    return scheme
+end 
 
 function generate_scheme_kraus()
     # initial state
