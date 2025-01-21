@@ -100,17 +100,17 @@ LindbladData(
 
 # Constructor of Lindblad dynamics
 # NonDecay, NonControl
-function Lindblad(
-    ham::Hamiltonian,
-    tspan::AbstractVector;
-    dyn_method::Union{Symbol,String} = :Ode,
-)
-    p = ham.params
-    return LindbladDynamics{typeof(ham),NonDecay,NonControl,eval(Symbol(dyn_method)),Some}(
-        LindbladData(ham, tspan),
-        p,
-    )
-end
+# function Lindblad(
+#     ham::Hamiltonian,
+#     tspan::AbstractVector;
+#     dyn_method::Union{Symbol,String} = :Ode,
+# )
+#     p = ham.params
+#     return LindbladDynamics{typeof(ham),NonDecay,NonControl,eval(Symbol(dyn_method)),Some}(
+#         LindbladData(ham, tspan),
+#         p,
+#     )
+# end
 
 function Lindblad(
     H0::T,
@@ -126,19 +126,18 @@ function Lindblad(
 end
 
 # Decay, NonControl,
-
-function Lindblad(
-    ham::Hamiltonian,
-    tspan::AbstractVector,
-    decay::AbstractVector;
-    dyn_method::Union{Symbol,String} = :Ode,
-)
-    p = ham.params
-    return LindbladDynamics{typeof(ham),Decay,NonControl,eval(Symbol(dyn_method)),Some}(
-        LindbladData(ham, tspan; decay = decay),
-        p,
-    )
-end
+# function Lindblad(
+#     ham::Hamiltonian,
+#     tspan::AbstractVector,
+#     decay::AbstractVector;
+#     dyn_method::Union{Symbol,String} = :Ode,
+# )
+#     p = ham.params
+#     return LindbladDynamics{typeof(ham),Decay,NonControl,eval(Symbol(dyn_method)),Some}(
+#         LindbladData(ham, tspan; decay = decay),
+#         p,
+#     )
+# end
 
 function Lindblad(
     H0::H,
@@ -170,19 +169,19 @@ function Lindblad(
     )
 end
 
-function Lindblad(
-    ham::Hamiltonian,
-    tspan::AbstractVector,
-    Hc::Vector{M};
-    ctrl = ZeroCTRL(),
-    dyn_method::Union{Symbol,String} = :Ode,
-) where {M<:AbstractMatrix}
-    p = ham.params
-    return LindbladDynamics{typeof(ham),NonDecay,Control,eval(Symbol(dyn_method)),Some}(
-        LindbladData(ham, tspan; Hc = complex.(Hc), ctrl = init_ctrl(Hc, tspan, ctrl)),
-        p,
-    )
-end
+# function Lindblad(
+#     ham::Hamiltonian,
+#     tspan::AbstractVector,
+#     Hc::Vector{M};
+#     ctrl = ZeroCTRL(),
+#     dyn_method::Union{Symbol,String} = :Ode,
+# ) where {M<:AbstractMatrix}
+#     p = ham.params
+#     return LindbladDynamics{typeof(ham),NonDecay,Control,eval(Symbol(dyn_method)),Some}(
+#         LindbladData(ham, tspan; Hc = complex.(Hc), ctrl = init_ctrl(Hc, tspan, ctrl)),
+#         p,
+#     )
+# end
 
 # Decay, Control
 function Lindblad(
@@ -208,26 +207,26 @@ function Lindblad(
 end
 
 
-function Lindblad(
-    ham::Hamiltonian,
-    tspan::AbstractVector,
-    Hc::Vector{M},
-    decay::AbstractVector;
-    ctrl = ZeroCTRL(),
-    dyn_method::Union{Symbol,String} = :Ode,
-) where {M<:AbstractMatrix}
-    p = ham.params
-    return LindbladDynamics{typeof(ham),Decay,Control,eval(Symbol(dyn_method)),Some}(
-        LindbladData(
-            ham,
-            tspan;
-            decay = decay,
-            Hc = complex.(Hc),
-            ctrl = init_ctrl(Hc, tspan, ctrl),
-        ),
-        p,
-    )
-end
+# function Lindblad(
+#     ham::Hamiltonian,
+#     tspan::AbstractVector,
+#     Hc::Vector{M},
+#     decay::AbstractVector;
+#     ctrl = ZeroCTRL(),
+#     dyn_method::Union{Symbol,String} = :Ode,
+# ) where {M<:AbstractMatrix}
+#     p = ham.params
+#     return LindbladDynamics{typeof(ham),Decay,Control,eval(Symbol(dyn_method)),Some}(
+#         LindbladData(
+#             ham,
+#             tspan;
+#             decay = decay,
+#             Hc = complex.(Hc),
+#             ctrl = init_ctrl(Hc, tspan, ctrl),
+#         ),
+#         p,
+#     )
+# end
 
 init_ctrl(Hc, tspan, ctrl::AbstractVector) = ctrl
 init_ctrl(Hc, tspan, ::ZeroCTRL) = [zero(tspan[1:end-1]) for _ in eachindex(Hc)]

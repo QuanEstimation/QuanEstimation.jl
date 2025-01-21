@@ -7,6 +7,14 @@ function test_lindblad(;dyn_method=:Ode)
     ode(tspan, rho0, H0, dH[1])
     ode(tspan, rho0, H0, dH, decay=decay, Hc=Hc, ctrl=ctrl)
 
+    Lindblad(H0, dH, tspan, Hc; ctrl=ZeroCTRL())
+    Lindblad(H0, dH, tspan, Hc; ctrl=LinearCTRL())
+    Lindblad(H0, dH, tspan, Hc; ctrl=SineCTRL())
+    Lindblad(H0, dH, tspan, Hc; ctrl=SawCTRL())
+    Lindblad(H0, dH, tspan, Hc; ctrl=TriangleCTRL())
+    Lindblad(H0, dH, tspan, Hc; ctrl=GaussianCTRL())
+    Lindblad(H0, dH, tspan, Hc; ctrl=GaussianEdgeCTRL())
+
     dynamics = Lindblad(H0, dH, tspan; dyn_method=dyn_method)
     scheme = GeneralScheme(; probe=rho0, param=dynamics)
     expm(scheme);ode(scheme);evolve(scheme)
@@ -27,7 +35,7 @@ function test_lindblad(;dyn_method=:Ode)
 end  # function test_lindblad
 
 function test_lindblad_pure()
-    (; tspan, rho0, H0, dH, Hc, decay, ctrl, M) = generate_qubit_dynamics()
+    (; tspan, rho0, H0, dH, Hc, decay, ctrl) = generate_qubit_dynamics()
 
     expm(tspan, rho0, H0, dH[1])
     ode(tspan, rho0, H0, dH[1])
@@ -36,10 +44,12 @@ function test_lindblad_pure()
     dynamics = Lindblad(H0, dH, tspan)
     scheme = GeneralScheme(; probe=PlusState(), param=dynamics)
     evolve(scheme)
-
+    
     dynamics = Lindblad(H0, dH, tspan, decay)
     scheme = GeneralScheme(; probe=PlusState(), param=dynamics)
     evolve(scheme)
+
+    
 
     dynamics = Lindblad(H0, dH, tspan, Hc, decay)
     scheme = GeneralScheme(; probe=PlusState(), param=dynamics)
