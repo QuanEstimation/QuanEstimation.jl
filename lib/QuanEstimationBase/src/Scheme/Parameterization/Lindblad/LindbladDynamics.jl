@@ -73,65 +73,7 @@ function expm(
     Hc::Union{AbstractVector,Nothing} = nothing,
     ctrl::Union{AbstractVector,Nothing} = nothing,
 )
-    dim = size(ρ0, 1)
-    tnum = length(tspan)
-    if isnothing(decay)
-        decay_opt = [zeros(ComplexF64, dim, dim)]
-        γ = [0.0]
-    else
-        decay_opt = [decay[1] for decay in decay]
-        γ = [decay[2] for decay in decay]
-    end
-
-    if isnothing(Hc)
-        Hc = [zeros(ComplexF64, dim, dim)]
-        ctrl = [zeros(tnum - 1)]
-    elseif isnothing(ctrl)
-        ctrl = [zeros(tnum - 1)]
-    else
-        ctrl_num = length(Hc)
-        ctrl_length = length(ctrl)
-        if ctrl_num < ctrl_length
-            throw(
-                ArgumentError(
-                    "There are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences: too many coefficients sequences",
-                ),
-            )
-        elseif ctrl_num < ctrl_length
-            throw(
-                ArgumentError(
-                    "Not enough coefficients sequences: there are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences. The rest of the control sequences are set to be 0.",
-                ),
-            )
-        end
-
-        ratio_num = ceil((length(tspan) - 1) / length(ctrl[1]))
-        if length(tspan) - 1 % length(ctrl[1]) != 0
-            tnum = ratio_num * length(ctrl[1]) |> Int
-            tspan = range(tspan[1], tspan[end], length = tnum + 1)
-        end
-    end
-    ctrl_num = length(Hc)
-    ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
-
-    H = Htot(H0, Hc, ctrl)
-    dH_L = liouville_commu(dH)
-
-    Δt = tspan[2] - tspan[1]
-
-    ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i in eachindex(tspan)]
-    ∂ρt_∂x_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i in eachindex(tspan)]
-    ρt_all[1] = ρ0 |> vec
-    ∂ρt_∂x_all[1] = ρt_all[1] |> zero
-
-    decay_opt, γ = decay
-    for t in eachindex(tspan)[2:end]
-        exp_L = expL(H[t-1], decay_opt, γ, Δt, t - 1)
-        ρt_all[t] = exp_L * ρt_all[t-1]
-        ∂ρt_∂x_all[t] = -im * Δt * dH_L * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1]
-    end
-    ρt_all |> vec2mat, ∂ρt_∂x_all |> vec2mat
+    expm(tspan, ρ0, H0, [dH]; decay = decay, Hc = Hc, ctrl = ctrl)
 end
 
 @doc raw"""
@@ -228,8 +170,8 @@ function expm(
 end
 
 function expm(
-    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,NonControl,S},M,E},
-) where {HT,M,E,S}
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,NonControl,S,N},M,E},
+) where {HT,M,E,S,N}
     (; hamiltonian, tspan) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(hamiltonian)
@@ -238,8 +180,8 @@ function expm(
 end
 
 function expm(
-    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,NonControl,S},M,E},
-) where {HT,M,E,S}
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,NonControl,S,N},M,E},
+) where {HT,M,E,S,N}
     (; hamiltonian, tspan, decay) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(hamiltonian)
@@ -248,8 +190,8 @@ function expm(
 end
 
 function expm(
-    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,Control,S},M,E},
-) where {HT,M,E,S}
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,Control,S,N},M,E},
+) where {HT,M,E,S,N}
     (; hamiltonian, tspan, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(hamiltonian)
@@ -258,8 +200,8 @@ function expm(
 end
 
 function expm(
-    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,Control,S},M,E},
-) where {HT,M,E,S}
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,Control,S,N},M,E},
+) where {HT,M,E,S,N}
     (; hamiltonian, tspan, decay, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(hamiltonian)
@@ -267,10 +209,10 @@ function expm(
     return expm(tspan, ρ0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
 end
 
-expm(tspan, ρ0, H0, dH, decay) = expm(tspan, ρ0, H0, dH; decay = decay)
-expm(tspan, ρ0, H0, dH, decay, Hc) = expm(tspan, ρ0, H0, dH; decay = decay, Hc = Hc)
-expm(tspan, ρ0, H0, dH, decay, Hc, ctrl) =
-    expm(tspan, ρ0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
+# expm(tspan, ρ0, H0, dH, decay) = expm(tspan, ρ0, H0, dH; decay = decay)
+# expm(tspan, ρ0, H0, dH, decay, Hc) = expm(tspan, ρ0, H0, dH; decay = decay, Hc = Hc)
+# expm(tspan, ρ0, H0, dH, decay, Hc, ctrl) =
+#     expm(tspan, ρ0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
 
 # function secondorder_derivative(
 #     tspan::AbstractVector,
@@ -327,78 +269,7 @@ function ode(
     Hc::Union{AbstractVector,Nothing} = nothing,
     ctrl::Union{AbstractVector,Nothing} = nothing,
 )
-
-    ##==========initialization==========##
-    dim = size(ρ0, 1)
-    ρ0 = complex.(ρ0)
-    tnum = length(tspan)
-    if isnothing(decay)
-        Γ = [zeros(ComplexF64, dim, dim)]
-        γ = [0.0]
-    else
-        Γ = [decay[1] for decay in decay]
-        γ = [decay[2] for decay in decay]
-    end
-
-    if isnothing(Hc)
-        Hc = [zeros(ComplexF64, dim, dim)]
-        ctrl0 = [zeros(tnum)]
-    elseif isnothing(ctrl)
-        ctrl0 = [zeros(tnum)]
-    else
-        ctrl_num = length(Hc)
-        ctrl_length = length(ctrl)
-        if ctrl_num < ctrl_length
-            throw(
-                ArgumentError(
-                    "There are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences: too many coefficients sequences",
-                ),
-            )
-        elseif ctrl_num < ctrl_length
-            throw(
-                ArgumentError(
-                    "Not enough coefficients sequences: there are $ctrl_num control Hamiltonians but $ctrl_length coefficients sequences. The rest of the control sequences are set to be 0.",
-                ),
-            )
-        end
-
-        ratio_num = ceil((length(tspan)) / length(ctrl[1]))
-        if length(tspan) % length(ctrl[1]) != 0
-            tnum = ratio_num * length(ctrl[1]) |> Int
-            tspan = range(tspan[1], tspan[end], length = tnum)
-        end
-        ctrl0 = ctrl
-    end
-
-    ctrl_num = length(Hc)
-    ctrl_interval = (length(tspan) / length(ctrl0[1])) |> Int
-    ctrl = [repeat(ctrl0[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
-
-    H(ctrl) = Htot(H0, Hc, ctrl)
-    dt = tspan[2] - tspan[1]
-    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func!(ρ, ctrl, t) =
-        -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + (
-            [
-                γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i])) for
-                i in eachindex(Γ)
-            ] |> sum
-        )
-    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
-    ρt = solve(prob_ρ, Tsit5(), saveat = dt).u
-
-    ∂ρt_func!(∂ρ, ctrl, t) =
-        -im * (dH * ρt[t2Num(t)] - ρt[t2Num(t)] * dH) -
-        im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + (
-            [
-                γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i]))
-                for i in eachindex(Γ)
-            ] |> sum
-        )
-
-    prob_∂ρ = ODEProblem(∂ρt_func!, ρ0 |> zero, (tspan[1], tspan[end]), ctrl)
-    ∂ρt = solve(prob_∂ρ, Tsit5(), saveat = dt).u
-    ρt, ∂ρt
+    ode(tspan, ρ0, H0, [dH]; decay = decay, Hc = Hc, ctrl = ctrl)
 end
 
 @doc raw"""
@@ -501,14 +372,14 @@ function ode(
     ρt, ∂ρt
 end
 
-ode(tspan, ρ0, H0, dH, decay) = ode(tspan, ρ0, H0, dH; decay = decay)
-ode(tspan, ρ0, H0, dH, decay, Hc) = ode(tspan, ρ0, H0, dH; decay = decay, Hc = Hc)
-ode(tspan, ρ0, H0, dH, decay, Hc, ctrl) =
-    ode(tspan, ρ0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
+# ode(tspan, ρ0, H0, dH, decay) = ode(tspan, ρ0, H0, dH; decay = decay)
+# ode(tspan, ρ0, H0, dH, decay, Hc) = ode(tspan, ρ0, H0, dH; decay = decay, Hc = Hc)
+# ode(tspan, ρ0, H0, dH, decay, Hc, ctrl) =
+#     ode(tspan, ρ0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
 
 function ode(
-    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,NonControl,S},M,E},
-) where {HT,M,E,S}
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,NonControl,S,N},M,E},
+) where {HT,M,E,S,N}
     (; hamiltonian, tspan) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(hamiltonian)
@@ -517,8 +388,8 @@ function ode(
 end
 
 function ode(
-    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,NonControl,S},M,E},
-) where {HT,M,E,S}
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,NonControl,S,N},M,E},
+) where {HT,M,E,S,N}
     (; hamiltonian, tspan, decay) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(hamiltonian)
@@ -527,8 +398,8 @@ function ode(
 end
 
 function ode(
-    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,Control,S},M,E},
-) where {HT,M,E,S}
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,Control,S,N},M,E},
+) where {HT,M,E,S,N}
     (; hamiltonian, tspan, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(hamiltonian)
@@ -537,8 +408,8 @@ function ode(
 end
 
 function ode(
-    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,Control,S},M,E},
-) where {HT,M,E,S}
+    scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,Control,S,N},M,E},
+) where {HT,M,E,S,N}
     (; hamiltonian, tspan, decay, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(hamiltonian)

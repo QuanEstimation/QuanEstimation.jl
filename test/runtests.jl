@@ -35,6 +35,10 @@ end
     end
 end
 
+@testset "Parameterization" begin
+    include("test_parameterization.jl")
+end
+
 @testset "Resource" begin
     include("test_resource.jl")
 end
