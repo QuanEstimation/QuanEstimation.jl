@@ -19,7 +19,12 @@ include("utils.jl")
     @testset "Comprehensive Optimization" begin
         include("optimization/test_comprehensive_optimization.jl")
     end
+end
 
+@testset "Bayesian Estimation" begin
+    @testset "Bayesian Estimation" begin
+        include("test_bayesian_estimation.jl")
+    end
     @testset "Adaptive Estimation" begin
         include("test_adaptive_estimation.jl")
     end

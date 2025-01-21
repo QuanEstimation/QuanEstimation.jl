@@ -130,7 +130,7 @@ function generate_LMG2_dynamics()
     return (; tspan = tspan, psi = psi, H0 = H0, dH = dH, decay = decay, W = W)
 end
 
-function generate_scheme_bayes()
+function generate_bayes()
     function H0_func(x)
         return 0.5 * pi/2 * (σx() * cos(x) + σz() * sin(x))
     end
@@ -152,6 +152,17 @@ function generate_scheme_bayes()
     c = trapz(x, p_tp)
     p = p_tp / c
     dp = dp_tp / c
+    return (;
+        rho0 = rho0,
+        x = x,
+        p = p,
+        dp = dp,
+        H0_func = H0_func,
+        dH_func = dH_func,
+    )
+end
+function generate_scheme_bayes()
+    (; rho0, x, p, dp, H0_func, dH_func) = generate_bayes()
     tspan = range(0.0, stop = 1.0, length = 100)
     dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method = :Expm)
     scheme = GeneralScheme(; probe = rho0, param = dynamics, x = x, p = p, dp = dp)
@@ -159,27 +170,7 @@ function generate_scheme_bayes()
 end 
 
 function generate_scheme_adaptive()
-    function H0_func(x)
-        return 0.5 * pi/2 * (σx() * cos(x) + σz() * sin(x))
-    end
-    function dH_func(x)
-        return [0.5 * pi/2 * (-σx() * sin(x) + σz() * cos(x))]
-    end
-    function p_func(x, mu, eta)
-        return exp(-(x - mu)^2 / (2 * eta^2)) / (eta * sqrt(2 * pi))
-    end
-    function dp_func(x, mu, eta)
-        return -(x - mu) * exp(-(x - mu)^2 / (2 * eta^2)) / (eta^3 * sqrt(2 * pi))
-    end
-
-    rho0 = 0.5 * ones(2, 2)
-    x = range(-0.5 * pi, stop = 0.5 * pi, length = 100) |> Vector
-    mu, eta = 0.0, 0.2
-    p_tp = [p_func(x[i], mu, eta) for i in eachindex(x)]
-    dp_tp = [dp_func(x[i], mu, eta) for i in eachindex(x)]
-    c = trapz(x, p_tp)
-    p = p_tp / c
-    dp = dp_tp / c
+    (; rho0, x, p, dp, H0_func, dH_func) = generate_bayes()
     tspan = range(0.0, stop = 1.0, length = 100)
     dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method = :Expm)
     strategy = AdaptiveStrategy(x=x, p=p, dp=dp)
