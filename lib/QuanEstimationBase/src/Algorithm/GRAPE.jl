@@ -2,8 +2,8 @@ function optimize!(opt::ControlOpt, alg::AbstractGRAPE, obj::QFIM_obj, scheme, o
     (; max_episode) = alg
     pdata = param_data(scheme)
 
-    ctrl_length = length(pdata.ctrl[1])
-    ctrl_num = length(pdata.Hc)
+    ctrl_length = get_ctrl_length(scheme)
+    ctrl_num = get_ctrl_num(scheme)
 
     scheme_copy = set_ctrl(scheme, [zeros(ctrl_length) for i = 1:ctrl_num])
     f_noctrl, f_comp = objective(obj, scheme_copy)
@@ -28,8 +28,8 @@ function optimize!(opt::ControlOpt, alg::AbstractGRAPE, obj::CFIM_obj, scheme, o
     (; max_episode) = alg
     pdata = param_data(scheme)
 
-    ctrl_length = length(pdata.ctrl[1])
-    ctrl_num = length(pdata.Hc)
+    ctrl_length = get_ctrl_length(scheme)
+    ctrl_num = get_ctrl_num(scheme)
 
     scheme_copy = set_ctrl(scheme, [zeros(ctrl_length) for i = 1:ctrl_num])
     f_noctrl, f_comp = objective(obj, scheme_copy)
@@ -52,7 +52,8 @@ end
 
 function scheme_analy(scheme, dim, tnum, para_num, ctrl_num)
     pdata = param_data(scheme)
-    sdata = state_data(scheme)
+    rho0 = state_data(scheme)
+    sdata = ndims(rho0)[1]==1 ? rho0*rho0' : rho0
 
     tspan = pdata.tspan
     Δt = tspan[2] - tspan[1]
@@ -117,12 +118,11 @@ end
 
 function gradient_QFIM_analy(alg::GRAPE_Adam, obj, scheme)
     pdata = param_data(scheme)
-    sdata = state_data(scheme)
 
-    dim = size(sdata)[1]
+    dim = get_dim(scheme)
     tnum = length(pdata.tspan)
     para_num = length(pdata.hamiltonian.dH)
-    ctrl_num = length(pdata.Hc)
+    ctrl_num = get_ctrl_num(scheme)
 
     ρt_T, ∂ρt_T, δρt_δV, ∂xδρt_δV = scheme_analy(scheme, dim, tnum, para_num, ctrl_num)
 
@@ -241,12 +241,11 @@ end
 
 function gradient_QFIM_analy(alg::GRAPE, obj, scheme)
     pdata = param_data(scheme)
-    sdata = state_data(scheme)
 
-    dim = size(sdata)[1]
+    dim = get_dim(scheme)
     tnum = length(pdata.tspan)
     para_num = length(pdata.hamiltonian.dH)
-    ctrl_num = length(pdata.Hc)
+    ctrl_num = get_ctrl_num(scheme) 
 
     ρt_T, ∂ρt_T, δρt_δV, ∂xδρt_δV = scheme_analy(scheme, dim, tnum, para_num, ctrl_num)
 
@@ -333,12 +332,11 @@ end
 
 function gradient_CFIM_analy_Adam(opt, alg, obj, scheme)
     pdata = param_data(scheme)
-    sdata = state_data(scheme)
 
-    dim = size(sdata)[1]
+    dim = get_dim(scheme)
     tnum = length(pdata.tspan)
     para_num = length(pdata.hamiltonian.dH)
-    ctrl_num = length(pdata.Hc)
+    ctrl_num = get_ctrl_num(scheme)
 
     ρt_T, ∂ρt_T, δρt_δV, ∂xδρt_δV = scheme_analy(scheme, dim, tnum, para_num, ctrl_num)
 
@@ -506,12 +504,11 @@ end
 
 function gradient_CFIM_analy(alg, obj, scheme)
     pdata = param_data(scheme)
-    sdata = state_data(scheme)
 
-    dim = size(sdata)[1]
+    dim = get_dim(scheme)
     tnum = length(pdata.tspan)
     para_num = length(pdata.hamiltonian.dH)
-    ctrl_num = length(pdata.Hc)
+    ctrl_num = get_ctrl_num(scheme)
 
     ρt_T, ∂ρt_T, δρt_δV, ∂xδρt_δV = scheme_analy(scheme, dim, tnum, para_num, ctrl_num)
 

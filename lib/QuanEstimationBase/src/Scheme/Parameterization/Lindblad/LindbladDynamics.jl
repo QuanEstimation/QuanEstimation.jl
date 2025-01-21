@@ -7,49 +7,6 @@ function liouville_dissip(Γ)
     0.5 * kron(Γ |> one, Γ' * Γ)
 end
 
-function liouville_commu_py(A::Array{T}) where {T<:Complex}
-    dim = size(A)[1]
-    result = zeros(T, dim^2, dim^2)
-    for i = 1:dim
-        for j = 1:dim
-            @inbounds for k = 1:dim
-                ni = dim * (i - 1) + j
-                nj = dim * (k - 1) + j
-                nk = dim * (i - 1) + k
-
-                result[ni, nj] = A[i, k]
-                result[ni, nk] = -A[k, j]
-                result[ni, ni] = A[i, i] - A[j, j]
-            end
-        end
-    end
-    result
-end
-
-function liouville_dissip_py(A::Array{T}) where {T<:Complex}
-    dim = size(A)[1]
-    result = zeros(T, dim^2, dim^2)
-    for i = 1:dim
-        for j = 1:dim
-            ni = dim * (i - 1) + j
-            for k = 1:dim
-                @inbounds for l = 1:dim
-                    nj = dim * (k - 1) + l
-                    L_temp = A[i, k] * conj(A[j, l])
-                    for p = 1:dim
-                        L_temp -=
-                            0.5 * float(k == i) * A[p, j] * conj(A[p, l]) +
-                            0.5 * float(l == j) * A[p, k] * conj(A[p, i])
-                    end
-                    result[ni, nj] = L_temp
-                end
-            end
-        end
-    end
-    result[findall(abs.(result) .< 1e-10)] .= 0.0
-    result
-end
-
 function dissipation(Γ::V, γ::Vector{R}, t::Int = 1) where {V<:AbstractVector,R<:Real}
     [γ[i] * liouville_dissip(Γ[i]) for i in eachindex(Γ)] |> sum
 end
@@ -310,124 +267,49 @@ function expm(
     return expm(tspan, ρ0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
 end
 
-function expm_py(
-    tspan,
-    ρ0::AbstractMatrix,
-    H0::AbstractVecOrMat,
-    dH::AbstractMatrix,
-    Hc::AbstractVector,
-    decay_opt::AbstractVector,
-    γ,
-    ctrl::AbstractVector,
-)
-
-    ctrl_num = length(Hc)
-    ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
-
-    H = Htot(H0, Hc, ctrl)
-    dH_L = liouville_commu(dH)
-
-    Δt = tspan[2] - tspan[1]
-
-    ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i in eachindex(tspan)]
-    ∂ρt_∂x_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i in eachindex(tspan)]
-    ρt_all[1] = ρ0 |> vec
-    ∂ρt_∂x_all[1] = ρt_all[1] |> zero
-
-    for t in eachindex(tspan)[2:end]
-        exp_L = expL(H[t-1], decay_opt, γ, Δt, t - 1)
-        ρt_all[t] = exp_L * ρt_all[t-1]
-        ∂ρt_∂x_all[t] = -im * Δt * dH_L * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1]
-    end
-    ρt_all |> vec2mat, ∂ρt_∂x_all |> vec2mat
-end
-
-function expm_py(
-    tspan,
-    ρ0::AbstractMatrix,
-    H0::AbstractVecOrMat,
-    dH::AbstractVector,
-    decay_opt::AbstractVector,
-    γ,
-    Hc::AbstractVector,
-    ctrl::AbstractVector,
-)
-
-    param_num = length(dH)
-    ctrl_num = length(Hc)
-    ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
-
-    H = Htot(H0, Hc, ctrl)
-    dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
-
-    Δt = tspan[2] - tspan[1]
-
-    ρt_all = [Vector{ComplexF64}(undef, (length(H0))^2) for i in eachindex(tspan)]
-    ∂ρt_∂x_all = [
-        [Vector{ComplexF64}(undef, (length(H0))^2) for j = 1:param_num] for
-        i = 1:length(tspan)
-    ]
-    ρt_all[1] = ρ0 |> vec
-    for pj = 1:param_num
-        ∂ρt_∂x_all[1][pj] = ρt_all[1] |> zero
-    end
-
-    for t in eachindex(tspan)[2:end]
-        exp_L = expL(H[t-1], decay_opt, γ, Δt, t - 1)
-        ρt_all[t] = exp_L * ρt_all[t-1]
-        for pj = 1:param_num
-            ∂ρt_∂x_all[t][pj] =
-                -im * Δt * dH_L[pj] * ρt_all[t] + exp_L * ∂ρt_∂x_all[t-1][pj]
-        end
-    end
-    ρt_all |> vec2mat, ∂ρt_∂x_all |> vec2mat
-end
-
 expm(tspan, ρ0, H0, dH, decay) = expm(tspan, ρ0, H0, dH; decay = decay)
 expm(tspan, ρ0, H0, dH, decay, Hc) = expm(tspan, ρ0, H0, dH; decay = decay, Hc = Hc)
 expm(tspan, ρ0, H0, dH, decay, Hc, ctrl) =
     expm(tspan, ρ0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
 
-function secondorder_derivative(
-    tspan::AbstractVector,
-    ρ0::AbstractMatrix,
-    H0::AbstractVecOrMat,
-    dH::AbstractVector,
-    dH_∂x::AbstractVector,
-    decay_opt::Vector{Matrix{T}},
-    γ,
-    Hc::Vector{Matrix{T}},
-    ctrl::Vector{Vector{R}},
-) where {T<:Complex,R<:Real}
+# function secondorder_derivative(
+#     tspan::AbstractVector,
+#     ρ0::AbstractMatrix,
+#     H0::AbstractVecOrMat,
+#     dH::AbstractVector,
+#     dH_∂x::AbstractVector,
+#     decay_opt::Vector{Matrix{T}},
+#     γ,
+#     Hc::Vector{Matrix{T}},
+#     ctrl::Vector{Vector{R}},
+# ) where {T<:Complex,R<:Real}
 
-    param_num = length(dH)
-    ctrl_num = length(Hc)
-    ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
+#     param_num = length(dH)
+#     ctrl_num = length(Hc)
+#     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
+#     ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
 
-    H = Htot(H0, Hc, ctrl)
-    dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
-    dH_L = [liouville_commu(dH_∂x[i]) for i = 1:param_num]
+#     H = Htot(H0, Hc, ctrl)
+#     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
+#     dH_L = [liouville_commu(dH_∂x[i]) for i = 1:param_num]
 
-    ρt = ρ0 |> vec
-    ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-    ∂2ρt_∂x = [ρt |> zero for i = 1:param_num]
-    for t in eachindex(tspan)[2:end]
-        Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
-        exp_L = expL(H[t-1], decay_opt, γ, Δt, t - 1)
-        ρt = exp_L * ρt
-        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
-        ∂2ρt_∂x =
-            [
-                (-im * Δt * dH_L[i] + Δt * Δt * dH_L[i] * dH_L[i]) * ρt -
-                2 * im * Δt * dH_L[i] * ∂ρt_∂x[i] for i = 1:param_num
-            ] + [exp_L] .* ∂2ρt_∂x
-    end
-    # ρt = exp(vec(H[end])' * zero(ρt)) * ρt
-    ρt |> vec2mat, ∂ρt_∂x |> vec2mat, ∂2ρt_∂x |> vec2mat
-end
+#     ρt = ρ0 |> vec
+#     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
+#     ∂2ρt_∂x = [ρt |> zero for i = 1:param_num]
+#     for t in eachindex(tspan)[2:end]
+#         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
+#         exp_L = expL(H[t-1], decay_opt, γ, Δt, t - 1)
+#         ρt = exp_L * ρt
+#         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
+#         ∂2ρt_∂x =
+#             [
+#                 (-im * Δt * dH_L[i] + Δt * Δt * dH_L[i] * dH_L[i]) * ρt -
+#                 2 * im * Δt * dH_L[i] * ∂ρt_∂x[i] for i = 1:param_num
+#             ] + [exp_L] .* ∂2ρt_∂x
+#     end
+#     # ρt = exp(vec(H[end])' * zero(ρt)) * ρt
+#     ρt |> vec2mat, ∂ρt_∂x |> vec2mat, ∂2ρt_∂x |> vec2mat
+# end
 
 ##========== solve ordinary differential equation (ODE) ==========##
 @doc raw"""
@@ -663,96 +545,6 @@ function ode(
 
     return ode(tspan, ρ0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
 end
-
-function ode_py(
-    tspan,
-    ρ0::AbstractMatrix,
-    H0::AbstractVecOrMat,
-    dH::AbstractMatrix,
-    Hc::AbstractVector,
-    Γ::AbstractVector,
-    γ,
-    ctrl::AbstractVector,
-)
-    ctrl_num = length(Hc)
-    ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    ctrl =
-        [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |> Array for i = 1:ctrl_num]
-    push!.(ctrl, [0.0 for i = 1:ctrl_num])
-    H(ctrl) = Htot(H0, Hc, ctrl)
-    dt = tspan[2] - tspan[1]
-    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func!(ρ, ctrl, t) =
-        -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + (
-            [
-                γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i])) for
-                i in eachindex(Γ)
-            ] |> sum
-        )
-    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
-    ρt = solve(prob_ρ, Tsit5(), saveat = dt).u
-
-    ∂ρt_func!(∂ρ, ctrl, t) =
-        -im * (dH * ρt[t2Num(t)] - ρt[t2Num(t)] * dH) -
-        im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + (
-            [
-                γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i]))
-                for i in eachindex(Γ)
-            ] |> sum
-        )
-
-    prob_∂ρ = ODEProblem(∂ρt_func!, ρ0 |> zero, (tspan[1], tspan[end]), ctrl)
-    ∂ρt = solve(prob_∂ρ, Tsit5(), saveat = dt).u
-    ρt, ∂ρt
-end
-
-function ode_py(
-    tspan,
-    ρ0::AbstractMatrix,
-    H0::AbstractVecOrMat,
-    dH::AbstractVector,
-    Γ::AbstractVector,
-    γ,
-    Hc::AbstractVector,
-    ctrl::AbstractVector,
-)
-    param_num = length(dH)
-    ctrl_num = length(Hc)
-    ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-    ctrl =
-        [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |> Array for i = 1:ctrl_num]
-    push!.(ctrl, [0.0 for i = 1:ctrl_num])
-    H(ctrl) = Htot(H0, Hc, ctrl)
-    dt = tspan[2] - tspan[1]
-    t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func!(ρ, ctrl, t) =
-        -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + (
-            [
-                γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i])) for
-                i in eachindex(Γ)
-            ] |> sum
-        )
-    prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
-    ρt = solve(prob_ρ, Tsit5(), saveat = dt).u
-
-    ∂ρt_func!(∂ρ, (pa, ctrl), t) =
-        -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -
-        im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + (
-            [
-                γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i]))
-                for i in eachindex(Γ)
-            ] |> sum
-        )
-
-    ∂ρt_tp = []
-    for pa = 1:param_num
-        prob_∂ρ = ODEProblem(∂ρt_func!, ρ0 |> zero, (tspan[1], tspan[end]), (pa, ctrl))
-        push!(∂ρt_tp, solve(prob_∂ρ, Tsit5(), saveat = dt).u)
-    end
-    ∂ρt = [[∂ρt_tp[i][j] for i = 1:param_num] for j in eachindex(tspan)]
-    ρt, ∂ρt
-end
-
 
 function evaluate_hamiltonian(
     scheme::Scheme{S,LindbladDynamics{HT,DT,CT,ST,Nothing},TS},
@@ -1147,7 +939,7 @@ end
 #### evolution of state under time-independent Hamiltonian with noise and controls #### 
 function evolve(scheme::Scheme{Ket,LindbladDynamics{HT,Decay,Control,Expm,P},M,E}) where {HT,M,E,P}
     (; tspan, decay, Hc, ctrl) = param_data(scheme)
-    ρ0 = state_data(scheme)
+    ρ0 = state_data(scheme)|>x->x*x'
     H0, dH = evaluate_hamiltonian(scheme)
     decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
 
