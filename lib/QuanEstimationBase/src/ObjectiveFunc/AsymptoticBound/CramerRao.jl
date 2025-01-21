@@ -691,8 +691,10 @@ function Williamson_form(A::AbstractMatrix)
     P = one(A) |> x -> [x[:, 1:2:2n-1] x[:, 2:2:2n]]
     t, Q, vals = schur(B)
     c = vals[1:2:2n-1] .|> imag
-    D = c |> diagm |>complex |> x -> x^(-0.5)
-    S = (J * A_sqrt * Q * P * [zeros(n, n) -D; D zeros(n, n)] |> transpose |> inv) * transpose(P)
+    D = c |> diagm |> complex |> x -> x^(-0.5)
+    S =
+        (J * A_sqrt * Q * P * [zeros(n, n) -D; D zeros(n, n)] |> transpose |> inv) *
+        transpose(P)
     return S, c
 end
 

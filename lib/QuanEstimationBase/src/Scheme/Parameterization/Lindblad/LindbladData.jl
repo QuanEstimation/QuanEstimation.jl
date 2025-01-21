@@ -50,9 +50,9 @@ end
 
 
 mutable struct Hamiltonian{T1,T2,N} <: AbstractHamiltonian
-    H0
-    dH
-    params
+    H0::Any
+    dH::Any
+    params::Any
 end
 
 function Hamiltonian(H0::T, dH::Vector{T}) where {T}
@@ -119,7 +119,13 @@ function Lindblad(
     dyn_method::Union{Symbol,String} = :Ode,
 ) where {T,D}
     ham = Hamiltonian(H0, dH)
-    return LindbladDynamics{typeof(ham),NonDecay,NonControl,eval(Symbol(dyn_method)),Nothing}(
+    return LindbladDynamics{
+        typeof(ham),
+        NonDecay,
+        NonControl,
+        eval(Symbol(dyn_method)),
+        Nothing,
+    }(
         LindbladData(ham, tspan),
         nothing,
     )
@@ -263,15 +269,17 @@ init_ctrl(Hc, tspan, ctrl::GaussianEdgeCTRL) = [
 ]
 
 
-para_type(::LindbladDynamics{Hamiltonian{T,D,1},DC,C,S,P}) where {T,D,DC,C,S,P} = :single_para
-para_type(::LindbladDynamics{Hamiltonian{T,D,N},DC,C,S,P}) where {T,D,N,DC,C,S,P} = :multi_para
+para_type(::LindbladDynamics{Hamiltonian{T,D,1},DC,C,S,P}) where {T,D,DC,C,S,P} =
+    :single_para
+para_type(::LindbladDynamics{Hamiltonian{T,D,N},DC,C,S,P}) where {T,D,N,DC,C,S,P} =
+    :multi_para
 
 get_param_num(::Type{LindbladDynamics{H,D,C,S,P}}) where {H,D,C,S,P} = get_param_num(H)
 get_param_num(::Type{Hamiltonian{H,D,N}}) where {H,D,N} = N
 get_param_num(::Scheme{S,L,M,E}) where {S,L<:AbstractDynamics,M,E} = get_param_num(L)
 
 get_dim(ham::Hamiltonian{H,DH,N}) where {H<:AbstractMatrix,DH,N} = size(ham.H0, 1)
-get_dim(data::Hamiltonian{F,DF,N}) where {F<:Function,DF,N}= size(data.H0(0.0), 1)
+get_dim(data::Hamiltonian{F,DF,N}) where {F<:Function,DF,N} = size(data.H0(0.0), 1)
 get_dim(data::LindbladData) = get_dim(data.hamiltonian)
 get_dim(dynamics::LindbladDynamics) = get_dim(dynamics.data.hamiltonian)
 

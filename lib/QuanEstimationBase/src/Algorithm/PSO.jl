@@ -168,12 +168,14 @@ function optimize!(opt::StateOpt, alg::PSO, obj, scheme, output)
                     c0 * velocity[dk, pk] +
                     c1 * rand(opt.rng) * (pbest[dk, pk] - state_data(particles[pk])[dk]) +
                     c2 * rand(opt.rng) * (gbest[dk] - state_data(particles[pk])[dk])
-                particles[pk].StatePreparation.data[dk] = state_data(particles[pk])[dk] + velocity[dk, pk]
+                particles[pk].StatePreparation.data[dk] =
+                    state_data(particles[pk])[dk] + velocity[dk, pk]
             end
-            particles[pk].StatePreparation.data =  state_data(particles[pk]) / norm( state_data(particles[pk]))
+            particles[pk].StatePreparation.data =
+                state_data(particles[pk]) / norm(state_data(particles[pk]))
 
             for dm = 1:dim
-                velocity[dm, pk] =  state_data(particles[pk])[dm] - psi_pre[dm]
+                velocity[dm, pk] = state_data(particles[pk])[dm] - psi_pre[dm]
             end
         end
         if ei % max_episode[2] == 0
@@ -527,7 +529,7 @@ function optimize!(opt::StateControlOpt, alg::PSO, obj, scheme, output)
     f_ini, f_comp = objective(obj, scheme)
 
     set_f!(output, f_ini)
-    set_buffer!(output,  state_data(particles[1]),  param_data(particles[1]).ctrl)
+    set_buffer!(output, state_data(particles[1]), param_data(particles[1]).ctrl)
     set_io!(output, f_noctrl, f_ini)
     show(opt, output, obj, alg)
 
@@ -538,7 +540,7 @@ function optimize!(opt::StateControlOpt, alg::PSO, obj, scheme, output)
                 p_fit[pj] = f_now
                 p_out[pj] = f_out
                 for di = 1:dim
-                    pbest_state[di, pj] =  state_data(particles[pj])[di]
+                    pbest_state[di, pj] = state_data(particles[pj])[di]
                 end
 
                 for di = 1:ctrl_num
@@ -568,17 +570,20 @@ function optimize!(opt::StateControlOpt, alg::PSO, obj, scheme, output)
         for pk = 1:p_num
             psi_pre = zeros(ComplexF64, dim)
             for dk = 1:dim
-                psi_pre[dk] =  state_data(particles[pk])[dk]
+                psi_pre[dk] = state_data(particles[pk])[dk]
                 velocity_state[dk, pk] =
                     c0 * velocity_state[dk, pk] +
-                    c1 * rand(opt.rng) * (pbest_state[dk, pk] -  state_data(particles[pk])[dk]) +
-                    c2 * rand(opt.rng) * (gbest_state[dk] -  state_data(particles[pk])[dk])
+                    c1 *
+                    rand(opt.rng) *
+                    (pbest_state[dk, pk] - state_data(particles[pk])[dk]) +
+                    c2 * rand(opt.rng) * (gbest_state[dk] - state_data(particles[pk])[dk])
                 particles[pk].StatePreparation.data[dk] =
-                state_data(particles[pk])[dk] + velocity_state[dk, pk]
+                    state_data(particles[pk])[dk] + velocity_state[dk, pk]
             end
-            particles[pk].StatePreparation.data =  state_data(particles[pk]) / norm( state_data(particles[pk]))
+            particles[pk].StatePreparation.data =
+                state_data(particles[pk]) / norm(state_data(particles[pk]))
             for dm = 1:dim
-                velocity_state[dm, pk] =  state_data(particles[pk])[dm] - psi_pre[dm]
+                velocity_state[dm, pk] = state_data(particles[pk])[dm] - psi_pre[dm]
             end
 
             control_coeff_pre = [zeros(ctrl_length) for i = 1:ctrl_num]
@@ -654,7 +659,7 @@ function optimize!(opt::StateMeasurementOpt, alg::PSO, obj, scheme, output)
     f_ini, f_comp = objective(obj_copy, scheme)
 
     set_f!(output, f_ini)
-    set_buffer!(output,  state_data(particles[1]), M)
+    set_buffer!(output, state_data(particles[1]), M)
     set_io!(output, f_ini)
     show(opt, output, obj, alg)
 
@@ -667,7 +672,7 @@ function optimize!(opt::StateMeasurementOpt, alg::PSO, obj, scheme, output)
                 p_fit[pj] = f_now
                 p_out[pj] = f_out
                 for di = 1:dim
-                    pbest_state[di, pj] =  state_data(particles[pj])[di]
+                    pbest_state[di, pj] = state_data(particles[pj])[di]
                 end
 
                 for di = 1:M_num
@@ -697,17 +702,21 @@ function optimize!(opt::StateMeasurementOpt, alg::PSO, obj, scheme, output)
         for pk = 1:p_num
             psi_pre = zeros(ComplexF64, dim)
             for dk = 1:dim
-                psi_pre[dk] =  state_data(particles[pk])[dk]
+                psi_pre[dk] = state_data(particles[pk])[dk]
                 velocity_state[dk, pk] =
                     c0 * velocity_state[dk, pk] +
-                    c1 * rand(opt.rng) * (pbest_state[dk, pk] -  state_data(particles[pk])[dk]) +
-                    c2 * rand(opt.rng) * (gbest_state[dk] -  state_data(particles[pk])[dk])
+                    c1 *
+                    rand(opt.rng) *
+                    (pbest_state[dk, pk] - state_data(particles[pk])[dk]) +
+                    c2 * rand(opt.rng) * (gbest_state[dk] - state_data(particles[pk])[dk])
                 particles[pk].StatePreparation.data[dk] =
-                state_data(particles[pk])[dk] + velocity_state[dk, pk]
+                    state_data(particles[pk])[dk] + velocity_state[dk, pk]
             end
-            particles[pk].StatePreparation.data =  state_data(particles[pk]) / norm(state_data(particles[pk]))
+            particles[pk].StatePreparation.data =
+                state_data(particles[pk]) / norm(state_data(particles[pk]))
             for dm = 1:dim
-                velocity_state[dm, pk] = particles[pk].StatePreparation.data[dm] - psi_pre[dm]
+                velocity_state[dm, pk] =
+                    particles[pk].StatePreparation.data[dm] - psi_pre[dm]
             end
 
             meas_pre = [zeros(ComplexF64, dim) for i = 1:M_num]
@@ -918,7 +927,12 @@ function optimize!(opt::StateControlMeasurementOpt, alg::PSO, obj, scheme, outpu
     f_ini, _ = objective(obj_copy, scheme)
 
     set_f!(output, f_ini)
-    set_buffer!(output, particles[1].StatePreparation.data, param_data(particles[1]).ctrl, M)
+    set_buffer!(
+        output,
+        particles[1].StatePreparation.data,
+        param_data(particles[1]).ctrl,
+        M,
+    )
     set_io!(output, f_ini)
     show(opt, output, obj, alg)
 
@@ -972,14 +986,21 @@ function optimize!(opt::StateControlMeasurementOpt, alg::PSO, obj, scheme, outpu
                 psi_pre[dk] = particles[pk].StatePreparation.data[dk]
                 velocity_state[dk, pk] =
                     c0 * velocity_state[dk, pk] +
-                    c1 * rand(opt.rng) * (pbest_state[dk, pk] - particles[pk].StatePreparation.data[dk]) +
-                    c2 * rand(opt.rng) * (gbest_state[dk] - particles[pk].StatePreparation.data[dk])
+                    c1 *
+                    rand(opt.rng) *
+                    (pbest_state[dk, pk] - particles[pk].StatePreparation.data[dk]) +
+                    c2 *
+                    rand(opt.rng) *
+                    (gbest_state[dk] - particles[pk].StatePreparation.data[dk])
                 particles[pk].StatePreparation.data[dk] =
                     particles[pk].StatePreparation.data[dk] + velocity_state[dk, pk]
             end
-            particles[pk].StatePreparation.data = particles[pk].StatePreparation.data / norm(particles[pk].StatePreparation.data)
+            particles[pk].StatePreparation.data =
+                particles[pk].StatePreparation.data /
+                norm(particles[pk].StatePreparation.data)
             for dm = 1:dim
-                velocity_state[dm, pk] = particles[pk].StatePreparation.data[dm] - psi_pre[dm]
+                velocity_state[dm, pk] =
+                    particles[pk].StatePreparation.data[dm] - psi_pre[dm]
             end
 
             control_coeff_pre = [zeros(ctrl_length) for i = 1:ctrl_num]

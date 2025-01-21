@@ -1,8 +1,8 @@
-using QuanEstimationBase:QFIM_RLD, QFIM_LLD, QFIM_pure
+using QuanEstimationBase: QFIM_RLD, QFIM_LLD, QFIM_pure
 function test_cramer_rao_bound_single_param()
     (; tspan, rho0, H0, dH, Hc, decay, ctrl, M) = generate_qubit_dynamics()
 
-    rho, drho = expm(tspan, rho0, H0, dH; decay=decay, Hc=Hc, ctrl=ctrl)
+    rho, drho = expm(tspan, rho0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
     # calculation of the CFI and QFI
     Im, F, H = Float64[], Float64[], Float64[]
     for ti = 2:length(tspan)
@@ -18,7 +18,7 @@ function test_cramer_rao_bound_multi_param()
     (; tspan, psi, H0, dH, decay) = generate_LMG2_dynamics()
 
     rho0 = psi * psi'
-    rho, drho = expm(tspan, rho0, H0, dH; decay=decay)
+    rho, drho = expm(tspan, rho0, H0, dH; decay = decay)
     Im, F, H = Matrix{Float64}[], Matrix{Float64}[], Float64[]
     for ti = 2:length(tspan)
         I_tp = CFIM(rho[ti], drho[ti], SIC(3))
@@ -28,7 +28,7 @@ function test_cramer_rao_bound_multi_param()
         H_tp = HCRB(rho[ti], drho[ti], I(2))
         push!(H, H_tp)
     end
-    SLD(rho[end], drho[end]; rep="eigen")
+    SLD(rho[end], drho[end]; rep = "eigen")
     SLD_liouville(rho[end], drho[end])
     SLD_qr(rho[end], drho[end][1])
     RLD(rho[end], drho[end])
@@ -58,19 +58,19 @@ function test_cramer_rao_bound_kraus()
 end  # function test_cramer_rao_bound_kraus
 
 function test_qfim_bloch()
-    r1 = ones(3)/sqrt(3)
-    dr1 = [[0.0,1.0,0.0]]
+    r1 = ones(3) / sqrt(3)
+    dr1 = [[0.0, 1.0, 0.0]]
     @test QFIM_Bloch(r1, dr1) ≈ 1
-    r2  = ones(8)/sqrt(8)
-    dr2 = [[0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0]]
+    r2 = ones(8) / sqrt(8)
+    dr2 = [[0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
     @test QFIM_Bloch(r2, dr2) > 0
 end  # function test_qfim_bloch
 
 function test_qfim_gauss()
-    R =  [1.0,0.0,1.0,0.0]
+    R = [1.0, 0.0, 1.0, 0.0]
     dR = [zero(R)]
-    D = [2.0 0 1 0;0 1 0 0;1 0 2 0;0 0 0 1]
-    dD=[zeros(4,4)]
+    D = [2.0 0 1 0; 0 1 0 0; 1 0 2 0; 0 0 0 1]
+    dD = [zeros(4, 4)]
     @test QFIM_Gauss(R, dR, D, dD) ≈ 0
 end  # function test_qfim_gauss
 

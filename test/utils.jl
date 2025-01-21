@@ -132,10 +132,10 @@ end
 
 function generate_bayes()
     function H0_func(x)
-        return 0.5 * pi/2 * (σx() * cos(x) + σz() * sin(x))
+        return 0.5 * pi / 2 * (σx() * cos(x) + σz() * sin(x))
     end
     function dH_func(x)
-        return [0.5 * pi/2 * (-σx() * sin(x) + σz() * cos(x))]
+        return [0.5 * pi / 2 * (-σx() * sin(x) + σz() * cos(x))]
     end
     function p_func(x, mu, eta)
         return exp(-(x - mu)^2 / (2 * eta^2)) / (eta * sqrt(2 * pi))
@@ -152,14 +152,7 @@ function generate_bayes()
     c = trapz(x, p_tp)
     p = p_tp / c
     dp = dp_tp / c
-    return (;
-        rho0 = rho0,
-        x = x,
-        p = p,
-        dp = dp,
-        H0_func = H0_func,
-        dH_func = dH_func,
-    )
+    return (; rho0 = rho0, x = x, p = p, dp = dp, H0_func = H0_func, dH_func = dH_func)
 end
 function generate_scheme_bayes()
     (; rho0, x, p, dp, H0_func, dH_func) = generate_bayes()
@@ -167,20 +160,20 @@ function generate_scheme_bayes()
     dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method = :Expm)
     scheme = GeneralScheme(; probe = rho0, param = dynamics, x = x, p = p, dp = dp)
     return scheme
-end 
+end
 
 function generate_scheme_adaptive()
     (; rho0, x, p, dp, H0_func, dH_func) = generate_bayes()
     tspan = range(0.0, stop = 1.0, length = 100)
     dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method = :Expm)
-    strategy = AdaptiveStrategy(x=x, p=p, dp=dp)
+    strategy = AdaptiveStrategy(x = x, p = p, dp = dp)
     scheme = GeneralScheme(; probe = rho0, param = dynamics, strat = strategy)
     return scheme
-end 
+end
 
 function generate_kraus()
     # initial state
-    rho0 = [1.0, 1.0]/sqrt(2)
+    rho0 = [1.0, 1.0] / sqrt(2)
     # Kraus operators for the amplitude damping channel
     gamma = 0.1
     K1 = [1.0 0.0; 0.0 sqrt(1 - gamma)]
@@ -190,18 +183,14 @@ function generate_kraus()
     dK1 = [1.0 0.0; 0.0 -0.5/sqrt(1 - gamma)]
     dK2 = [0.0 0.5/sqrt(gamma); 0.0 0.0]
     dK = [[dK1], [dK2]]
-    return (;
-        rho0 = rho0,
-        K = K,
-        dK = dK,
-    )
-end 
+    return (; rho0 = rho0, K = K, dK = dK)
+end
 
 function generate_scheme_kraus()
     (; rho0, K, dK) = generate_kraus()
 
     # parameterization process
     kraus = Kraus(K, dK)
-    scheme = GeneralScheme(; probe=rho0, param=kraus,)
+    scheme = GeneralScheme(; probe = rho0, param = kraus)
     return scheme
 end  # function generate_scheme_kraus

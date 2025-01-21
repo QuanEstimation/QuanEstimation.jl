@@ -21,7 +21,7 @@ function test_bayesian_cramer_rao_bounds()
     @test f_BQCRB1 >= 0
     @test f_BQCRB2 >= 0
     @test f_BQCRB3 >= 0
-    
+
     @test f_VTB >= 0
     @test f_QVTB >= 0
     @test f_QZZB >= 0

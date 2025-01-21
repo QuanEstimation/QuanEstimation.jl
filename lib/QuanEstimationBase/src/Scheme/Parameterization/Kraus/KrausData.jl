@@ -15,11 +15,11 @@ end
 # - `dK`: Derivatives of the Kraus operators with respect to the unknown parameters to be estimated. For example, dK[0] is the derivative vector on the first parameter.
 # """
 Kraus(K::KT, dK::DKT) where {KT<:AbstractVector,DKT<:AbstractVector} =
-    Kraus{KT,DKT,length(K),length(dK[1]),}(KrausData(K, dK), nothing)
+    Kraus{KT,DKT,length(K),length(dK[1])}(KrausData(K, dK), nothing)
 Kraus(K::KT, dK::DKT, params) where {KT<:Function,DKT<:Function} =
     Kraus{KT,DKT,length(K(params)),length([params...])}(KrausData(K, dK), params)
 Kraus(K::KT, dK::DKT) where {KT<:Function,DKT<:Function} =
-    Kraus{KT,DKT,Nothing,Nothing}(KrausData(K, dK),nothing)
+    Kraus{KT,DKT,Nothing,Nothing}(KrausData(K, dK), nothing)
 
 # para_type(data::KrausData) = length(data.dK[1]) == 1 ? :single_para : :multi_para
 
