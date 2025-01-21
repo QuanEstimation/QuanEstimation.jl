@@ -11,18 +11,6 @@ function dissipation(Γ::V, γ::Vector{R}, t::Int = 1) where {V<:AbstractVector,
     [γ[i] * liouville_dissip(Γ[i]) for i in eachindex(Γ)] |> sum
 end
 
-function dissipation(
-    Γ::V,
-    γ::Vector{Vector{R}},
-    t::Int = 1,
-) where {V<:AbstractVector,R<:Real}
-    [γ[i][t] * liouville_dissip(Γ[i]) for i in eachindex(Γ)] |> sum
-end
-
-function free_evolution(H0)
-    -1.0im * liouville_commu(H0)
-end
-
 function liouvillian(H::Matrix{T}, decay_opt::AbstractVector, γ, t = 1) where {T<:Complex}
     freepart = liouville_commu(H)
     dissp = norm(γ) + 1 ≈ 1 ? freepart |> zero : dissipation(decay_opt, γ, t)
@@ -33,13 +21,13 @@ function Htot(H0::T, Hc::V, ctrl) where {T<:Matrix{ComplexF64},V<:AbstractVector
     [H0 + sum([ctrl[i][t] * Hc[i] for i in eachindex(Hc)]) for t in eachindex(ctrl[1])]
 end
 
-function Htot(
-    H0::T,
-    Hc::V,
-    ctrl::Vector{R},
-) where {T<:AbstractArray,V<:AbstractVector,R<:Real}
-    H0 + ([ctrl[i] * Hc[i] for i in eachindex(ctrl)] |> sum)
-end
+# function Htot(
+#     H0::T,
+#     Hc::V,
+#     ctrl::Vector{R},
+# ) where {T<:AbstractArray,V<:AbstractVector,R<:Real}
+#     H0 + ([ctrl[i] * Hc[i] for i in eachindex(ctrl)] |> sum)
+# end
 
 
 # function Htot(H0::V1, Hc::V2, ctrl) where {V1<:AbstractVector,V2<:AbstractVector}

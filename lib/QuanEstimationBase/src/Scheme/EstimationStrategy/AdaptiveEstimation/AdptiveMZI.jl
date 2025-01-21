@@ -21,12 +21,12 @@ Online adaptive phase estimation in the MZI.
 - `target`: Setting the target function for calculating the tunable phase. Options are: "sharpness" and "MI".
 - `output`: Choose the output variables. Options are: "phi" and "dphi".
 """
-function online(apt::Adapt_MZI; target::Symbol = :sharpness, output::String = "phi", res=nothing)
+function online(apt::Adapt_MZI; target::String = "sharpness", output::String = "phi", res=nothing)
     (; x, p, rho0) = apt
-    adaptMZI_online(x, p, rho0, Symbol(output), target; res=res)
+    adaptMZI_online(x, p, rho0, Symbol(output),  Symbol(target); res=res)
 end
 
-function adaptMZI_online(x, p, rho0, output, target::Symbol; res=nothing)
+function adaptMZI_online(x, p, rho0, output, target; res=nothing)
     N = Int(sqrt(size(rho0, 1))) - 1
     a = destroy(N + 1) |> sparse
     exp_ix = [exp(1.0im * xi) for xi in x]
@@ -119,9 +119,6 @@ function adaptMZI_online(x, p, rho0, output, target::Symbol; res=nothing)
         savefile_online(xout, y)
     end
 end
-
-adaptMZI_online(x, p, rho0, output::String, target::String) =
-    adaptMZI_online(x, p, rho0, Symbol(output), Symbol(target))
 
 function calculate_online{sharpness}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix)
 
@@ -319,34 +316,6 @@ function DE_deltaphiOpt(
     savefile_offline(deltaphi[findmax(p_fit)[2]], f_list)
     return deltaphi[findmax(p_fit)[2]]
 end
-
-DE_deltaphiOpt(
-    x,
-    p,
-    rho0,
-    comb,
-    p_num,
-    ini_population,
-    c,
-    cr,
-    seed::Number,
-    max_episode,
-    target::String,
-    eps,
-) = DE_deltaphiOpt(
-    x,
-    p,
-    rho0,
-    comb,
-    p_num,
-    ini_population,
-    c,
-    cr,
-    MersenneTwister(seed),
-    max_episode,
-    Symbol(target),
-    eps,
-)
 
 function PSO_deltaphiOpt(
     x,

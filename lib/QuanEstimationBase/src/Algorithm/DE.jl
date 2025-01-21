@@ -7,7 +7,7 @@ function optimize!(opt::ControlOpt, alg::DE, obj, scheme, output)
     ini_population = ini_population[1]
     ctrl_length = get_ctrl_length(scheme)
     ctrl_num = get_ctrl_num(scheme)
-    populations = repeat(scheme, p_num)
+    populations = repeat_copy(scheme, p_num)
 
     # initialization
     initial_ctrl!(opt, ini_population, populations, p_num, opt.rng)
@@ -84,7 +84,7 @@ function optimize!(opt::StateOpt, alg::DE, obj, scheme, output)
     end
     ini_population = ini_population[1]
     dim = get_dim(scheme)
-    populations = repeat(scheme, p_num)
+    populations = repeat_copy(scheme, p_num)
     # initialization  
     initial_state!(ini_population, populations, p_num, opt.rng)
 
@@ -426,7 +426,7 @@ function optimize!(opt::StateControlOpt, alg::DE, obj, scheme, output)
     ctrl_length = get_ctrl_length(scheme)
     ctrl_num = get_ctrl_num(scheme)
     dim = get_dim(scheme)
-    populations = repeat(scheme, p_num)
+    populations = repeat_copy(scheme, p_num)
 
     # initialization 
     initial_state!(psi0, populations, p_num, opt.rng)
@@ -533,7 +533,7 @@ function optimize!(opt::StateMeasurementOpt, alg::DE, obj, scheme, output)
     psi0, measurement0 = ini_population
     dim = get_dim(scheme)
     M_num = length(opt.M)
-    populations = repeat(scheme, p_num)
+    populations = repeat_copy(scheme, p_num)
 
     # initialization 
     initial_state!(psi0, populations, p_num, opt.rng)
@@ -645,7 +645,7 @@ function optimize!(opt::ControlMeasurementOpt, alg::DE, obj, scheme, output)
     ctrl_num = get_ctrl_num(scheme)
 
     M_num = length(opt.M)
-    populations = repeat(scheme, p_num)
+    populations = repeat_copy(scheme, p_num)
 
     # initialization 
     initial_ctrl!(opt, ctrl0, populations, p_num, opt.rng)
@@ -763,7 +763,7 @@ function optimize!(opt::StateControlMeasurementOpt, alg::DE, obj, scheme, output
     ctrl_length = get_ctrl_length(scheme)
     ctrl_num = get_ctrl_num(scheme)
     M_num = length(opt.M)
-    populations = repeat(scheme, p_num)
+    populations = repeat_copy(scheme, p_num)
 
     # initialization 
     initial_state!(psi0, populations, p_num, opt.rng)

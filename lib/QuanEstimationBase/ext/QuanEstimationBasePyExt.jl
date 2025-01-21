@@ -209,7 +209,7 @@ function QuanEstimationBase.ode_py(
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
     ctrl =
-        [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |> Array for i = 1:ctrl_num]
+        [repeat_copy(ctrl[i], 1, ctrl_interval) |> transpose |> vec |> Array for i = 1:ctrl_num]
     push!.(ctrl, [0.0 for i = 1:ctrl_num])
     H(ctrl) = Htot(H0, Hc, ctrl)
     dt = tspan[2] - tspan[1]
@@ -252,7 +252,7 @@ function QuanEstimationBase.ode_py(
     ctrl_num = length(Hc)
     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
     ctrl =
-        [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |> Array for i = 1:ctrl_num]
+        [repeat_copy(ctrl[i], 1, ctrl_interval) |> transpose |> vec |> Array for i = 1:ctrl_num]
     push!.(ctrl, [0.0 for i = 1:ctrl_num])
     H(ctrl) = Htot(H0, Hc, ctrl)
     dt = tspan[2] - tspan[1]

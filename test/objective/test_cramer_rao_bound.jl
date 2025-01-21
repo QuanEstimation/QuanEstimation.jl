@@ -40,6 +40,7 @@ function test_cramer_rao_bound_multi_param()
     QFIM_LLD(rho[end], drho[end][1])
     QFIM_pure(rho0, [zero(rho0) for _ = 1:2])
     QFIM_pure(rho0, zero(rho0))
+    NHB(rho[end], drho[end], one(zeros(2, 2)))
 
     @test all([tr(pinv(i)) >= 0 for i in Im])
     @test all([tr(pinv(f)) >= 0 for f in F])
