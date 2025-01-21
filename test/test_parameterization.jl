@@ -58,6 +58,12 @@ function test_lindblad_pure()
     evaluate_hamiltonian(scheme)
 end
 
+function test_kraus() 
+    (;rho0, K, dK) = generate_kraus()
+
+    QFIM_Kraus(rho0, K, dK)
+    
+end
 function test_parameterization()
     test_lindblad(dyn_method=:Ode)
     test_lindblad(dyn_method=:Expm)

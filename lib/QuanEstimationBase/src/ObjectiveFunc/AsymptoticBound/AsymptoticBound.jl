@@ -82,13 +82,7 @@ para_type(::CFIM_obj{multi_para}) = :multi_para
 para_type(::HCRB_obj{single_para}) = :single_para
 para_type(::HCRB_obj{multi_para}) = :multi_para
 
-LDtype(::QFIM_obj{P,SLD}) where {P} = :SLD
-LDtype(::QFIM_obj{P,RLD}) where {P} = :RLD
-LDtype(::QFIM_obj{P,LLD}) where {P} = :LLD
-
 QFIM_obj(opt::CFIM_obj{P}) where {P} = QFIM_obj{P,SLD}(opt.W, opt.eps)
-QFIM_obj(opt::CFIM_obj{P}, LDtype::Symbol) where {P} =
-    QFIM_obj{P,eval(LDtype)}(opt.W, opt.eps)
 
 const obj_idx = Dict(:QFIM => QFIM_obj, :CFIM => CFIM_obj, :HCRB => HCRB_obj)
 
@@ -110,18 +104,6 @@ function objective(obj::QFIM_obj{multi_para,SLD}, scheme)
     return f, 1.0 / f
 end
 
-function objective(obj::QFIM_obj{single_para,SLD}, ρ, dρ)
-    (; eps) = obj
-    f = QFIM_SLD(ρ, dρ[1]; eps = eps)
-    return f, f
-end
-
-function objective(obj::QFIM_obj{multi_para,SLD}, ρ, dρ)
-    (; W, eps) = obj
-    f = tr(W * pinv(QFIM_SLD(ρ, dρ; eps = eps)))
-    return f, 1.0 / f
-end
-
 function objective(obj::QFIM_obj{single_para,RLD}, scheme)
     (; eps) = obj
     ρ, dρ = evolve(scheme)
@@ -133,18 +115,6 @@ function objective(obj::QFIM_obj{multi_para,RLD}, scheme)
     (; W, eps) = obj
     ρ, dρ = evolve(scheme)
     f = tr(W * pinv(QFIM_RLD(ρ, dρ; eps = eps)))
-    return f, 1.0 / f
-end
-
-function objective(obj::QFIM_obj{single_para,RLD}, ρ, dρ)
-    (; W, eps) = obj
-    f = W[1] * QFIM_RLD(ρ, dρ[1]; eps = eps)
-    return f, f
-end
-
-function objective(obj::QFIM_obj{multi_para,RLD}, ρ, dρ)
-    (; W, eps) = obj
-    f = tr(W * pinv(QFIM_RLD(ρ, dρ; eps = eps))) |> real
     return f, 1.0 / f
 end
 
@@ -162,19 +132,6 @@ function objective(obj::QFIM_obj{multi_para,LLD}, scheme)
     return f, 1.0 / f
 end
 
-function objective(obj::QFIM_obj{single_para,LLD}, ρ, dρ)
-    (; W, eps) = obj
-    f = W[1] * QFIM_LLD(ρ, dρ[1]; eps = eps)
-    return f, f
-end
-
-function objective(obj::QFIM_obj{multi_para,LLD}, ρ, dρ)
-    (; W, eps) = obj
-    f = tr(W * pinv(QFIM_LLD(ρ, dρ; eps = eps))) |> real
-    return f, 1.0 / f
-end
-
-
 function objective(obj::CFIM_obj{single_para}, scheme)
     (; M, eps) = obj
     ρ, dρ = evolve(scheme)
@@ -189,27 +146,9 @@ function objective(obj::CFIM_obj{multi_para}, scheme)
     return f, 1.0 / f
 end
 
-function objective(obj::CFIM_obj{single_para}, ρ, dρ)
-    (; M, eps) = obj
-    f = CFIM(ρ, dρ[1], M; eps = eps)
-    return f, f
-end
-
-function objective(obj::CFIM_obj{multi_para}, ρ, dρ)
-    (; M, W, eps) = obj
-    f = tr(W * pinv(CFIM(ρ, dρ, M; eps = eps)))
-    return f, 1.0 / f
-end
-
 function objective(obj::HCRB_obj{multi_para}, scheme)
     (; W, eps) = obj
     ρ, dρ = evolve(scheme)
-    f = Holevo_bound_obj(ρ, dρ, W; eps = eps)
-    return f, 1.0 / f
-end
-
-function objective(obj::HCRB_obj{multi_para}, ρ, dρ)
-    (; W, eps) = obj
     f = Holevo_bound_obj(ρ, dρ, W; eps = eps)
     return f, 1.0 / f
 end

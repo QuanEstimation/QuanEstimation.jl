@@ -178,7 +178,7 @@ function generate_scheme_adaptive()
     return scheme
 end 
 
-function generate_scheme_kraus()
+function generate_kraus()
     # initial state
     rho0 = [1.0, 1.0]/sqrt(2)
     # Kraus operators for the amplitude damping channel
@@ -190,6 +190,16 @@ function generate_scheme_kraus()
     dK1 = [1.0 0.0; 0.0 -0.5/sqrt(1 - gamma)]
     dK2 = [0.0 0.5/sqrt(gamma); 0.0 0.0]
     dK = [[dK1], [dK2]]
+    return (;
+        rho0 = rho0,
+        K = K,
+        dK = dK,
+    )
+end 
+
+function generate_scheme_kraus()
+    (; rho0, K, dK) = generate_kraus()
+
     # parameterization process
     kraus = Kraus(K, dK)
     scheme = GeneralScheme(; probe=rho0, param=kraus,)

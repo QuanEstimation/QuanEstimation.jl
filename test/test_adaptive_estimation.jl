@@ -14,7 +14,7 @@ function test_adaptive_estimation_MZI()
     apt = Adapt_MZI(x, p, rho0)
 
     #================online strategy=========================#
-    # adapt!(apt; target=:sharpness, output="phi")
+    online(apt; target=:sharpness, output="phi", res=zeros(2))
 
     #================offline strategy=========================#
     # algorithm: DE
@@ -29,16 +29,17 @@ function test_adaptive_estimation_MZI()
 
     rm("f.csv")
     rm("deltaphi.csv")
+    rm("adaptive.dat")
     return true
 end
 
 function test_adaptive_estimation()
     scheme=generate_scheme_adaptive()
 
-    @suppress adapt!(scheme; res=zeros(10), method="FOP", max_episode=10)
-    @suppress adapt!(scheme; res=zeros(10), method="MI", max_episode=10)
+    # @suppress adapt!(scheme; res=zeros(10), method="FOP", max_episode=10)
+    # @suppress adapt!(scheme; res=zeros(10), method="MI", max_episode=10)
 
-    rm("adaptive.dat")
+    # rm("adaptive.dat")
     return true
 end
 

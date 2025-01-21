@@ -29,7 +29,7 @@ export expm, ode
 export SigmaX, SigmaY, SigmaZ, σx, σy, σz
 export PlusState, MinusState, BellState
 export ZeroCTRL, LinearCTRL, SineCTRL, SawCTRL, TriangleCTRL, GaussianCTRL, GaussianEdgeCTRL
-export AdaptiveStrategy, adapt!, Adapt_MZI, offline, Bayes, MLE
+export AdaptiveStrategy, adapt!, Adapt_MZI, online, offline, Bayes, MLE
 
 using Random
 using LinearAlgebra
