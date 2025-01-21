@@ -17,8 +17,8 @@ function vec2mat(x)
     vec2mat.(x)
 end
 
-function repeat_copy(system, N)
-    [deepcopy(system) for _ = 1:N]
+function repeat_copy(scheme, N)
+    [deepcopy(scheme) for _ = 1:N]
 end
 
 function filterZeros!(x::Matrix{T}) where {T<:Complex}
