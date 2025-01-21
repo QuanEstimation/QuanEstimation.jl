@@ -20,6 +20,7 @@ function test_adaptive_estimation_MZI()
     # algorithm: DE
     alg = DE(p_num = 3, ini_population = nothing, max_episode = 10, c = 1.0, cr = 0.5)
     offline(apt, alg, target = :sharpness, seed = 1234)
+    offline(apt, alg, target = :MI, seed = 1234)
 
     # # algorithm: PSO
     PSO(p_num=3, ini_particle=nothing, max_episode=[10,10], c0=1.0, c1=2.0, c2=2.0)
