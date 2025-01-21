@@ -36,10 +36,10 @@ end
 function test_adaptive_estimation()
     scheme=generate_scheme_adaptive()
 
-    # @suppress adapt!(scheme; res=zeros(10), method="FOP", max_episode=10)
-    # @suppress adapt!(scheme; res=zeros(10), method="MI", max_episode=10)
+    @suppress adapt!(scheme; res=zeros(10), method="FOP", max_episode=10)
+    @suppress adapt!(scheme; res=zeros(10), method="MI", max_episode=10)
 
-    # rm("adaptive.dat")
+    rm("adaptive.dat")
     return true
 end
 
