@@ -27,7 +27,7 @@ function test_lindblad(;dyn_method=:Ode)
 end  # function test_lindblad
 
 function test_lindblad_pure()
-    (; tspan, H0, dH, Hc, decay, ctrl, M) = generate_qubit_dynamics()
+    (; tspan, rho0, H0, dH, Hc, decay, ctrl, M) = generate_qubit_dynamics()
 
     expm(tspan, rho0, H0, dH[1])
     ode(tspan, rho0, H0, dH[1])
