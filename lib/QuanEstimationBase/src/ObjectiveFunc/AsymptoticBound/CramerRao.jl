@@ -454,11 +454,11 @@ function QFIM(
 ) where {T<:Complex}
 
     if LDtype == :SLD
-        return QFIM_SLD(ρ, dρ; eps = eps)
+        F = QFIM_SLD(ρ, dρ; eps = eps)
     elseif LDtype == :RLD
-        return QFIM_RLD(ρ, dρ; eps = eps)
+        F = QFIM_RLD(ρ, dρ; eps = eps)
     elseif LDtype == :LLD
-        return QFIM_LLD(ρ, dρ; eps = eps)
+        F = QFIM_LLD(ρ, dρ; eps = eps)
     else
         throw(ArgumentError("The LDtype should be chosen in {'SLD', 'RLD', 'LLD'}."))
     end
@@ -470,9 +470,6 @@ function QFIM(
         return F, LD
     end
 end
-
-QFIM(sym::Symbol, args...; kwargs...) = QFIM(Val{sym}, args...; kwargs...)
-
 
 function QFIM(
     scheme::Scheme;
@@ -706,10 +703,8 @@ function Williamson_form(A::AbstractMatrix)
     P = one(A) |> x -> [x[:, 1:2:2n-1] x[:, 2:2:2n]]
     t, Q, vals = schur(B)
     c = vals[1:2:2n-1] .|> imag
-    D = c |> diagm |> x -> x^(-0.5)
-    S =
-        (J * A_sqrt * Q * P * [zeros(n, n) -D; D zeros(n, n)] |> transpose |> inv) *
-        transpose(P)
+    D = c |> diagm |>complex |> x -> x^(-0.5)
+    S = (J * A_sqrt * Q * P * [zeros(n, n) -D; D zeros(n, n)] |> transpose |> inv) * transpose(P)
     return S, c
 end
 

@@ -13,7 +13,6 @@ end
 
 include("LindbladData.jl")
 include("LindbladDynamics.jl")
-include("LindbladWrapper.jl")
 
 function get_param(scheme::Scheme{S,P,M,E}) where {S,P<:AbstractDynamics,M,E}
     return param_data(scheme).hamiltonian.params

@@ -2,7 +2,7 @@ function test_copt_qfi(; savefile=false)
     (; tspan, rho0, H0, dH, Hc, decay, ctrl, ctrl_bound) = generate_qubit_dynamics()
 
     dynamics = Lindblad(H0, dH, tspan, Hc, decay; ctrl=ctrl, dyn_method=:Expm)
-    scheme = GeneralScheme(; probe=rho0, param=dynamics)
+    scheme = GeneralScheme(; probe=PlusState(), param=dynamics)
 
     obj = QFIM_obj()
     f0 = QFIM(scheme)[1]
@@ -15,6 +15,19 @@ function test_copt_qfi(; savefile=false)
     @test f1 >= f0
     rm("f.csv")
     rm("controls.dat")
+
+    alg = GRAPE(Adam=true, max_episode=3,)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("controls.dat")
+
+    alg = GRAPE(Adam=false, max_episode=3,)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("controls.dat")
+
+    dynamics = Lindblad(H0, dH, tspan, Hc, decay; ctrl=ctrl, dyn_method=:Ode)
+    scheme = GeneralScheme(; probe=rho0, param=dynamics)
 
     alg = DE(p_num=3, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
@@ -54,6 +67,16 @@ function test_copt_qfim(; savefile=false)
     alg = DE(p_num=3, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     rm("f.csv")
+    # rm("controls.dat")
+
+    alg = GRAPE(Adam=true, max_episode=3,)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("controls.dat")
+
+    alg = GRAPE(Adam=false, max_episode=3,)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
     rm("controls.dat")
 end
 
@@ -85,6 +108,16 @@ function test_copt_cfi(; savefile=false)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     rm("f.csv")
     rm("controls.dat")
+
+    alg = GRAPE(Adam=true, max_episode=3,)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("controls.dat")
+
+    alg = GRAPE(Adam=false, max_episode=3,)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("controls.dat")
 end
 
 function test_copt_cfim(; savefile=false)
@@ -112,6 +145,16 @@ function test_copt_cfim(; savefile=false)
     rm("controls.dat")
 
     alg = DE(p_num=3, max_episode=10)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("controls.dat")
+
+    alg = GRAPE(Adam=true, max_episode=3,)
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("controls.dat")
+
+    alg = GRAPE(Adam=false, max_episode=3,)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     rm("f.csv")
     rm("controls.dat")

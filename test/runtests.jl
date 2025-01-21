@@ -16,6 +16,10 @@ include("utils.jl")
         include("optimization/test_measurement_optimization.jl")
     end
 
+    @testset "Comprehensive Optimization" begin
+        include("optimization/test_comprehensive_optimization.jl")
+    end
+
     @testset "Adaptive Estimation" begin
         include("test_adaptive_estimation.jl")
     end
@@ -29,6 +33,10 @@ end
     @testset "Bayesian Cramer-Rao Bounds" begin
         include("objective/test_bayesian_cramer_rao_bound.jl")
     end
+end
+
+@testset "Parameterization" begin
+    include("test_parameterization.jl")
 end
 
 @testset "Resource" begin

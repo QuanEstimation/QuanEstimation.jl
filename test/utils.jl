@@ -161,7 +161,7 @@ end
 
 function generate_scheme_kraus()
     # initial state
-    rho0 = 0.5 * ones(2, 2)
+    rho0 = [1.0, 1.0]/sqrt(2)
     # Kraus operators for the amplitude damping channel
     gamma = 0.1
     K1 = [1.0 0.0; 0.0 sqrt(1 - gamma)]

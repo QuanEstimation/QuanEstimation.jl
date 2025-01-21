@@ -37,7 +37,7 @@ function test_mopt_projection_cfi(; savefile = false)
     scheme = GeneralScheme(; probe = rho0, param = dynamics)
 
     obj = CFIM_obj()
-    opt = MeasurementOpt(mtype = :Rotation, POVM_basis = POVM_basis, seed = 1234)
+    opt = MeasurementOpt(mtype=:Projection, seed = 1234)
     
     alg = DE(p_num = 3, max_episode = 10)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
@@ -45,11 +45,6 @@ function test_mopt_projection_cfi(; savefile = false)
     rm("measurements.dat")
 
     alg = PSO(p_num=3, max_episode=[10, 10])
-    @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
-    rm("f.csv")
-    rm("measurements.dat")
-    
-    alg = AD(max_episode = 10)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
     rm("f.csv")
     rm("measurements.dat")

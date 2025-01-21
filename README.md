@@ -6,8 +6,8 @@
 
 [action-img]: https://github.com/QuanEstimation/QuanEstimation.jl/actions/workflows/CI_QuanEstimation.yml/badge.svg
 [action-url]: https://github.com/QuanEstimation/QuanEstimation.jl/actions
-[codecov-img]: https://codecov.io/gh/QuanEstimation/QuanEstimation.jl/branch/master/graph/badge.svg
-[codecov-url]: https://codecov.io/gh/QuanEstimation/QuanEstimation.jl?branch=test-codecov
+[codecov-img]: https://codecov.io/gh/QuanEstimation/QuanEstimation.jl/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/QuanEstimation/QuanEstimation.jl
 [docs-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-url]: https://quanestimation.github.io/QuanEstimation/
 

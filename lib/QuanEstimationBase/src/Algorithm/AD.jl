@@ -209,23 +209,23 @@ function optimize!(opt::StateControlOpt, alg::AbstractAD, obj, scheme, output)
     f_ini, f_comp = objective(obj, scheme)
 
     set_f!(output, f_ini)
-    set_buffer!(output, param_data(scheme).ψ0, param_data(scheme).ctrl)
+    set_buffer!(output, state_data(scheme), param_data(scheme).ctrl)
     set_io!(output, f_noctrl, f_ini)
     show(opt, output, obj, alg)
 
     for ei = 1:(max_episode-1)
         δ = Flux.gradient(
             () -> objective(obj, scheme)[2],
-            Flux.Params([param_data(scheme).ψ0, param_data(scheme).ctrl]),
+            Flux.Params([state_data(scheme), param_data(scheme).ctrl]),
         )
-        update_state!(alg, obj, scheme, δ[param_data(scheme).ψ0])
+        update_state!(alg, obj, scheme, δ[state_data(scheme)])
         update_ctrl!(alg, obj, scheme, δ[param_data(scheme).ctrl])
         bound!(param_data(scheme).ctrl, opt.ctrl_bound)
-        param_data(scheme).ψ0 = param_data(scheme).ψ0 / norm(param_data(scheme).ψ0)
+        scheme.StatePreparation.data = state_data(scheme) / norm(state_data(scheme))
         f_out, f_now = objective(obj, scheme)
 
         set_f!(output, f_out)
-        set_buffer!(output, param_data(scheme).ψ0, param_data(scheme).ctrl)
+        set_buffer!(output, state_data(scheme), param_data(scheme).ctrl)
         set_io!(output, f_out, ei)
         show(output, obj)
     end

@@ -1,30 +1,29 @@
-function optimize!(opt::StateOpt, alg::RI, obj, dynamics, output)
+function optimize!(opt::StateOpt, alg::RI, obj, scheme, output)
     (; max_episode) = alg
 
-    rho, drho = evolve(dynamics)
+    rho, drho = evolve(scheme)
     f = QFIM(rho, drho)
 
     set_f!(output, f[1, 1])
-    set_buffer!(output, dynamics.data.ψ0)
+    set_buffer!(output, state_data(scheme))
     set_io!(output, f[1, 1])
     show(opt, output, obj, alg)
 
-    f_list = [f[1, 1]]
     idx = 0
     ## single-parameter scenario
     for ei = 1:(max_episode-1)
-        rho, drho = evolve(dynamics)
+        rho, drho = evolve(scheme)
         f, LD = QFIM(rho, drho, exportLD = true)
-        M1 = d_DualMap(LD[1], dynamics.data.K, dynamics.data.dK)
-        M2 = DualMap(LD[1] * LD[1], dynamics.data.K)
+        M1 = d_DualMap(LD[1], param_data(scheme).K, param_data(scheme).dK)
+        M2 = DualMap(LD[1] * LD[1], param_data(scheme).K)
         M = 2 * M1[1] - M2
         value, vec = eigen(M)
         val, idx = findmax(real(value))
         psi0 = vec[:, idx]
-        dynamics.data.ψ0 = psi0
+        scheme.StatePreparation.data = psi0
 
         set_f!(output, f[1, 1])
-        set_buffer!(output, dynamics.data.ψ0)
+        set_buffer!(output, state_data(scheme))
         set_io!(output, f[1, 1], ei)
         show(output, obj)
     end

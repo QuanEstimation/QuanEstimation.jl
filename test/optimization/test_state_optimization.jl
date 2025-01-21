@@ -30,6 +30,12 @@ function test_sopt_qfi(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     rm("f.csv")
     rm("states.dat")
+
+    alg = RI()
+    scheme = generate_scheme_kraus()
+    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+    rm("f.csv")
+    rm("states.dat")
 end
 
 function test_sopt_qfim(; savefile = false)
