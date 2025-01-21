@@ -17,18 +17,8 @@ function vec2mat(x)
     vec2mat.(x)
 end
 
-function vec2mat(x::Matrix)
-    throw(ErrorException("vec2mating a matrix of size $(size(x))"))
-end
-
-unzip(X) = map(x -> getfield.(X, x), fieldnames(eltype(X)))
-
-function Base.repeat(system, N)
-    [deepcopy(system) for i = 1:N]
-end
-
-function Base.repeat(system, M, N)
-    reshape(repeat(system, M * N), M, N)
+function repeat_copy(system, N)
+    [deepcopy(system) for _ = 1:N]
 end
 
 function filterZeros!(x::Matrix{T}) where {T<:Complex}

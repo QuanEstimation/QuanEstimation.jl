@@ -10,7 +10,7 @@ function optimize!(opt::ControlOpt, alg::PSO, obj, scheme, output)
     ini_particle = ini_particle[1]
     ctrl_length = get_ctrl_length(scheme)
     ctrl_num = get_ctrl_num(scheme)
-    particles = repeat(scheme, p_num)
+    particles = repeat_copy(scheme, p_num)
 
     if typeof(max_episode) == Int
         max_episode = [max_episode, max_episode]
@@ -94,7 +94,7 @@ function optimize!(opt::ControlOpt, alg::PSO, obj, scheme, output)
         end
         if ei % max_episode[2] == 0
             pdata.ctrl = [gbest[k, :] for k = 1:ctrl_num]
-            particles = repeat(scheme, p_num)
+            particles = repeat_copy(scheme, p_num)
         end
 
         set_f!(output, fit_out)
@@ -116,7 +116,7 @@ function optimize!(opt::StateOpt, alg::PSO, obj, scheme, output)
     end
     ini_particle = ini_particle[1]
     dim = get_dim(scheme)
-    particles = repeat(scheme, p_num)
+    particles = repeat_copy(scheme, p_num)
 
     if typeof(max_episode) == Int
         max_episode = [max_episode, max_episode]
@@ -178,7 +178,7 @@ function optimize!(opt::StateOpt, alg::PSO, obj, scheme, output)
         end
         if ei % max_episode[2] == 0
             sdata = [gbest[i] for i = 1:dim]
-            particles = repeat(scheme, p_num)
+            particles = repeat_copy(scheme, p_num)
         end
         set_f!(output, fit_out)
         set_buffer!(output, [gbest[i] for i = 1:dim])
@@ -407,7 +407,7 @@ function optimize!(opt::Mopt_Rotation, alg::PSO, obj, scheme, output)
     #     append!(Lambda, [suN[i] for i in eachindex(suN)])
     # end
 
-    particles = repeat(s, p_num)
+    particles = repeat_copy(s, p_num)
 
     if typeof(max_episode) == Int
         max_episode = [max_episode, max_episode]
@@ -502,7 +502,7 @@ function optimize!(opt::StateControlOpt, alg::PSO, obj, scheme, output)
     dim = get_dim(scheme)
     ctrl_length = get_ctrl_length(scheme)
     ctrl_num = get_ctrl_num(scheme)
-    particles = repeat(scheme, p_num)
+    particles = repeat_copy(scheme, p_num)
 
     if typeof(max_episode) == Int
         max_episode = [max_episode, max_episode]
@@ -628,7 +628,7 @@ function optimize!(opt::StateMeasurementOpt, alg::PSO, obj, scheme, output)
     psi0, measurement0 = ini_particle
     dim = get_dim(scheme)
     M_num = length(opt.M)
-    particles = repeat(scheme, p_num)
+    particles = repeat_copy(scheme, p_num)
 
     if typeof(max_episode) == Int
         max_episode = [max_episode, max_episode]
@@ -750,7 +750,7 @@ function optimize!(opt::ControlMeasurementOpt, alg::PSO, obj, scheme, output)
     ctrl_num = get_ctrl_num(scheme)
     dim = get_dim(scheme)
     M_num = length(opt.M)
-    particles = repeat(scheme, p_num)
+    particles = repeat_copy(scheme, p_num)
 
     if typeof(max_episode) == Int
         max_episode = [max_episode, max_episode]
@@ -888,7 +888,7 @@ function optimize!(opt::StateControlMeasurementOpt, alg::PSO, obj, scheme, outpu
     ctrl_num = get_ctrl_num(scheme)
     dim = get_dim(scheme)
     M_num = length(opt.M)
-    particles = repeat(scheme, p_num)
+    particles = repeat_copy(scheme, p_num)
 
     if typeof(max_episode) == Int
         max_episode = [max_episode, max_episode]

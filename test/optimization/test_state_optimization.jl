@@ -73,9 +73,9 @@ function test_sopt_qfim(; savefile = false)
 end
 
 function test_sopt_cfi(; savefile = false)
-    (; tspan, psi, H0, dH, decay) = generate_LMG1_dynamics()
+    (; tspan, psi, H0, dH) = generate_LMG1_dynamics()
 
-    dynamics = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
+    dynamics = Lindblad(H0, dH, tspan; dyn_method = :Expm)
     scheme = GeneralScheme(; probe = psi, param = dynamics)
 
     obj = CFIM_obj()

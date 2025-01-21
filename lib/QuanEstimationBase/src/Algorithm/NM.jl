@@ -4,7 +4,7 @@ function optimize!(opt::StateOpt, alg::NM, obj, scheme, output)
         ini_state = [opt.psi]
     end
     dim = get_dim(scheme)
-    nelder_mead = repeat(scheme, p_num)
+    nelder_mead = repeat_copy(scheme, p_num)
 
     # initialize 
     if length(ini_state) > p_num
