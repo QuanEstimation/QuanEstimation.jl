@@ -192,7 +192,7 @@ end
 function expm(
     scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,Control,S,N},M,E},
 ) where {HT,M,E,S,N}
-    (; hamiltonian, tspan, Hc, ctrl) = param_data(scheme)
+    (; hamiltonian, tspan, Hc, ctrl, decay) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(hamiltonian)
 
@@ -400,7 +400,7 @@ end
 function ode(
     scheme::Scheme{DensityMatrix,LindbladDynamics{HT,NonDecay,Control,S,N},M,E},
 ) where {HT,M,E,S,N}
-    (; hamiltonian, tspan, Hc, ctrl) = param_data(scheme)
+    (; hamiltonian, tspan, Hc, ctrl, decay) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(hamiltonian)
 
@@ -410,7 +410,7 @@ end
 function ode(
     scheme::Scheme{DensityMatrix,LindbladDynamics{HT,Decay,Control,S,N},M,E},
 ) where {HT,M,E,S,N}
-    (; hamiltonian, tspan, decay, Hc, ctrl) = param_data(scheme)
+    (; hamiltonian, tspan, decay, Hc, ctrl, decay) = param_data(scheme)
     ρ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(hamiltonian)
 
@@ -705,7 +705,7 @@ function evolve(
 ) where {HT,M,E,P}
     (; tspan, Hc, ctrl) = param_data(scheme)
     ρ0 = state_data(scheme)
-    H0, dH = evaluate_hamiltonian(shceme)
+    H0, dH = evaluate_hamiltonian(scheme)
 
     param_num = length(dH)
     ctrl_num = length(Hc)

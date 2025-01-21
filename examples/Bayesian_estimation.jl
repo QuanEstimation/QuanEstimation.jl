@@ -1,19 +1,12 @@
-using QuanEstimation
-using Random
+using QuanEstimation, Random
 
-# free Hamiltonian
 function H0_func(x)
-    return 0.5 * B * omega0 * (sx * cos(x) + sz * sin(x))
+    return 0.5 * pi/2 * (σx() * cos(x) + σz() * sin(x))
 end
-# derivative of the free Hamiltonian on x
 function dH_func(x)
-    return [0.5 * B * omega0 * (-sx * sin(x) + sz * cos(x))]
+    return [0.5 * pi/2 * (-σx() * sin(x) + σz() * cos(x))]
 end
 
-B, omega0 = pi / 2.0, 1.0
-sx = [0.0 1.0; 1.0 0.0im]
-sy = [0.0 -im; im 0.0]
-sz = [1.0 0.0im; 0.0 -1.0]
 # initial state
 rho0 = 0.5 * ones(2, 2)
 # measurement 
