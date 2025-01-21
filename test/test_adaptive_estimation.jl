@@ -43,3 +43,4 @@ end
 
 
 @test test_adaptive_estimation_MZI()
+@test test_adaptive_estimation()
