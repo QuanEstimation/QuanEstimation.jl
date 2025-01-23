@@ -40,7 +40,7 @@ function annotations(x)
             push!(res, (name=Symbol(f), type=nameof(typeof(v)), description=doc, value=v))
         end
     end
-    res
+    return res
 end
 
 Base.convert(::Type{AnnotatedStructTree}, x::AnnotatedStructTree) = x

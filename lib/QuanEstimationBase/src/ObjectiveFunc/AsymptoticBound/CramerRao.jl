@@ -59,18 +59,17 @@ function SLD(
     else
         throw(ArgumentError("The rep should be chosen in {'original', 'eigen'}."))
     end
-    SLD
+    return SLD
 end
 
 @adjoint function SLD(ρ::Matrix{T}, dρ::Matrix{T}; eps = GLOBAL_EPS) where {T<:Complex}
     L = SLD(ρ, dρ; eps = eps)
     SLD_pullback = L̄ -> (Ḡ -> (-Ḡ * L - L * Ḡ, 2 * Ḡ))(SLD((ρ) |> Array, L̄ / 2))
-    L, SLD_pullback
+    return L, SLD_pullback
 end
 
 function SLD_liouville(ρ::Matrix{T}, ∂ρ_∂x::Matrix{T}; eps = GLOBAL_EPS) where {T<:Complex}
-    2 * pinv(kron(ρ |> transpose, ρ |> one) + kron(ρ |> one, ρ), rtol = eps) * vec(∂ρ_∂x) |>
-    vec2mat
+    2 * pinv(kron(ρ |> transpose, ρ |> one) + kron(ρ |> one, ρ), rtol = eps) * vec(∂ρ_∂x) |> vec2mat
 end
 
 function SLD_liouville(ρ::Vector{T}, ∂ρ_∂x::Vector{T}; eps = GLOBAL_EPS) where {T<:Complex}
@@ -153,7 +152,7 @@ function RLD(
     elseif rep == "eigen"
         RLD = RLD_eig
     end
-    RLD
+    return RLD
 end
 
 
@@ -218,7 +217,7 @@ function LLD(
     elseif rep == "eigen"
         LLD = LLD_eig
     end
-    LLD
+    return LLD
 end
 
 
@@ -726,7 +725,7 @@ function G_Gauss(S::M, dC::VM, c::V) where {M<:AbstractMatrix,V,VM<:AbstractVect
             end
         end
     end
-    G
+    return G
 end
 
 """

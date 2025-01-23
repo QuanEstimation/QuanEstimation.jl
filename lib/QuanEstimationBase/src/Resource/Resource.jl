@@ -18,7 +18,7 @@ function Jp_full(N)
         end
         Jp += jp_tp
     end
-    Jp
+    return Jp
 end
 
 """
