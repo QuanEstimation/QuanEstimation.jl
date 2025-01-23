@@ -5,17 +5,17 @@ function decomposition(A)
     return R
 end
 
-function HCRB(scheme::AbstractScheme; C = nothing, eps = GLOBAL_EPS)
-    if isnothing(C)
-        C = I(get_param_num(scheme))
+function HCRB(scheme::AbstractScheme; W = nothing, eps = GLOBAL_EPS)
+    if isnothing(W)
+        W = I(get_param_num(scheme))
     end
     rho, drho = evolve(scheme)
-    return HCRB(rho, drho, C; eps = eps)
+    return HCRB(rho, drho, W; eps = eps)
 end
 
 """
 
-    HCRB(ρ::AbstractMatrix, dρ::AbstractVector, C::AbstractMatrix; eps=GLOBAL_EPS)
+    HCRB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix; eps=GLOBAL_EPS)
 
 Caltulate the Holevo Cramer-Rao bound (HCRB) via the semidefinite program (SDP).
 - `ρ`: Density matrix.
@@ -23,28 +23,28 @@ Caltulate the Holevo Cramer-Rao bound (HCRB) via the semidefinite program (SDP).
 - `W`: Weight matrix.
 - `eps`: Machine epsilon.
 """
-function HCRB(ρ::AbstractMatrix, dρ::AbstractVector, C::AbstractMatrix; eps = GLOBAL_EPS)
+function HCRB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix; eps = GLOBAL_EPS)
     if length(dρ) == 1
         println(
             "In the single-parameter scenario, the HCRB is equivalent to the QFI. This function will return the value of the QFI.",
         )
         f = QFIM_SLD(ρ, dρ[1]; eps = eps)
         return f
-    elseif rank(C) == 1
+    elseif rank(W) == 1
         println(
             "For rank-one wight matrix, the HCRB is equivalent to QFIM. This function will return the value of Tr(WF^{-1}).",
         )
         F = QFIM_SLD(ρ, dρ; eps = eps)
-        return tr(C * pinv(F))
+        return tr(W * pinv(F))
     else
-        Holevo_bound(ρ, dρ, C; eps = eps)
+        Holevo_bound(ρ, dρ, W; eps = eps)
     end
 end
 
 function Holevo_bound(
     ρ::AbstractMatrix,
     dρ::AbstractVector,
-    C::AbstractMatrix;
+    W::AbstractMatrix;
     eps = GLOBAL_EPS,
 )
 
@@ -85,18 +85,18 @@ function Holevo_bound(
             end
         end
     end
-    problem = minimize(tr(C * V), constraints)
+    problem = minimize(tr(W * V), constraints)
     Convex.solve!(problem, SCS.Optimizer, silent_solver = true)
-    return evaluate(tr(C * V))
+    return evaluate(tr(W * V))
 end
 
 function Holevo_bound_obj(
     ρ::AbstractMatrix,
     dρ::AbstractVector,
-    C::AbstractMatrix;
+    W::AbstractMatrix;
     eps = GLOBAL_EPS,
 )
-    return Holevo_bound(ρ, dρ, C; eps = eps)[1]
+    return Holevo_bound(ρ, dρ, W; eps = eps)[1]
 end
 
 """
