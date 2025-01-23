@@ -2,7 +2,7 @@ function test_sopt_qfi(; savefile = false)
     (; tspan, psi, H0, dH, decay) = generate_LMG1_dynamics()
 
     dynamics = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
-    scheme = GeneralScheme(; probe = psi, param = dynamics)
+    scheme = GeneralScheme(; probe = BellState(1), param = dynamics)
 
     obj = QFIM_obj()
     f0 = QFIM(scheme)[1]
@@ -42,7 +42,7 @@ function test_sopt_qfim(; savefile = false)
     (; tspan, psi, H0, dH, decay, W) = generate_LMG2_dynamics()
 
     dynamics = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
-    scheme = GeneralScheme(; probe = psi, param = dynamics)
+    scheme = GeneralScheme(; probe = BellState(2), param = dynamics)
 
     obj = QFIM_obj(W = W)
     f0 = tr(pinv(QFIM(scheme)))
@@ -76,7 +76,7 @@ function test_sopt_cfi(; savefile = false)
     (; tspan, psi, H0, dH) = generate_LMG1_dynamics()
 
     dynamics = Lindblad(H0, dH, tspan; dyn_method = :Expm)
-    scheme = GeneralScheme(; probe = psi, param = dynamics)
+    scheme = GeneralScheme(; probe = BellState(3), param = dynamics)
 
     obj = CFIM_obj()
     f0 = CFIM(scheme)[1]
@@ -112,7 +112,7 @@ function test_sopt_cfim(; savefile = false)
     (; tspan, psi, H0, dH, decay, W) = generate_LMG2_dynamics()
 
     dynamics = Lindblad(H0, dH, tspan, decay; dyn_method = :Expm)
-    scheme = GeneralScheme(; probe = psi, param = dynamics)
+    scheme = GeneralScheme(; probe = BellState(4), param = dynamics)
 
     obj = CFIM_obj(W = W)
     f0 = tr(pinv(CFIM(scheme)))
