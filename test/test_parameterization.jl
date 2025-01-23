@@ -31,6 +31,16 @@ function test_lindblad(;dyn_method=:Ode)
     scheme = GeneralScheme(; probe=rho0, param=dynamics)
     expm(scheme);ode(scheme);evolve(scheme)
 
+    (;H0_func, dH_func) = generate_bayes()
+    
+    ham = Hamiltonian(H0_func, dH_fun, 1.0)
+    dynamics = Lindblad(ham, tspan, decay; dyn_method=dyn_method)
+    dynamics = Lindblad(ham, tspan, Hc; dyn_method=dyn_method)
+    dynamics = Lindblad(ham, tspan, Hc, decay; dyn_method=dyn_method)
+    scheme = GeneralScheme(; probe=rho0, param=dynamics)
+    evolve(scheme)
+
+
     evaluate_hamiltonian(scheme)
 end  # function test_lindblad
 
@@ -59,10 +69,16 @@ function test_lindblad_pure()
 end
 
 function test_kraus() 
-    (;rho0, K, dK) = generate_kraus()
+    (;rho0, psi, K, dK, K_func, dK_func) = generate_kraus()
 
     QFIM_Kraus(rho0, K, dK)
-    
+    channel = Kraus(K, dK)
+    evolve(GeneralScheme(; probe=rho0, param=channel))
+    evolve(GeneralScheme(; probe=psi, param=channel))
+
+    channel = Kraus(K_func, dK_func, 0.5)
+    evolve(GeneralScheme(; probe=rho0, param=channel))
+    evolve(GeneralScheme(; probe=psi, param=channel))
 end
 function test_parameterization()
     test_lindblad(dyn_method=:Ode)

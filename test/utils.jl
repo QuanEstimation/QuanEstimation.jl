@@ -180,7 +180,8 @@ end
 
 function generate_kraus()
     # initial state
-    rho0 = [1.0, 1.0]/sqrt(2)
+    rho0 = 0.5*ones(2, 2)
+    psi = [1.0, 1.0]/sqrt(2)
     # Kraus operators for the amplitude damping channel
     gamma = 0.1
     K1 = [1.0 0.0; 0.0 sqrt(1 - gamma)]
@@ -190,10 +191,17 @@ function generate_kraus()
     dK1 = [1.0 0.0; 0.0 -0.5/sqrt(1 - gamma)]
     dK2 = [0.0 0.5/sqrt(gamma); 0.0 0.0]
     dK = [[dK1], [dK2]]
+
+    K_func(u) = [[1 0; 0 sqrt(1-u)], [0 sqrt(u); 0 0]]
+    dK_func(u) = [[[0 0; 0 -0.5/sqrt(1-u)]], [[0 0.5/sqrt(u); 0 0]]]
+
     return (;
         rho0 = rho0,
+        psi = psi,
         K = K,
         dK = dK,
+        K_func = K_func,
+        dK_func = dK_func,
     )
 end 
 
