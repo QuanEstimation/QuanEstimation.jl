@@ -47,6 +47,18 @@ function test_cramer_rao_bound_multi_param()
     @test all(H .>= 0)
 end
 
+function test_bounds_with_scheme()
+    H0(u) = (SigmaX()*cos(u)+SigmaZ()*sin(u))/2
+    dH(u) = [(-SigmaX()*sin(u)+SigmaZ()*cos(u))/2] 
+    ham = Hamiltonian(H0, dH, pi/4)
+    dynamics = Lindblad(ham,0:0.01:1,[SigmaY()],[[SigmaZ(), 0.01]]) 
+    scheme = GeneralScheme(; probe=PlusState(),param=dynamics,measurement=SIC(2)) 
+    QFIM(scheme; LDtype=:SLD)
+    CFIM(scheme) 
+    HCRB(scheme)
+    NHB(scheme)
+end  # function test_bounds_with_scheme
+
 function test_cramer_rao_bound_kraus()
     scheme = generate_scheme_kraus()
     rho, drho = evolve(scheme)
@@ -84,6 +96,7 @@ function test_cramer_rao()
     test_cramer_rao_bound_single_param()
     test_cramer_rao_bound_multi_param()
     test_cramer_rao_bound_kraus()
+    test_bounds_with_scheme()
     test_qfim_bloch()
     test_qfim_gauss()
     test_fim()
