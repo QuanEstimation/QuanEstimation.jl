@@ -51,3 +51,7 @@ end
 @testset "NV" begin
     include("test_nv.jl")
 end
+
+@testset "Error evaluation and control" begin
+    include("test_error.jl")
+end

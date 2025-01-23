@@ -1,12 +1,5 @@
 using Setfield
 
-# function error_control_param(scheme::Scheme{S, LindbladDynamics{HT, DT, CT, Expm, P}, M, E};output_error_scaling = 1e-6, input_error_scaling=1e-8, max_episode=1000) where {S, HT, DT, CT, Expm, P, M, E}
-#     (;Parameterization) = scheme
-#     (;data) = Parameterization
-
-
-# end
-
 function error_control_param(
     scheme::Scheme{S,LindbladDynamics{HT,DT,CT,Expm,P},M,E};
     output_error_scaling = 1e-6,
