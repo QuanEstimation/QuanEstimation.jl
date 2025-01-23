@@ -80,11 +80,22 @@ function test_kraus()
     evolve(GeneralScheme(; probe=rho0, param=channel))
     evolve(GeneralScheme(; probe=psi, param=channel))
 end
+
+function test_state()
+    @test PlusState() == [1.0, 1.0]/sqrt(2)
+    @test MinusState() == [1.0, -1.0]/sqrt(2)
+    @test BellState() == BellState(1) == [1.0, 0.0, 0.0, 1.0]/sqrt(2)
+    @test BellState(2) == [1.0, 0.0, 0.0, -1.0]/sqrt(2)
+    @test BellState(3) == [0.0, 1.0, 1.0, 0.0]/sqrt(2)
+    @test BellState(4) == [0.0, 1.0, -1.0, 0.0]/sqrt(2)
+end  # function test_state
+
 function test_parameterization()
     test_lindblad(dyn_method=:Ode)
     test_lindblad(dyn_method=:Expm)
     test_lindblad_pure()
     test_kraus()
+    test_state()
 end  # function test_parameterization
 
 test_parameterization()
