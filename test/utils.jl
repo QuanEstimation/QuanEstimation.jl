@@ -1,6 +1,6 @@
 function generate_qubit_dynamics()
     tspan = range(0.0, 2.0, length = 100)
-    rho0 = 0.5 * ones(2, 2)
+    rho0 = complex(0.5 * ones(2, 2))
     omega = 1.0
     sx = [0.0 1.0; 1.0 0.0im]
     sy = [0.0 -im; im 0.0]
@@ -144,7 +144,7 @@ function generate_bayes()
         return -(x - mu) * exp(-(x - mu)^2 / (2 * eta^2)) / (eta^3 * sqrt(2 * pi))
     end
 
-    rho0 = 0.5 * ones(2, 2)
+    rho0 = complex(0.5 * ones(2, 2))
     x = range(-0.5 * pi, stop = 0.5 * pi, length = 100) |> Vector
     mu, eta = 0.0, 0.2
     p_tp = [p_func(x[i], mu, eta) for i in eachindex(x)]
@@ -180,7 +180,7 @@ end
 
 function generate_kraus()
     # initial state
-    rho0 = 0.5*ones(2, 2)
+    rho0 = complex(0.5*ones(2, 2))
     psi = [1.0, 1.0]/sqrt(2)
     # Kraus operators for the amplitude damping channel
     gamma = 0.1

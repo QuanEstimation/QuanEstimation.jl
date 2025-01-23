@@ -33,7 +33,7 @@ function test_lindblad(;dyn_method=:Ode)
 
     (;H0_func, dH_func) = generate_bayes()
     
-    ham = Hamiltonian(H0_func, dH_fun, 1.0)
+    ham = Hamiltonian(H0_func, dH_func, 1.0)
     dynamics = Lindblad(ham, tspan, decay; dyn_method=dyn_method)
     dynamics = Lindblad(ham, tspan, Hc; dyn_method=dyn_method)
     dynamics = Lindblad(ham, tspan, Hc, decay; dyn_method=dyn_method)

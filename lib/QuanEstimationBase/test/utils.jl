@@ -1,6 +1,6 @@
 function generate_qubit_dynamics()
     tspan = range(0.0, 10.0, length = 100)
-    rho0 = 0.5 * ones(2, 2)
+    rho0 = complex(0.5 * ones(2, 2))
     omega = 1.0
     sx = [0.0 1.0; 1.0 0.0im]
     sy = [0.0 -im; im 0.0]
