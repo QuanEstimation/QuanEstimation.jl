@@ -95,7 +95,7 @@ function test_parameterization()
     test_lindblad(dyn_method=:Expm)
     test_lindblad_pure()
     test_kraus()
-    test_state()
 end  # function test_parameterization
 
 test_parameterization()
+test_state()
