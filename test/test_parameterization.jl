@@ -56,13 +56,13 @@ function test_lindblad_pure()
     evolve(scheme)
     
     dynamics = Lindblad(H0, dH, tspan, decay)
-    scheme = GeneralScheme(; probe=PlusState(), param=dynamics)
+    scheme = GeneralScheme(; probe=MinusState(), param=dynamics)
     evolve(scheme)
 
     
 
     dynamics = Lindblad(H0, dH, tspan, Hc, decay)
-    scheme = GeneralScheme(; probe=PlusState(), param=dynamics)
+    scheme = GeneralScheme(; probe=BellState(), param=dynamics)
     evolve(scheme)
 
     evaluate_hamiltonian(scheme)
