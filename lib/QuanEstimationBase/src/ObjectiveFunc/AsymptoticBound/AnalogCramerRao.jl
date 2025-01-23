@@ -13,6 +13,14 @@ function HCRB(scheme::AbstractScheme; W = nothing, eps = GLOBAL_EPS)
     return HCRB(rho, drho, W; eps = eps)
 end
 
+function NHB(scheme::AbstractScheme; W = nothing)
+    if isnothing(W)
+        W = I(get_param_num(scheme))
+    end
+    rho, drho = evolve(scheme)
+    return NHB(rho, drho, W)
+end
+
 """
 
     HCRB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix; eps=GLOBAL_EPS)
