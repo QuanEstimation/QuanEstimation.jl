@@ -206,10 +206,10 @@ function generate_kraus()
 end 
 
 function generate_scheme_kraus()
-    (; rho0, K, dK) = generate_kraus()
+    (; psi, K, dK) = generate_kraus()
 
     # parameterization process
     kraus = Kraus(K, dK)
-    scheme = GeneralScheme(; probe=rho0, param=kraus,)
+    scheme = GeneralScheme(; probe=psi, param=kraus,)
     return scheme
 end  # function generate_scheme_kraus
