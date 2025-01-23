@@ -8,8 +8,8 @@ function evaluate_kraus(
 ) where {S,M,E,F1<:Function,F2<:Function,NK,NP}
     (; K, dK) = param_data(scheme)
     params = scheme.Parameterization.params
-    KM = K([params...])
-    dKM = dK([params...])
+    KM = K(params...)
+    dKM = dK(params...)
     return KM, dKM
 end
 

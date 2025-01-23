@@ -23,7 +23,7 @@ function set_param!(scheme::Scheme{S,P,M,E}, x) where {S,P<:AbstractDynamics,M,E
 end
 
 function eachparam(scheme::Scheme{S,P,M,E}) where {S,P<:AbstractDynamics,M,E}
-    [p for p in zip(scheme.Parameterization.params...)]
+    return [p for p in zip(scheme.Parameterization.params...)]
 end
 
 function set_ctrl!(dynamics::LindbladDynamics, ctrl)
@@ -39,17 +39,17 @@ end
 function set_ctrl(dynamics::Scheme, ctrl)
     temp = deepcopy(dynamics)
     setfield!(temp.Parameterization.data, :ctrl, ctrl)
-    temp
+    return temp
 end
 
 function set_state(dynamics::LindbladDynamics, state::AbstractVector)
     temp = deepcopy(dynamics)
     setfield!(temp.data, :ψ0, state)
-    temp
+    return temp
 end
 
 function set_state(dynamics::LindbladDynamics, state::AbstractMatrix)
     temp = deepcopy(dynamics)
     setfield!(temp.data, :ρ0, state)
-    temp
+    return temp
 end

@@ -277,7 +277,7 @@ function gramschmidt(A::Vector{Vector{ComplexF64}})
         end
         Q[j] = q / norm(q)
     end
-    Q
+    return Q
 end
 
 function rotation_matrix(coefficients, Lambda)
@@ -286,7 +286,7 @@ function rotation_matrix(coefficients, Lambda)
     for i in eachindex(Lambda)
         U = U * exp(1.0im * coefficients[i] * Matrix(Lambda[i]))
     end
-    U
+    return U
 end
 
 #### initialization states for DE and PSO method ####
@@ -350,7 +350,7 @@ function initial_velocity_ctrl(opt, ctrl_length, ctrl_num, p_num, rng)
                 a * ones(ctrl_num, ctrl_length, p_num)
             )
     end
-    velocity
+    return velocity
 end
 
 #### initialization measurements for DE and PSO ####

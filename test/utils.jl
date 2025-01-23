@@ -1,6 +1,6 @@
 function generate_qubit_dynamics()
     tspan = range(0.0, 2.0, length = 100)
-    rho0 = 0.5 * ones(2, 2)
+    rho0 = complex(0.5 * ones(2, 2))
     omega = 1.0
     sx = [0.0 1.0; 1.0 0.0im]
     sy = [0.0 -im; im 0.0]
@@ -144,7 +144,7 @@ function generate_bayes()
         return -(x - mu) * exp(-(x - mu)^2 / (2 * eta^2)) / (eta^3 * sqrt(2 * pi))
     end
 
-    rho0 = 0.5 * ones(2, 2)
+    rho0 = complex(0.5 * ones(2, 2))
     x = range(-0.5 * pi, stop = 0.5 * pi, length = 100) |> Vector
     mu, eta = 0.0, 0.2
     p_tp = [p_func(x[i], mu, eta) for i in eachindex(x)]
@@ -180,7 +180,8 @@ end
 
 function generate_kraus()
     # initial state
-    rho0 = [1.0, 1.0]/sqrt(2)
+    rho0 = complex(0.5*ones(2, 2))
+    psi = [1.0, 1.0]/sqrt(2)
     # Kraus operators for the amplitude damping channel
     gamma = 0.1
     K1 = [1.0 0.0; 0.0 sqrt(1 - gamma)]
@@ -190,18 +191,25 @@ function generate_kraus()
     dK1 = [1.0 0.0; 0.0 -0.5/sqrt(1 - gamma)]
     dK2 = [0.0 0.5/sqrt(gamma); 0.0 0.0]
     dK = [[dK1], [dK2]]
+
+    K_func(u) = [[1 0; 0 sqrt(1-u)], [0 sqrt(u); 0 0]]
+    dK_func(u) = [[[0 0; 0 -0.5/sqrt(1-u)]], [[0 0.5/sqrt(u); 0 0]]]
+
     return (;
         rho0 = rho0,
+        psi = psi,
         K = K,
         dK = dK,
+        K_func = K_func,
+        dK_func = dK_func,
     )
 end 
 
 function generate_scheme_kraus()
-    (; rho0, K, dK) = generate_kraus()
+    (; psi, K, dK) = generate_kraus()
 
     # parameterization process
     kraus = Kraus(K, dK)
-    scheme = GeneralScheme(; probe=rho0, param=kraus,)
+    scheme = GeneralScheme(; probe=psi, param=kraus,)
     return scheme
 end  # function generate_scheme_kraus

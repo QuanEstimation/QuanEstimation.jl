@@ -3,7 +3,7 @@ JL = julia --project
 default: init test
 
 init:
-	$(JL) -e 'using Pkg; Pkg.develop("QuanEstimation"); Pkg.develop([Pkg.PackageSpec(path = joinpath("lib", pkg)) for pkg in ["QuanEstimationBase", "NVMagnetometer"]]); Pkg.precompile()'
+	$(JL) -e 'using Pkg; Pkg.develop([Pkg.PackageSpec(path = joinpath("lib", pkg)) for pkg in ["QuanEstimationBase", "NVMagnetometer"]]); Pkg.precompile()'
 
 update:
 	$(JL) -e 'using Pkg; Pkg.update(); Pkg.precompile()'
