@@ -40,8 +40,8 @@ end
     end
 end
 
-@testset "Parameterization" begin
-    include("test_parameterization.jl")
+@testset "Scheme" begin
+    include("test_scheme.jl")
 end
 
 @testset "Resource" begin
