@@ -21,20 +21,8 @@ function repeat_copy(scheme, N)
     [deepcopy(scheme) for _ = 1:N]
 end
 
-function filterZeros!(x::Matrix{T}) where {T<:Complex}
-    x[abs.(x).<eps()] .= zero(T)
-    x
-end
-function filterZeros!(x)
-    filterZeros!.(x)
-end
-
 function filterZeros(x::AbstractVecOrMat{T}) where {T<:Number}
     [x + 1 ≈ 1 ? zero(T) : x for x in x]
-end
-
-function t2Num(t0, dt, t)
-    Int(round((t - t0) / dt)) + 1
 end
 
 function basis(dim, si, ::T)::Array{T} where {T<:Complex}
