@@ -84,6 +84,7 @@ function test_parameterization()
     test_lindblad(dyn_method=:Ode)
     test_lindblad(dyn_method=:Expm)
     test_lindblad_pure()
+    test_raus()
 end  # function test_parameterization
 
 test_parameterization()

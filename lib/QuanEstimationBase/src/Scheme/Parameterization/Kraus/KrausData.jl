@@ -22,9 +22,9 @@ Kraus(K::KT, dK::DKT, params) where {KT<:Function,DKT<:Function} =
     Kraus{KT,DKT,length(K(params)),length([params...])}(KrausData(K, dK), params)
 Kraus(K::KT, dK::DKT) where {KT<:Function,DKT<:Function} =
     Kraus{KT,DKT,Nothing,Nothing}(KrausData(K, dK),nothing)
-
+    
+evaluate_kraus(k::Kraus{KT, DKT}) where {KT<:AbstractVector,DKT<:AbstractVector}= k.data.K, k.data.dK
 evaluate_kraus(k::Kraus) = k.data.K(k.params...), k.data.dK(k.params...)
-# para_type(data::KrausData) = length(data.dK[1]) == 1 ? :single_para : :multi_para
 
 get_dim(k::Kraus) = size(evaluate_kraus(k)[1], 1)
 
