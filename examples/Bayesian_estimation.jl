@@ -1,10 +1,10 @@
 using QuanEstimation, Random
 
 function H0_func(x)
-    return 0.5 * pi/2 * (σx() * cos(x) + σz() * sin(x))
+    return 0.5 * pi / 2 * (σx() * cos(x) + σz() * sin(x))
 end
 function dH_func(x)
-    return [0.5 * pi/2 * (-σx() * sin(x) + σz() * cos(x))]
+    return [0.5 * pi / 2 * (-σx() * sin(x) + σz() * cos(x))]
 end
 
 # initial state

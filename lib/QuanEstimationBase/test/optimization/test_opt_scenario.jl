@@ -35,7 +35,7 @@ end
 function test_Mopt_Projection()
     M = QuanEstimationBase.SIC(2)
     seed = 1234
-    opt = MeasurementOpt(; mtype = :Projection,M = M, seed = seed)
+    opt = MeasurementOpt(; mtype = :Projection, M = M, seed = seed)
     @test opt.M == M
     @test opt.rng == MersenneTwister(seed)
 end

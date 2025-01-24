@@ -1,11 +1,14 @@
 struct AdaptiveStrategy <: EstimationStrategy
-    x #ParameterRegion
-    p #PriorDistribution
-    dp
+    x::Any #ParameterRegion
+    p::Any #PriorDistribution
+    dp::Any
 end
 
-AdaptiveStrategy(;x::AbstractVector=nothing, p::AbstractArray=nothing,dp::AbstractArray=nothing) =
-    AdaptiveStrategy(x, p, dp)
+AdaptiveStrategy(;
+    x::AbstractVector = nothing,
+    p::AbstractArray = nothing,
+    dp::AbstractArray = nothing,
+) = AdaptiveStrategy(x, p, dp)
 
 function adapt_param!(scheme::Scheme{S,P,M,AdaptiveStrategy}, x) where {S,P,M}
     scheme.Parameterization.data.hamiltonian.params = [x...]
@@ -50,7 +53,7 @@ function adapt!(
     p_num = length(p |> vec)
 
 
-    x_list =  [(Iterators.product(x_tmp...))...]
+    x_list = [(Iterators.product(x_tmp...))...]
     rho_all, F_all = adapt_scheme!(scheme, x_list, M, W, eps)
     rho_all = reshape(rho_all, size(p))
     u = zeros(para_num)
@@ -82,8 +85,19 @@ function adapt!(
             savefile_false(p, xout, y)
         else
             for ei = 1:max_episode
-                p, x_out, res_exp, u =
-                    iter_FOP(p, p_num, para_num, x_tmp, x_list, u, rho_all, M, x_opt, res, ei)
+                p, x_out, res_exp, u = iter_FOP(
+                    p,
+                    p_num,
+                    para_num,
+                    x_tmp,
+                    x_list,
+                    u,
+                    rho_all,
+                    M,
+                    x_opt,
+                    res,
+                    ei,
+                )
                 savefile_true(p, x_out, Int(res_exp + 1))
             end
         end
@@ -208,8 +222,7 @@ function iter_MI(p, p_num, para_num, x, x_list, u, rho_all, M, res, ei)
         rho_u = Array{Matrix{ComplexF64}}(undef, p_num)
         for hj = 1:p_num
             x_idx = [
-                findmin(abs.(x[k] .- (x_list[hj][k] + x_list[ui][k])))[2] for
-                k = 1:para_num
+                findmin(abs.(x[k] .- (x_list[hj][k] + x_list[ui][k])))[2] for k = 1:para_num
             ]
             rho_u[hj] = rho_all[x_idx...]
         end
