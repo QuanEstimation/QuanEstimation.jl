@@ -1,0 +1,3 @@
+[deps]
+NVMagnetometer = "28fc4bcf-da03-4841-bbdb-88baaf311b30"
+QuanEstimationBase = "9769ca81-ed10-4016-bab9-e66dc61d4d60"

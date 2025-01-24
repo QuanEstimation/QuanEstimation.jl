@@ -1,4 +1,6 @@
 using QuanEstimationBase:QFIM_RLD, QFIM_LLD, QFIM_pure
+using LinearAlgebra
+
 function test_cramer_rao_bound_single_param()
     (; tspan, rho0, H0, dH, Hc, decay, ctrl, M) = generate_qubit_dynamics()
 
@@ -53,10 +55,11 @@ function test_bounds_with_scheme()
     ham = Hamiltonian(H0, dH, pi/4)
     dynamics = Lindblad(ham,0:0.01:1,[SigmaY()],[[SigmaZ(), 0.01]]) 
     scheme = GeneralScheme(; probe=PlusState(),param=dynamics,measurement=SIC(2)) 
-    QFIM(scheme; LDtype=:SLD)
-    CFIM(scheme) 
-    HCRB(scheme)
-    NHB(scheme)
+
+    @test all(eigen(QFIM(scheme; LDtype=:SLD)).values .>= 0)
+    @test all(eigen(CFIM(scheme)).values .>= 0) 
+    @test HCRB(scheme) >= 0
+    @test NHB(scheme) >= 0
 end  # function test_bounds_with_scheme
 
 function test_cramer_rao_bound_kraus()
