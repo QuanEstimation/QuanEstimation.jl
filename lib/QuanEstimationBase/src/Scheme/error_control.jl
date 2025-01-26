@@ -55,7 +55,6 @@ function error_control(
 )
     error_control_param(
         scheme;
-        objective = objective,
         output_error_scaling = output_error_scaling,
         input_error_scaling = input_error_scaling,
         max_episode = max_episode,
