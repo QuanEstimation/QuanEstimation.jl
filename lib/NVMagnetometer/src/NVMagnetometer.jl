@@ -96,6 +96,8 @@ function getscheme(
     )
 end
 
+getscheme(nv::NVMagnetometerScheme) = getscheme(nv.data)
+
 function nv_dynamics_hooks(nv::NVMagnetometerData)
     @unpack D, gS, gI, A1, A2, B1, B2, B3, γ, init_state, ctrl, tspan, M = nv
 
@@ -160,11 +162,11 @@ end
 
 ## 
 QuanEstimationBase.QFIM(nv::NVMagnetometerScheme; kwargs...) =
-    QFIM(getscheme(nv.data); kwargs...)
+    QFIM(getscheme(nv); kwargs...)
 QuanEstimationBase.CFIM(nv::NVMagnetometerScheme; kwargs...) =
-    CFIM(getscheme(nv.data); kwargs...)
+    CFIM(getscheme(nv); kwargs...)
 QuanEstimationBase.HCRB(nv::NVMagnetometerScheme; kwargs...) =
-    HCRB(getscheme(nv.data); kwargs...)
+    HCRB(getscheme(nv); kwargs...)
     
 function QuanEstimationBase.optimize!(
     nv::NVMagnetometerScheme,
@@ -177,4 +179,12 @@ function QuanEstimationBase.optimize!(
 end
 
 
-end # NVMagnetometer
+function QuanEstimationBase.error_evaluation(nv::NVMagnetometerScheme; kwargs...)
+    QuanEstimationBase.error_evaluation(getscheme(nv); kwargs...)
+end
+
+function QuanEstimationBase.error_control(nv::NVMagnetometerScheme; kwargs...)
+    QuanEstimationBase.error_control(getscheme(nv); kwargs...)
+end
+
+end

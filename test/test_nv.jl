@@ -8,6 +8,9 @@ function test_nv_magnetometer()
     @suppress optimize!(scheme, ControlOpt(); algorithm = alg)
     rm("f.csv")
     rm("controls.dat")
+
+    error_evaluation(scheme)
+    error_control(scheme)
 end
 
 test_nv_magnetometer()

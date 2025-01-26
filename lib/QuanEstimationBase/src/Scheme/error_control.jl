@@ -4,7 +4,7 @@ function error_control_param(
     scheme::Scheme{S,LindbladDynamics{HT,DT,CT,Expm,P},M,E};
     output_error_scaling = 1e-6,
     input_error_scaling = 1e-8,
-    max_episode = 1000,
+    max_episode = 10,
 ) where {S,HT,DT,CT,Expm,P,M,E}
     (; Parameterization) = scheme
     (; data) = Parameterization
@@ -25,7 +25,7 @@ function error_control_param(
 end
 
 
-function error_control_eps(scheme::Scheme; eps_scaling = 1e-8, max_episode = 100)
+function error_control_eps(scheme::Scheme; eps_scaling = 1e-8, max_episode = 10)
     eps_tp = eps_scaling
     eps_error = SLD_eps_error(scheme, eps_scaling)
     println("δF ≈ ", eps_error)
@@ -39,7 +39,7 @@ function error_control_eps(scheme::Scheme; eps_scaling = 1e-8, max_episode = 100
         if eps_error <= 1e-16
             break
         end
-        eps_error = SLD_eps_error(scheme, eps_scaling)
+        eps_error = SLD_eps_error(scheme, eps_tp)
         println("eps=", eps_tp, " δF ≈ ", eps_error)
     end
     return nothing
@@ -50,7 +50,7 @@ function error_control(
     output_error_scaling = 1e-6,
     input_error_scaling = 1e-8,
     eps_scaling = 1e-6,
-    max_episode = 1000,
+    max_episode = 10,
 )
     error_control_param(
         scheme,

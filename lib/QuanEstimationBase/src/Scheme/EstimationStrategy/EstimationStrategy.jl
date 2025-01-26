@@ -9,7 +9,7 @@ end
 Strategy(; x = nothing, p = nothing, dp = nothing) = Strategy(Vector(x), p, dp)
 
 function GeneralEstimation(x, p, dp)
-    return Strategy(Vector(x), p, dp)
+    return Strategy(isnothing(x) ? x : Vector(x), p, dp)
 end
 
 include("AdaptiveEstimation/AdaptiveEstimation.jl")
