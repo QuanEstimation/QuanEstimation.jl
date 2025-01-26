@@ -47,16 +47,18 @@ end
 
 function error_control(
     scheme::Scheme;
+    objective=:QFIM,
     output_error_scaling = 1e-6,
     input_error_scaling = 1e-8,
     eps_scaling = 1e-6,
     max_episode = 10,
 )
     error_control_param(
-        scheme,
+        scheme;
+        objective = objective,
         output_error_scaling = output_error_scaling,
         input_error_scaling = input_error_scaling,
         max_episode = max_episode,
     )
-    error_control_eps(scheme, eps_scaling = eps_scaling, max_episode = max_episode)
+    error_control_eps(scheme; eps_scaling = eps_scaling, max_episode = max_episode)
 end
