@@ -414,7 +414,7 @@ end
 
 function evaluate_hamiltonian(scheme::Scheme)
     (; hamiltonian,) = param_data(scheme)
-    params = scheme.Parameterization.params
+    params = hamiltonian.params
     H0 = hamiltonian.H0(params...)
     dH = hamiltonian.dH(params...)
     return H0, dH
