@@ -6,11 +6,11 @@ function QubitDephasing(r::Vector{Float64},
     H0 = r[1]*SigmaX()+r[2]*SigmaY()+r[3]*SigmaZ()
 
     # Choose the derivative of the Hamiltonian according to the parameter to be estimated
-    if para_est == "x"
+    if para_est == "x" || para_est == :x
         dH = [SigmaX()]
-    elseif para_est == "y"
+    elseif para_est == "y" || para_est == :y
         dH = [SigmaY()]
-    elseif para_est == "z"
+    elseif para_est == "z" || para_est == :z
         dH = [SigmaZ()]
     end
 
