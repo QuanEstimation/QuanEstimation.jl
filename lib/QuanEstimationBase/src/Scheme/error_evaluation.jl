@@ -7,7 +7,7 @@ function error_evaluation(
     abstol = 1e-6,
     reltol = 1e-3,
 )
-    println("Error evaluation for $(typeof(scheme))")
+    println("Error evaluation for $(nameof(typeof(scheme)))")
     param_error = param_error_evaluation(
         scheme,
         input_error_scaling;
