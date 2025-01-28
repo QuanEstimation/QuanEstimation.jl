@@ -1,7 +1,7 @@
 name = "QuanEstimation"
 uuid = "088c8dff-a786-4a66-974c-03d3f6773f87"
 authors = ["Jing Liu <liujing@hainanu.edu.cn>", "Huaiming Yu <Huaimingyuuu@gmail.com>", "Mao Zhang"]
-version = "0.2.5"
+version = "0.2.1"
 
 [deps]
 NVMagnetometer = "28fc4bcf-da03-4841-bbdb-88baaf311b30"
@@ -14,7 +14,7 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 QuanEstimationBase = "0.1"
 NVMagnetometer = "0.1"
 Reexport = "1"
-julia = "1.11.0"
+julia = "1"
 
 [extras]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

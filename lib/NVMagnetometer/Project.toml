@@ -1,7 +1,7 @@
 name = "NVMagnetometer"
 uuid = "28fc4bcf-da03-4841-bbdb-88baaf311b30"
 authors = ["Jing Liu <liujingphys@hust.edu.cn>", "Huaiming Yu<huaimingyuuu@gmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -11,8 +11,8 @@ UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 
 [compat]
 UnPack = "1.0"
-QuanEstimationBase = "0.1.0"
-julia = "1.11.0"
+QuanEstimationBase = "0.1.1"
+julia = "1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
