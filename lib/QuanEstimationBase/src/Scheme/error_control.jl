@@ -4,7 +4,7 @@ function error_control_param(
     scheme::Scheme{S,LindbladDynamics{HT,DT,CT,Expm,P},M,E};
     output_error_scaling = 1e-6,
     input_error_scaling = 1e-8,
-    max_episode = 1000,
+    max_episode = 10,
 ) where {S,HT,DT,CT,Expm,P,M,E}
     (; Parameterization) = scheme
     (; data) = Parameterization
@@ -25,9 +25,9 @@ function error_control_param(
 end
 
 
-function error_control_eps(scheme::Scheme; eps_scaling = 1e-8, max_episode = 100)
-    eps_tp = eps_scaling
-    eps_error = SLD_eps_error(scheme, eps_scaling)
+function error_control_eps(scheme::Scheme; SLD_eps = 1e-8, max_episode = 10)
+    eps_tp = SLD_eps
+    eps_error = SLD_eps_error(scheme, SLD_eps)
     println("δF ≈ ", eps_error)
     if eps_error ≈ 0
         println("No need for eps error control")
@@ -39,7 +39,7 @@ function error_control_eps(scheme::Scheme; eps_scaling = 1e-8, max_episode = 100
         if eps_error <= 1e-16
             break
         end
-        eps_error = SLD_eps_error(scheme, eps_scaling)
+        eps_error = SLD_eps_error(scheme, eps_tp)
         println("eps=", eps_tp, " δF ≈ ", eps_error)
     end
     return nothing
@@ -47,16 +47,25 @@ end
 
 function error_control(
     scheme::Scheme;
+    objective::Union{Symbol, String}="QFIM",
     output_error_scaling = 1e-6,
     input_error_scaling = 1e-8,
-    eps_scaling = 1e-6,
-    max_episode = 1000,
+    SLD_eps = 1e-6,
+    max_episode = 10,
 )
-    error_control_param(
-        scheme,
-        output_error_scaling = output_error_scaling,
-        input_error_scaling = input_error_scaling,
-        max_episode = max_episode,
-    )
-    error_control_eps(scheme, eps_scaling = eps_scaling, max_episode = max_episode)
+    if objective == "QFIM" || objective == :QFIM
+        if objective isa String
+            objective = Symbol(objective)
+        end
+
+        error_control_param(
+            scheme;
+            output_error_scaling = output_error_scaling,
+            input_error_scaling = input_error_scaling,
+            max_episode = max_episode,
+        )
+        error_control_eps(scheme; SLD_eps = SLD_eps, max_episode = max_episode)
+    else
+        throw(ArgumentError("Objective not supported."))
+    end
 end

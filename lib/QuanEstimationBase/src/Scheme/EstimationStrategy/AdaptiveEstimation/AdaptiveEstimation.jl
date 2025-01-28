@@ -1,11 +1,11 @@
 struct AdaptiveStrategy <: EstimationStrategy
-    x #ParameterRegion
+    x::Union{Nothing, AbstractVector}
     p #PriorDistribution
     dp
 end
 
 AdaptiveStrategy(;x::AbstractVector=nothing, p::AbstractArray=nothing,dp::AbstractArray=nothing) =
-    AdaptiveStrategy(x, p, dp)
+    AdaptiveStrategy(isnothing(x) ? x : Vector(x), p, dp)
 
 function adapt_param!(scheme::Scheme{S,P,M,AdaptiveStrategy}, x) where {S,P,M}
     scheme.Parameterization.data.hamiltonian.params = [x...]

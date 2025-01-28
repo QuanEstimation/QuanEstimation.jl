@@ -9,3 +9,6 @@
 *.log
 .vscode/
 coverage/
+
+*.csv
+*.dat

@@ -1,7 +1,7 @@
 mutable struct Adapt_MZI <: AbstractScheme
-    x::AbstractVector
-    p::AbstractVector
-    rho0::AbstractMatrix
+    x::Union{Nothing, AbstractVector}
+    p::Union{Nothing, AbstractVector}
+    rho0::Union{Nothing, AbstractMatrix}
 end
 
 abstract type MIZtargetType end

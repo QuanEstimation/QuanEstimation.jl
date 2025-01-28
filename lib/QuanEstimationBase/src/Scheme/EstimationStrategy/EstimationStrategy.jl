@@ -6,10 +6,10 @@ struct Strategy <: EstimationStrategy
     dp::Union{Nothing, AbstractVector} #DistributionDerivative
 end
 
-Strategy(; x = nothing, p = nothing, dp = nothing) = Strategy(x, p, dp)
+Strategy(; x = nothing, p = nothing, dp = nothing) = Strategy(Vector(x), p, dp)
 
 function GeneralEstimation(x, p, dp)
-    return Strategy(x, p, dp)
+    return Strategy(isnothing(x) ? x : Vector(x), p, dp)
 end
 
 include("AdaptiveEstimation/AdaptiveEstimation.jl")

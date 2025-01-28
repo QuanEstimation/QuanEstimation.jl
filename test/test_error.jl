@@ -8,6 +8,7 @@ function test_error_control()
     scheme = generate_qubit_scheme()
 
     error_control(scheme)
+    @test_throws ArgumentError error_control(scheme, objective="HCRB")
 end  # function test_error_control
 
 function test_error()
