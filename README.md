@@ -3,8 +3,8 @@
 [![][docs-img]][docs-url]
 [![][action-img]][action-url]
 [![][codecov-img]][codecov-url]
-[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal%2FQuanEstimation&query=total_requests&suffix=%2Ftotal&label=Downloads)](https://juliapkgstats.com/pkg/QuanEstimation)
-<!-- ![Downloads](https://img.shields.io/github/downloads/QuanEstimation/QuanEstimation.jl/total) -->
+[![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2FQuanEstimation&query=total_requests&suffix=%2Ftotal&label=Downloads)](https://juliapkgstats.com/pkg/QuanEstimation)
+
 
 [action-img]: https://github.com/QuanEstimation/QuanEstimation.jl/actions/workflows/CI_QuanEstimation.yml/badge.svg
 [action-url]: https://github.com/QuanEstimation/QuanEstimation.jl/actions
