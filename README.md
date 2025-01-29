@@ -3,6 +3,7 @@
 [![][docs-img]][docs-url]
 [![][action-img]][action-url]
 [![][codecov-img]][codecov-url]
+![Downloads](https://img.shields.io/github/downloads/QuanEstimation/QuanEstimation.jl/total)
 
 [action-img]: https://github.com/QuanEstimation/QuanEstimation.jl/actions/workflows/CI_QuanEstimation.yml/badge.svg
 [action-url]: https://github.com/QuanEstimation/QuanEstimation.jl/actions
