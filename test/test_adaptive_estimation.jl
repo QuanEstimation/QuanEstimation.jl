@@ -14,10 +14,10 @@ function test_adaptive_estimation_MZI()
     apt = Adapt_MZI(x, p, rho0)
 
     #================online strategy=========================#
-    online(apt; target="sharpness", output="phi", res=zeros(2))
-    online(apt; target="MI", output="phi", res=zeros(2))
-    online(apt; target="sharpness", output="dphi", res=zeros(2))
-    online(apt; target="MI", output="dphi", res=zeros(2))
+    online(apt; target = "sharpness", output = "phi", res = zeros(2))
+    online(apt; target = "MI", output = "phi", res = zeros(2))
+    online(apt; target = "sharpness", output = "dphi", res = zeros(2))
+    online(apt; target = "MI", output = "dphi", res = zeros(2))
 
     #================offline strategy=========================#
     # algorithm: DE
@@ -26,8 +26,15 @@ function test_adaptive_estimation_MZI()
     offline(apt, alg, target = :MI, seed = 1234)
 
     # # algorithm: PSO
-    alg = PSO(p_num=3, ini_particle=nothing, max_episode=[10,10], c0=1.0, c1=2.0, c2=2.0)
-    offline(apt, alg, target=:sharpness, seed=1234)
+    alg = PSO(
+        p_num = 3,
+        ini_particle = nothing,
+        max_episode = [10, 10],
+        c0 = 1.0,
+        c1 = 2.0,
+        c2 = 2.0,
+    )
+    offline(apt, alg, target = :sharpness, seed = 1234)
 
 
     rm("f.csv")
@@ -37,10 +44,10 @@ function test_adaptive_estimation_MZI()
 end
 
 function test_adaptive_estimation()
-    scheme=generate_scheme_adaptive()
+    scheme = generate_scheme_adaptive()
 
-    @suppress adapt!(scheme; res=zeros(10), method="FOP", max_episode=10)
-    @suppress adapt!(scheme; res=zeros(10), method="MI", max_episode=10)
+    @suppress adapt!(scheme; res = zeros(10), method = "FOP", max_episode = 10)
+    @suppress adapt!(scheme; res = zeros(10), method = "MI", max_episode = 10)
 
     rm("adaptive.dat")
     return true

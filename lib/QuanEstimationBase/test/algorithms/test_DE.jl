@@ -16,10 +16,10 @@ function test_StateOpt()
     @test opt.rng == MersenneTwister(seed)
 end
 
-function test_MeasurementOpt(; mtype = :Projection,)
+function test_MeasurementOpt(; mtype = :Projection)
     M = QuanEstimationBase.SIC(2)
     seed = 1234
-    opt = MeasurementOpt(; mtype = :Projection,M = M, seed = seed)
+    opt = MeasurementOpt(; mtype = :Projection, M = M, seed = seed)
     @test opt.M == M
     @test opt.rng == MersenneTwister(seed)
 end
@@ -37,7 +37,7 @@ end
 function test_Mopt_Rotation()
     POVM_basis = QuanEstimationBase.SIC(2)
     seed = 1234
-    opt = MeasurementOpt(; mtype = :Rotation,POVM_basis = POVM_basis, seed = seed)
+    opt = MeasurementOpt(; mtype = :Rotation, POVM_basis = POVM_basis, seed = seed)
     @test opt.POVM_basis == POVM_basis
     @test opt.rng == MersenneTwister(seed)
 end

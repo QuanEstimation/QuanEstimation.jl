@@ -246,8 +246,7 @@ function optimize!(opt::Mopt_LinearComb, alg::DE, obj, scheme, output)
     p_fit, p_out = zeros(p_num), zeros(p_num)
     for pj = 1:p_num
         M = [
-            sum([populations[pj][i][j] * POVM_basis[j] for j = 1:basis_num]) for
-            i = 1:M_num
+            sum([populations[pj][i][j] * POVM_basis[j] for j = 1:basis_num]) for i = 1:M_num
         ]
         obj_copy = set_M(obj, M)
         p_out[pj], p_fit[pj] = objective(obj_copy, scheme)

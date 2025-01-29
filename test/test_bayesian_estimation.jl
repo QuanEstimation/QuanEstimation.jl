@@ -1,4 +1,4 @@
-using QuanEstimationBase:BCB
+using QuanEstimationBase: BCB
 function test_bayes()
     (; rho0, x, p, dp, H0_func, dH_func) = generate_bayes()
     M = SIC(2)

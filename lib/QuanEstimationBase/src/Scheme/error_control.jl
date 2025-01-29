@@ -47,7 +47,7 @@ end
 
 function error_control(
     scheme::Scheme;
-    objective::Union{Symbol, String}="QFIM",
+    objective::Union{Symbol,String} = "QFIM",
     output_error_scaling = 1e-6,
     input_error_scaling = 1e-8,
     SLD_eps = 1e-6,
