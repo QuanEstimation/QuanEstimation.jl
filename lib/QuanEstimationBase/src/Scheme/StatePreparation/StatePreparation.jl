@@ -5,7 +5,7 @@ abstract type DensityMatrix <: AbstractState end
 abstract type Ket <: AbstractState end
 
 mutable struct GeneralState{S<:AbstractState} <: AbstractStatePreparation
-    data
+    data::Any
 end
 
 function GeneralState(probe::Matrix{T}) where {T<:Number}

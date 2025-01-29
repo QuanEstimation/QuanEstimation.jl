@@ -1,7 +1,7 @@
 function error_evaluation(
     scheme::Scheme;
     verbose::Bool = true,
-    objective=:QFIM,
+    objective = :QFIM,
     input_error_scaling = 1e-8,
     SLD_eps = 1e-6,
     abstol = 1e-6,
@@ -24,7 +24,7 @@ function param_error_evaluation(
     scheme::Scheme{S,LindbladDynamics{HT,DT,CT,Expm,P},M,E},
     input_error_scaling;
     verbose::Bool = true,
-    objective=:QFIM,
+    objective = :QFIM,
     abstol = 1e-6,
     reltol = 1e-3,
 ) where {S,HT,DT,CT,P,M,E}
@@ -50,7 +50,7 @@ function param_error_evaluation(
     scheme::Scheme{S,LindbladDynamics{HT,DT,CT,Ode,P},M,E},
     input_error_scaling;
     verbose::Bool = true,
-    objective=:QFIM,
+    objective = :QFIM,
     abstol = 1e-6,
     reltol = 1e-3,
 ) where {S,HT,DT,CT,P,M,E}

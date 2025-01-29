@@ -796,9 +796,11 @@ function evolve(
 end
 
 #### evolution of state under time-independent Hamiltonian with noise and controls #### 
-function evolve(scheme::Scheme{Ket,LindbladDynamics{HT,Decay,Control,Expm,P},M,E}) where {HT,M,E,P}
+function evolve(
+    scheme::Scheme{Ket,LindbladDynamics{HT,Decay,Control,Expm,P},M,E},
+) where {HT,M,E,P}
     (; tspan, decay, Hc, ctrl) = param_data(scheme)
-    ρ0 = state_data(scheme)|>x->x*x'
+    ρ0 = state_data(scheme) |> x -> x * x'
     H0, dH = evaluate_hamiltonian(scheme)
     decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
 
@@ -820,7 +822,9 @@ function evolve(scheme::Scheme{Ket,LindbladDynamics{HT,Decay,Control,Expm,P},M,E
     ρt |> vec2mat, ∂ρt_∂x |> vec2mat
 end
 
-function evolve(scheme::Scheme{Ket,LindbladDynamics{HT,Decay,Control,Ode,P},M,E}) where {HT,M,E,P}
+function evolve(
+    scheme::Scheme{Ket,LindbladDynamics{HT,Decay,Control,Ode,P},M,E},
+) where {HT,M,E,P}
     (; tspan, decay, Hc, ctrl) = param_data(scheme)
     ψ0 = state_data(scheme)
     H0, dH = evaluate_hamiltonian(scheme)

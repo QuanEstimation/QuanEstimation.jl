@@ -1,7 +1,7 @@
 mutable struct Adapt_MZI <: AbstractScheme
-    x::Union{Nothing, AbstractVector}
-    p::Union{Nothing, AbstractVector}
-    rho0::Union{Nothing, AbstractMatrix}
+    x::Union{Nothing,AbstractVector}
+    p::Union{Nothing,AbstractVector}
+    rho0::Union{Nothing,AbstractMatrix}
 end
 
 abstract type MIZtargetType end
@@ -21,12 +21,17 @@ Online adaptive phase estimation in the MZI.
 - `target`: Setting the target function for calculating the tunable phase. Options are: "sharpness" and "MI".
 - `output`: Choose the output variables. Options are: "phi" and "dphi".
 """
-function online(apt::Adapt_MZI; target::String = "sharpness", output::String = "phi", res=nothing)
+function online(
+    apt::Adapt_MZI;
+    target::String = "sharpness",
+    output::String = "phi",
+    res = nothing,
+)
     (; x, p, rho0) = apt
-    adaptMZI_online(x, p, rho0, Symbol(output),  Symbol(target); res=res)
+    adaptMZI_online(x, p, rho0, Symbol(output), Symbol(target); res = res)
 end
 
-function adaptMZI_online(x, p, rho0, output, target; res=nothing)
+function adaptMZI_online(x, p, rho0, output, target; res = nothing)
     N = Int(sqrt(size(rho0, 1))) - 1
     a = destroy(N + 1) |> sparse
     exp_ix = [exp(1.0im * xi) for xi in x]

@@ -37,7 +37,8 @@ function optimize!(opt::StateOpt, alg::NM, obj, scheme, output)
         # calculate the average vector
         vec_ave = zeros(ComplexF64, dim)
         for ni = 1:dim
-            vec_ave[ni] = [nelder_mead[pk].StatePreparation.data[ni] for pk = 1:(p_num-1)] |> sum
+            vec_ave[ni] =
+                [nelder_mead[pk].StatePreparation.data[ni] for pk = 1:(p_num-1)] |> sum
             vec_ave[ni] = vec_ave[ni] / (p_num - 1)
         end
         vec_ave = vec_ave / norm(vec_ave)
@@ -46,7 +47,8 @@ function optimize!(opt::StateOpt, alg::NM, obj, scheme, output)
         vec_ref = zeros(ComplexF64, dim)
         for nj = 1:dim
             vec_ref[nj] =
-                vec_ave[nj] + ar * (vec_ave[nj] - nelder_mead[sort_ind[end]].StatePreparation.data[nj])
+                vec_ave[nj] +
+                ar * (vec_ave[nj] - nelder_mead[sort_ind[end]].StatePreparation.data[nj])
         end
         vec_ref = vec_ref / norm(vec_ref)
         scheme_copy = set_state!(scheme, vec_ref)
@@ -84,7 +86,8 @@ function optimize!(opt::StateOpt, alg::NM, obj, scheme, output)
                 for nl = 1:dim
                     vec_ic[nl] =
                         vec_ave[nl] -
-                        ac * (vec_ave[nl] - nelder_mead[sort_ind[end]].StatePreparation.data[nl])
+                        ac *
+                        (vec_ave[nl] - nelder_mead[sort_ind[end]].StatePreparation.data[nl])
                 end
                 vec_ic = vec_ic / norm(vec_ic)
                 scheme_copy = set_state!(scheme, vec_ic)
@@ -98,15 +101,18 @@ function optimize!(opt::StateOpt, alg::NM, obj, scheme, output)
                     sort_ind = sortperm(p_fit, rev = true)
                 else
                     # shrink
-                    vec_first = [nelder_mead[sort_ind[1]].StatePreparation.data[i] for i = 1:dim]
+                    vec_first =
+                        [nelder_mead[sort_ind[1]].StatePreparation.data[i] for i = 1:dim]
                     for pk = 1:p_num
                         for nq = 1:dim
                             nelder_mead[pk].StatePreparation.data[nq] =
                                 vec_first[nq] +
-                                as0 * (nelder_mead[pk].StatePreparation.data[nq] - vec_first[nq])
+                                as0 *
+                                (nelder_mead[pk].StatePreparation.data[nq] - vec_first[nq])
                         end
                         nelder_mead[pk].StatePreparation.data =
-                            nelder_mead[pk].StatePreparation.data / norm(nelder_mead[pk].StatePreparation.data)
+                            nelder_mead[pk].StatePreparation.data /
+                            norm(nelder_mead[pk].StatePreparation.data)
                         p_out[pk], p_fit[pk] = objective(obj, nelder_mead[pk])
                     end
                     sort_ind = sortperm(p_fit, rev = true)
@@ -129,15 +135,18 @@ function optimize!(opt::StateOpt, alg::NM, obj, scheme, output)
                     sort_ind = sortperm(p_fit, rev = true)
                 else
                     # shrink
-                    vec_first = [nelder_mead[sort_ind[1]].StatePreparation.data[i] for i = 1:dim]
+                    vec_first =
+                        [nelder_mead[sort_ind[1]].StatePreparation.data[i] for i = 1:dim]
                     for pk = 1:p_num
                         for nq = 1:dim
                             nelder_mead[pk].StatePreparation.data[nq] =
                                 vec_first[nq] +
-                                as0 * (nelder_mead[pk].StatePreparation.data[nq] - vec_first[nq])
+                                as0 *
+                                (nelder_mead[pk].StatePreparation.data[nq] - vec_first[nq])
                         end
                         nelder_mead[pk].StatePreparation.data =
-                            nelder_mead[pk].StatePreparation.data / norm(nelder_mead[pk].StatePreparation.data)
+                            nelder_mead[pk].StatePreparation.data /
+                            norm(nelder_mead[pk].StatePreparation.data)
                         p_out[pk], p_fit[pk] = objective(obj, nelder_mead[pk])
                     end
                     sort_ind = sortperm(p_fit, rev = true)

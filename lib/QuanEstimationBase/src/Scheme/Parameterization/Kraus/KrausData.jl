@@ -1,6 +1,6 @@
 mutable struct KrausData <: AbstractKrausData
-    K
-    dK
+    K::Any
+    dK::Any
 end
 
 
@@ -15,15 +15,16 @@ end
 # - `dK`: Derivatives of the Kraus operators with respect to the unknown parameters to be estimated. For example, dK[0] is the derivative vector on the first parameter.
 # """
 Kraus(K::KT, dK::DKT) where {KT<:AbstractVector,DKT<:AbstractVector} =
-    Kraus{KT,DKT,length(K),length(dK[1]),}(KrausData(K, dK), nothing)
-    Kraus(K::KT, dK::DKT, params::Number) where {KT<:Function,DKT<:Function} =
+    Kraus{KT,DKT,length(K),length(dK[1])}(KrausData(K, dK), nothing)
+Kraus(K::KT, dK::DKT, params::Number) where {KT<:Function,DKT<:Function} =
     Kraus{KT,DKT,length(K(params)),length([params...])}(KrausData(K, dK), [params])
 Kraus(K::KT, dK::DKT, params) where {KT<:Function,DKT<:Function} =
     Kraus{KT,DKT,length(K(params)),length([params...])}(KrausData(K, dK), params)
 Kraus(K::KT, dK::DKT) where {KT<:Function,DKT<:Function} =
-    Kraus{KT,DKT,Nothing,Nothing}(KrausData(K, dK),nothing)
-    
-evaluate_kraus(k::Kraus{KT, DKT}) where {KT<:AbstractVector,DKT<:AbstractVector}= k.data.K, k.data.dK
+    Kraus{KT,DKT,Nothing,Nothing}(KrausData(K, dK), nothing)
+
+evaluate_kraus(k::Kraus{KT,DKT}) where {KT<:AbstractVector,DKT<:AbstractVector} =
+    k.data.K, k.data.dK
 evaluate_kraus(k::Kraus) = k.data.K(k.params...), k.data.dK(k.params...)
 
 get_dim(k::Kraus) = size(evaluate_kraus(k)[1], 1)
