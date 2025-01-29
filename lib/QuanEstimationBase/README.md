@@ -1,4 +1,4 @@
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/QuanEstimation/QuanEstimationBase.jl)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/QuanEstimation/lib/QuanEstimationBase.jl)
 
 # QuanEstimationBase
 
