@@ -1,7 +1,7 @@
 # QuanEstimation.jl
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/QuanEstimation/QuanEstimation.jl)
 [![][docs-img]][docs-url]
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![][action-img]][action-url]
 [![][codecov-img]][codecov-url]
 [![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FQuanEstimation&query=total_requests&label=Downloads)](https://juliapkgstats.com/pkg/QuanEstimation)
