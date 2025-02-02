@@ -20,7 +20,7 @@ This package is also the Julia implementation of [QuanEstimation](https://github
 
 ## Installation
 
-[![QuanEstimation](https://img.shields.io/badge/QuanEstimation.jl-v0.2.1-orange)](https://juliahub.com/ui/Packages/QuanEstimation)
+[![QuanEstimation](https://img.shields.io/badge/QuanEstimation-v0.2.1-orange)](https://juliahub.com/ui/Packages/QuanEstimation)
 
 Run the command in the julia REPL to install QuanEstimation:  
 
