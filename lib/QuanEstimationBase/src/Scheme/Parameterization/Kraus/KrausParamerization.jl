@@ -1,4 +1,6 @@
-function evaluate_kraus(scheme::Scheme{S,Kraus{KT,DKT,NK,NP},M,E}) where {S,KT,DKT,NK,NP,M,E}
+function evaluate_kraus(
+    scheme::Scheme{S,Kraus{KT,DKT,NK,NP},M,E},
+) where {S,KT,DKT,NK,NP,M,E}
     (; K, dK) = param_data(scheme)
     return K, dK
 end
@@ -43,7 +45,9 @@ end
 
 Evolution of density matrix under time-independent Hamiltonian without noise and controls.
 """
-function evolve(scheme::Scheme{DensityMatrix,Kraus{KT,DKT,NK,NP},M,E}) where {KT,DKT,NK,NP,M,E}
+function evolve(
+    scheme::Scheme{DensityMatrix,Kraus{KT,DKT,NK,NP},M,E},
+) where {KT,DKT,NK,NP,M,E}
     ρ0 = state_data(scheme)
     K, dK = evaluate_kraus(scheme)
     K_num = length(K)

@@ -5,7 +5,7 @@ function optimize!(
     objective = QFIM_obj(),
     savefile = false,
 )
-    show(stdout,"text/plain", scheme)
+    show(stdout, "text/plain", scheme)
 
     opt = init_opt(opt, scheme)
     objective = Objective(scheme, objective)

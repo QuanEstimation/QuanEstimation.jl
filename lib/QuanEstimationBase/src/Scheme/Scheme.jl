@@ -1,9 +1,9 @@
 abstract type AbstractScheme end
 struct Scheme{S,P,M,E} <: AbstractScheme
-    StatePreparation
-    Parameterization
-    Measurement
-    EstimationStrategy
+    StatePreparation::Any
+    Parameterization::Any
+    Measurement::Any
+    EstimationStrategy::Any
 end
 
 include("StatePreparation/StatePreparation.jl")
