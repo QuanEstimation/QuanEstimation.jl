@@ -30,7 +30,6 @@ save_type(::Output{savefile}) = :savefile
 save_type(::Output{no_save}) = :no_save
 
 function SaveFile(output::Output{no_save}; suffix::AbstractString = ".dat")
-    using JLD2
     open("f.csv", "w") do f
         writedlm(f, output.f_list)
     end
@@ -45,11 +44,9 @@ function SaveFile(output::Output{no_save}; suffix::AbstractString = ".dat")
 end
 
 function SaveFile(output::Output{savefile}) 
-    using JLD2 
 end
 
 function SaveCurrent(output::Output{savefile}; suffix::AbstractString = ".dat")
-    using JLD2
     open("f.csv", "a") do f
         writedlm(f, output.f_list[end])
     end
@@ -65,22 +62,18 @@ function SaveCurrent(output::Output{savefile}; suffix::AbstractString = ".dat")
 end
 
 function SaveCurrent(output::Output{no_save}) 
-    using JLD2
 end
 
 function SaveReward(output::Output{savefile}, reward::Number) ## TODO: reset file
-    using JLD2
     open("reward.csv", "a") do r
         writedlm(r, reward)
     end
 end
 
 function SaveReward(output::Output{no_save}, reward::Number)
-    using JLD2
 end
 
 function SaveReward(rewards)
-    using JLD2
     open("reward.csv", "w") do r
         writedlm(r, rewards)
     end
