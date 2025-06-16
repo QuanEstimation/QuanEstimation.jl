@@ -1,7 +1,11 @@
 name = "QuanEstimationBase"
 uuid = "9769ca81-ed10-4016-bab9-e66dc61d4d60"
-authors = ["Jing Liu <liujing@hainanu.edu.cn>", "Huaiming Yu <Huaimingyuuu@gmail.com>", "Mao Zhang <zhangmao2018@hust.edu.cn>"]
-version = "0.1.1"
+authors = [
+    "Jing Liu <liujing@hainanu.edu.cn>",
+    "Huaiming Yu <Huaimingyuuu@gmail.com>",
+    "Mao Zhang <zhangmao2018@hust.edu.cn>",
+]
+version = "0.1.2"
 
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
@@ -42,7 +46,7 @@ Distributions = "0.25"
 Flux = "0.12, 0.13, 0.14"
 Interpolations = "0.13, 0.14, 0.15"
 IntervalSets = "0.5, 0.7"
-JLD2 = "0.4"
+JLD2 = "0.5"
 OrdinaryDiffEq = "6.95"
 QuadGK = "2.9"
 Revise = "3.5"
