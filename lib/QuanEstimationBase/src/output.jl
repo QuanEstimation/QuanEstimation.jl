@@ -33,11 +33,11 @@ function SaveFile(output::Output{no_save}; suffix::AbstractString = ".dat")
     # # JLD2 save
     # open("f.csv", "w") do f
     #     writedlm(f, output.f_list)
+    # end
 
     # CSV save   
     df = DataFrame(f = output.f_list)
     CSV.write("f.csv", df)
-    end
     for (res, file) in zip(output.opt_buffer, output.res_file)
         # # JLD2 save
         # jldopen(file * suffix, "w") do f
@@ -57,11 +57,11 @@ function SaveCurrent(output::Output{savefile}; suffix::AbstractString = ".dat")
     # # JLD2 save
     # open("f.csv", "a") do f
     #     writedlm(f, output.f_list[end])
+    # end
 
     # CSV save
     df = DataFrame(f = [output.f_list[end]])
     CSV.write("f.csv", df; append=true)
-    end
     for (res, file) in zip(output.opt_buffer, output.res_file)
         # # JLD2 save
         # fs = isfile(file * suffix) ? load(file * suffix)[file] : typeof(res)[]
@@ -78,7 +78,6 @@ function SaveCurrent(output::Output{savefile}; suffix::AbstractString = ".dat")
         newrow = DataFrame(res = [res])
         df_res = vcat(df_res, newrow)
         CSV.write(csvfile, df_res)
-        end
     end
 end
 
@@ -89,11 +88,11 @@ function SaveReward(output::Output{savefile}, reward::Number) ## TODO: reset fil
     # # JLD2 save
     # open("reward.csv", "a") do r
     #     writedlm(r, reward)
+    # end
 
     # CSV save
     df = DataFrame(reward = [reward])
     CSV.write("reward.csv", df; append=true)
-    end
 end
 
 function SaveReward(output::Output{no_save}, reward::Number)
@@ -103,9 +102,9 @@ function SaveReward(rewards)
     # # JLD2 save
     # open("reward.csv", "w") do r
     #     writedlm(r, rewards)
+    # end
 
     # CSV save
     df = DataFrame(reward = rewards)
     CSV.write("reward.csv", df)
-    end
 end
