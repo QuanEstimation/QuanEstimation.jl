@@ -42,16 +42,15 @@ function SaveFile(output::Output{no_save}; suffix::AbstractString = ".dat")
         # # JLD2 save
         # jldopen(file * suffix, "w") do f
         #     f[file] = res
+        # end
 
         # CSV save   
         df = DataFrame(res = res)
         CSV.write(file * suffix * ".csv", df)
-        end
     end
 end
 
-function SaveFile(output::Output{savefile}) 
-end
+function SaveFile(output::Output{savefile}) end
 
 function SaveCurrent(output::Output{savefile}; suffix::AbstractString = ".dat")
     # # JLD2 save
