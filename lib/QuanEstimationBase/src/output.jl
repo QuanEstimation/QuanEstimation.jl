@@ -80,8 +80,7 @@ function SaveCurrent(output::Output{savefile}; suffix::AbstractString = ".dat")
     end
 end
 
-function SaveCurrent(output::Output{no_save}) 
-end
+function SaveCurrent(output::Output{no_save}) end
 
 function SaveReward(output::Output{savefile}, reward::Number) ## TODO: reset file
     # # JLD2 save
