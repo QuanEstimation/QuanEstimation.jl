@@ -54,9 +54,10 @@ StableRNGs = "1.0"
 StatsBase = "0.34"
 Trapz = "2.0"
 Zygote = "0.6"
-julia = "1.10 - 1.12"
-CSV = "0.10.15"
-DataFrames = "1.6"
+julia = "1"
+DataFrames = "1.7"
+CSV = "0.10"
+
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
