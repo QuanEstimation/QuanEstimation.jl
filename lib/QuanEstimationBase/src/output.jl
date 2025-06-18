@@ -30,15 +30,22 @@ save_type(::Output{savefile}) = :savefile
 save_type(::Output{no_save}) = :no_save
 
 function SaveFile(output::Output{no_save}; suffix::AbstractString = ".dat")
-    open("f.csv", "w") do f
-        writedlm(f, output.f_list)
+    # # JLD2 save
+    # open("f.csv", "w") do f
+    #     writedlm(f, output.f_list)
+
+    # CSV save   
+    df = DataFrame(f = output.f_list)
+    CSV.write("f.csv", df)
     end
     for (res, file) in zip(output.opt_buffer, output.res_file)
-        # open(file, "w") do g
-        # writedlm(g, res)
-        # end
-        jldopen(file * suffix, "w") do f
-            f[file] = res
+        # # JLD2 save
+        # jldopen(file * suffix, "w") do f
+        #     f[file] = res
+
+        # CSV save   
+        df = DataFrame(res = res)
+        CSV.write(file * suffix * ".csv", df)
         end
     end
 end
@@ -47,16 +54,30 @@ function SaveFile(output::Output{savefile})
 end
 
 function SaveCurrent(output::Output{savefile}; suffix::AbstractString = ".dat")
-    open("f.csv", "a") do f
-        writedlm(f, output.f_list[end])
+    # # JLD2 save
+    # open("f.csv", "a") do f
+    #     writedlm(f, output.f_list[end])
+
+    # CSV save
+    df = DataFrame(f = [output.f_list[end]])
+    CSV.write("f.csv", df; append=true)
     end
     for (res, file) in zip(output.opt_buffer, output.res_file)
-        # open(file, "a") do g
-        # writedlm(g, res)
-        # end
-        fs = isfile(file * suffix) ? load(file * suffix)[file] : typeof(res)[]
-        jldopen(file * suffix, "w") do f
-            f[file] = append!(fs, [res])
+        # # JLD2 save
+        # fs = isfile(file * suffix) ? load(file * suffix)[file] : typeof(res)[]
+        # jldopen(file * suffix, "w") do f
+        #     f[file] = append!(fs, [res])
+
+        # CSV save
+        csvfile = file * suffix * ".csv"      
+        if isfile(csvfile)
+            df_res = CSV.read(csvfile, DataFrame)
+        else
+            df_res = DataFrame(res = typeof(res)[])
+        end
+        newrow = DataFrame(res = [res])
+        df_res = vcat(df_res, newrow)
+        CSV.write(csvfile, df_res)
         end
     end
 end
@@ -65,8 +86,13 @@ function SaveCurrent(output::Output{no_save})
 end
 
 function SaveReward(output::Output{savefile}, reward::Number) ## TODO: reset file
-    open("reward.csv", "a") do r
-        writedlm(r, reward)
+    # # JLD2 save
+    # open("reward.csv", "a") do r
+    #     writedlm(r, reward)
+
+    # CSV save
+    df = DataFrame(reward = [reward])
+    CSV.write("reward.csv", df; append=true)
     end
 end
 
@@ -74,7 +100,12 @@ function SaveReward(output::Output{no_save}, reward::Number)
 end
 
 function SaveReward(rewards)
-    open("reward.csv", "w") do r
-        writedlm(r, rewards)
+    # # JLD2 save
+    # open("reward.csv", "w") do r
+    #     writedlm(r, rewards)
+
+    # CSV save
+    df = DataFrame(reward = rewards)
+    CSV.write("reward.csv", df)
     end
 end
