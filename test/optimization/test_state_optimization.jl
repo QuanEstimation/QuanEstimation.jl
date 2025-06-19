@@ -1,10 +1,3 @@
-using QuanEstimation
-using QuanEstimationBase
-using Test
-using Suppressor
-using LinearAlgebra
-include("../utils.jl")  # For generate_LMG1_dynamics, generate_LMG2_dynamics, generate_scheme_kraus
-
 function test_sopt_qfi(; savefile = false)
     (; tspan, psi, H0, dH, decay) = generate_LMG1_dynamics()
 
