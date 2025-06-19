@@ -1,3 +1,10 @@
+using QuanEstimation
+using QuanEstimationBase
+using Test
+using Suppressor
+using LinearAlgebra
+include("../utils.jl")  # For generate_LMG1_dynamics, generate_LMG2_dynamics, generate_scheme_kraus
+
 function test_sopt_qfi(; savefile = false)
     (; tspan, psi, H0, dH, decay) = generate_LMG1_dynamics()
 
@@ -12,30 +19,41 @@ function test_sopt_qfi(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
 
     f1 = QFIM(scheme)[1]
-    @test isapprox(f1, f0; atol=1e-5) || f1 >= f0
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
+    @test f1 >= f0 || isapprox(f1, f0; atol=1e-5)
+    
+    # Ensure cleanup happens even if tests fail
+    try
+        isfile("f.csv") && rm("f.csv")
+        isfile("states.dat") && rm("states.dat")
+    catch e
+        @warn "Cleanup failed: $e"
+    end
 
-    alg = PSO(p_num=3, max_episode=[10, 10])
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
+    # Test other algorithms
+    for alg in [
+        PSO(p_num=3, max_episode=[10, 10]),
+        DE(p_num=3, max_episode=10),
+        NM(p_num=5, max_episode=10)
+    ]
+        @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+        try
+            isfile("f.csv") && rm("f.csv")
+            isfile("states.dat") && rm("states.dat")
+        catch e
+            @warn "Cleanup failed: $e"
+        end
+    end
 
-    alg = DE(p_num=3, max_episode=10)
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
-
-    alg = NM(p_num=5, max_episode=10)
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
-
+    # Test RI algorithm separately
     alg = RI()
     scheme = generate_scheme_kraus()
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
+    try
+        isfile("f.csv") && rm("f.csv")
+        isfile("states.dat") && rm("states.dat")
+    catch e
+        @warn "Cleanup failed: $e"
+    end
 end
 
 function test_sopt_qfim(; savefile = false)
@@ -45,31 +63,36 @@ function test_sopt_qfim(; savefile = false)
     scheme = GeneralScheme(; probe = psi, param = dynamics)
 
     obj = QFIM_obj(W = W)
-    f0 = tr(pinv(QFIM(scheme)))
+    f0 = LinearAlgebra.tr(pinv(QFIM(scheme)))
 
     opt = StateOpt(psi = psi, seed = 1234)
     alg = AD(Adam = true, max_episode = 10, epsilon = 0.01, beta1 = 0.90, beta2 = 0.99)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
 
-    f1 = tr(pinv(QFIM(scheme)))
-    @test isapprox(f1, f0; atol=1e-5) || f1 <= f0    
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
+    f1 = LinearAlgebra.tr(pinv(QFIM(scheme)))
+    @test f1 <= f0 || isapprox(f1, f0; atol=1e-5)
+    
+    try
+        isfile("f.csv") && rm("f.csv")
+        isfile("states.dat") && rm("states.dat")
+    catch e
+        @warn "Cleanup failed: $e"
+    end
 
-    alg = PSO(p_num=3, max_episode=[10, 10])
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
-
-    alg = DE(p_num=3, max_episode=10)
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
-
-    alg = NM(p_num=5, max_episode=10)
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
+    # Test other algorithms
+    for alg in [
+        PSO(p_num=3, max_episode=[10, 10]),
+        DE(p_num=3, max_episode=10),
+        NM(p_num=5, max_episode=10)
+    ]
+        @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+        try
+            isfile("f.csv") && rm("f.csv")
+            isfile("states.dat") && rm("states.dat")
+        catch e
+            @warn "Cleanup failed: $e"
+        end
+    end
 end
 
 function test_sopt_cfi(; savefile = false)
@@ -86,26 +109,29 @@ function test_sopt_cfi(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
 
     f1 = CFIM(scheme)[1]
-    @test isapprox(f1, f0; atol=1e-5) || f1 >= f0
+    @test f1 >= f0 || isapprox(f1, f0; atol=1e-5)
+    
+    try
+        isfile("f.csv") && rm("f.csv")
+        isfile("states.dat") && rm("states.dat")
+    catch e
+        @warn "Cleanup failed: $e"
+    end
 
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
-
-    alg = PSO(p_num=3, max_episode=[10, 10])
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
-
-    alg = DE(p_num=3, max_episode=10)
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
-
-
-    alg = NM(p_num=5, max_episode=10)
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
+    # Test other algorithms
+    for alg in [
+        PSO(p_num=3, max_episode=[10, 10]),
+        DE(p_num=3, max_episode=10),
+        NM(p_num=5, max_episode=10)
+    ]
+        @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+        try
+            isfile("f.csv") && rm("f.csv")
+            isfile("states.dat") && rm("states.dat")
+        catch e
+            @warn "Cleanup failed: $e"
+        end
+    end
 end
 
 function test_sopt_cfim(; savefile = false)
@@ -115,31 +141,36 @@ function test_sopt_cfim(; savefile = false)
     scheme = GeneralScheme(; probe = psi, param = dynamics)
 
     obj = CFIM_obj(W = W)
-    f0 = tr(pinv(CFIM(scheme)))
+    f0 = LinearAlgebra.tr(pinv(CFIM(scheme)))
 
     opt = StateOpt(psi = psi, seed = 1234)
     alg = AD(Adam = true, max_episode = 10, epsilon = 0.01, beta1 = 0.90, beta2 = 0.99)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
 
-    f1 = tr(pinv(CFIM(scheme)))
-    @test isapprox(f1, f0; atol=1e-5) || f1 <= f0 
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
+    f1 = LinearAlgebra.tr(pinv(CFIM(scheme)))
+    @test f1 <= f0 || isapprox(f1, f0; atol=1e-5)
+    
+    try
+        isfile("f.csv") && rm("f.csv")
+        isfile("states.dat") && rm("states.dat")
+    catch e
+        @warn "Cleanup failed: $e"
+    end
 
-    alg = PSO(p_num=3, max_episode=[10, 10])
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
-
-    alg = DE(p_num=3, max_episode=10)
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
-
-    alg = NM(p_num=5, max_episode=10)
-    @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    isfile("f.csv") && rm("f.csv")
-    isfile("states.dat") && rm("states.dat")
+    # Test other algorithms
+    for alg in [
+        PSO(p_num=3, max_episode=[10, 10]),
+        DE(p_num=3, max_episode=10),
+        NM(p_num=5, max_episode=10)
+    ]
+        @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
+        try
+            isfile("f.csv") && rm("f.csv")
+            isfile("states.dat") && rm("states.dat")
+        catch e
+            @warn "Cleanup failed: $e"
+        end
+    end
 end
 
 
@@ -158,5 +189,3 @@ function test_sopt()
         test_sopt_cfim(savefile = true)
     end
 end
-
-test_sopt()
