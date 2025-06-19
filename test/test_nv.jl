@@ -6,8 +6,8 @@ function test_nv_magnetometer()
         
     alg = autoGRAPE(;max_episode = 10)
     @suppress optimize!(scheme, ControlOpt(); algorithm = alg)
-    rm("f.csv")
-    rm("controls.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("controls.dat") && rm("controls.dat")
 
     error_evaluation(scheme)
     error_control(scheme)

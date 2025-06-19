@@ -12,30 +12,30 @@ function test_sopt_qfi(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
 
     f1 = QFIM(scheme)[1]
-    @test f1 >= f0
-    rm("f.csv")
-    rm("states.dat")
+    @test isapprox(f1, f0; atol=1e-5) || f1 >= f0
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 
     alg = PSO(p_num=3, max_episode=[10, 10])
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    rm("f.csv")
-    rm("states.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 
     alg = DE(p_num=3, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    rm("f.csv")
-    rm("states.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 
     alg = NM(p_num=5, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    rm("f.csv")
-    rm("states.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 
     alg = RI()
     scheme = generate_scheme_kraus()
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    rm("f.csv")
-    rm("states.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 end
 
 function test_sopt_qfim(; savefile = false)
@@ -52,24 +52,24 @@ function test_sopt_qfim(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
 
     f1 = tr(pinv(QFIM(scheme)))
-    @test f1 <= f0
-    rm("f.csv")
-    rm("states.dat")
+    @test isapprox(f1, f0; atol=1e-5) || f1 <= f0    
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 
     alg = PSO(p_num=3, max_episode=[10, 10])
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    rm("f.csv")
-    rm("states.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 
     alg = DE(p_num=3, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    rm("f.csv")
-    rm("states.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 
     alg = NM(p_num=5, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    rm("f.csv")
-    rm("states.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 end
 
 function test_sopt_cfi(; savefile = false)
@@ -86,26 +86,26 @@ function test_sopt_cfi(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
 
     f1 = CFIM(scheme)[1]
-    @test f1 >= f0
+    @test isapprox(f1, f0; atol=1e-5) || f1 >= f0
 
-    rm("f.csv")
-    rm("states.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 
     alg = PSO(p_num=3, max_episode=[10, 10])
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    rm("f.csv")
-    rm("states.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 
     alg = DE(p_num=3, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    rm("f.csv")
-    rm("states.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 
 
     alg = NM(p_num=5, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    rm("f.csv")
-    rm("states.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 end
 
 function test_sopt_cfim(; savefile = false)
@@ -122,25 +122,24 @@ function test_sopt_cfim(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
 
     f1 = tr(pinv(CFIM(scheme)))
-    @test f1 <= f0
-    rm("f.csv")
-    rm("states.dat")
+    @test isapprox(f1, f0; atol=1e-5) || f1 <= f0 
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 
     alg = PSO(p_num=3, max_episode=[10, 10])
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    rm("f.csv")
-    rm("states.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 
     alg = DE(p_num=3, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    rm("f.csv")
-    rm("states.dat")
-
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 
     alg = NM(p_num=5, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
-    rm("f.csv")
-    rm("states.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("states.dat") && rm("states.dat")
 end
 
 

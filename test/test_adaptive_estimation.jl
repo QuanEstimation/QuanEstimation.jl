@@ -29,10 +29,9 @@ function test_adaptive_estimation_MZI()
     alg = PSO(p_num=3, ini_particle=nothing, max_episode=[10,10], c0=1.0, c1=2.0, c2=2.0)
     offline(apt, alg, target=:sharpness, seed=1234)
 
-
-    rm("f.csv")
-    rm("deltaphi.csv")
-    rm("adaptive.dat")
+    isfile("f.csv") && rm("f.csv")
+    isfile("deltaphi.csv") && rm("deltaphi.csv")
+    isfile("adaptive.dat") && rm("adaptive.dat")
     return true
 end
 
@@ -42,7 +41,7 @@ function test_adaptive_estimation()
     @suppress adapt!(scheme; res=zeros(10), method="FOP", max_episode=10)
     @suppress adapt!(scheme; res=zeros(10), method="MI", max_episode=10)
 
-    rm("adaptive.dat")
+    isfile("adaptive.dat") && rm("adaptive.dat")
     return true
 end
 

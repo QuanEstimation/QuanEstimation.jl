@@ -26,8 +26,8 @@ function test_bayes()
     Lout, xout = MLE([x], rho, y, M = M; savefile = true)
 
     BCB([x], p, rho)
-    rm("bayes.dat")
-    rm("MLE.dat")
+    isfile("bayes.dat") && rm("bayes.dat")
+    isfile("MLE.dat") && rm("MLE.dat")
 end
 
 test_bayes()

@@ -23,7 +23,7 @@ concurrency:
 env:
   RETESTITEMS_NWORKERS: 4
   RETESTITEMS_NWORKER_THREADS: 2
-  JULIA_NUM_PRECOMPILE_TASKS: 1
+  # JULIA_NUM_PRECOMPILE_TASKS: 1
 
 jobs:
   test:
@@ -73,6 +73,7 @@ jobs:
       - uses: codecov/codecov-action@v5
         with:
           files: lcov.info
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.QUANESTIMATION_TOKEN }}
+          slug: LiuJPhys/QuanEstimation.jl
           verbose: true
           fail_ci_if_error: false
