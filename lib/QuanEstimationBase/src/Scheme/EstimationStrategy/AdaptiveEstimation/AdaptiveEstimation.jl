@@ -252,45 +252,45 @@ function iter_MI(p, p_num, para_num, x, x_list, u, rho_all, M, res, ei)
 end
 
 function savefile_true(p, xout, y)
-    # fp = isfile("adaptive.dat") ? load("adaptive.dat")["p"] : []
-    # fx = isfile("adaptive.dat") ? load("adaptive.dat")["x"] : []
-    # fy = isfile("adaptive.dat") ? load("adaptive.dat")["y"] : []
-    # jldopen("adaptive.dat", "w") do f
-    #     f["p"] = append!(fp, [p])
-    #     f["x"] = append!(fx, [xout])
-    #     f["y"] = append!(fy, [y])
-    # end
-    
-    # Check if CSV file exists
-    if isfile("adaptive.csv")
-        # Load existing data
-        df = CSV.read("adaptive.csv", DataFrame)
-    else
-        # Create new DataFrame if file doesn't exist
-        df = DataFrame()
-        df[!, :p] = []
-        df[!, :x] = []
-        df[!, :y] = []
+    fp = isfile("adaptive.dat") ? load("adaptive.dat")["p"] : []
+    fx = isfile("adaptive.dat") ? load("adaptive.dat")["x"] : []
+    fy = isfile("adaptive.dat") ? load("adaptive.dat")["y"] : []
+    jldopen("adaptive.dat", "w") do f
+        f["p"] = append!(fp, [p])
+        f["x"] = append!(fx, [xout])
+        f["y"] = append!(fy, [y])
     end
     
-    # Append new data
-    new_row = (p=p, x=xout, y=y)
-    push!(df, new_row)
+    # Check if CSV file exists
+    # if isfile("adaptive.csv")
+    #     # Load existing data
+    #     df = CSV.read("adaptive.csv", DataFrame)
+    # else
+    #     # Create new DataFrame if file doesn't exist
+    #     df = DataFrame()
+    #     df[!, :p] = []
+    #     df[!, :x] = []
+    #     df[!, :y] = []
+    # end
     
-    # Save updated DataFrame
-    CSV.write("adaptive.csv", df)
+    # # Append new data
+    # new_row = (p=p, x=xout, y=y)
+    # push!(df, new_row)
+    
+    # # Save updated DataFrame
+    # CSV.write("adaptive.csv", df)
 end
 
 function savefile_false(p, xout, y)
-    # jldopen("adaptive.dat", "w") do f
-    #     f["p"] = [p]
-    #     f["x"] = xout
-    #     f["y"] = y
-    # end
+    jldopen("adaptive.dat", "w") do f
+        f["p"] = [p]
+        f["x"] = xout
+        f["y"] = y
+    end
 
     # Create a DataFrame to store the data
-    df = DataFrame(p = [p], x = xout, y = y)
-    CSV.write("adaptive.csv", df)
+    # df = DataFrame(p = [p], x = xout, y = y)
+    # CSV.write("adaptive.csv", df)
 end
 
 include("AdptiveMZI.jl")

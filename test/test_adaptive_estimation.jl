@@ -32,6 +32,7 @@ function test_adaptive_estimation_MZI()
     isfile("f.csv") && rm("f.csv")
     isfile("deltaphi.csv") && rm("deltaphi.csv")
     isfile("adaptive.dat") && rm("adaptive.dat")
+    isfile("adaptive.csv") && rm("adaptive.csv")
     return true
 end
 
@@ -42,6 +43,7 @@ function test_adaptive_estimation()
     @suppress adapt!(scheme; res=zeros(10), method="MI", max_episode=10)
 
     isfile("adaptive.dat") && rm("adaptive.dat")
+    isfile("adaptive.csv") && rm("adaptive.csv")    
     return true
 end
 

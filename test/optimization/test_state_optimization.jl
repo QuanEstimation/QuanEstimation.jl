@@ -68,6 +68,7 @@ function test_sopt_qfim(; savefile = false)
     try
         isfile("f.csv") && rm("f.csv")
         isfile("states.dat") && rm("states.dat")
+        isfile("states.csv") && rm("states.csv")
     catch e
         @warn "Cleanup failed: $e"
     end
@@ -82,6 +83,7 @@ function test_sopt_qfim(; savefile = false)
         try
             isfile("f.csv") && rm("f.csv")
             isfile("states.dat") && rm("states.dat")
+            isfile("states.csv") && rm("states.csv")
         catch e
             @warn "Cleanup failed: $e"
         end
@@ -107,6 +109,7 @@ function test_sopt_cfi(; savefile = false)
     try
         isfile("f.csv") && rm("f.csv")
         isfile("states.dat") && rm("states.dat")
+        isfile("states.csv") && rm("states.csv")
     catch e
         @warn "Cleanup failed: $e"
     end
@@ -121,6 +124,7 @@ function test_sopt_cfi(; savefile = false)
         try
             isfile("f.csv") && rm("f.csv")
             isfile("states.dat") && rm("states.dat")
+            isfile("states.csv") && rm("states.csv")
         catch e
             @warn "Cleanup failed: $e"
         end
@@ -146,6 +150,7 @@ function test_sopt_cfim(; savefile = false)
     try
         isfile("f.csv") && rm("f.csv")
         isfile("states.dat") && rm("states.dat")
+        isfile("states.csv") && rm("states.csv")
     catch e
         @warn "Cleanup failed: $e"
     end
@@ -160,6 +165,7 @@ function test_sopt_cfim(; savefile = false)
         try
             isfile("f.csv") && rm("f.csv")
             isfile("states.dat") && rm("states.dat")
+            isfile("states.csv") && rm("states.csv")
         catch e
             @warn "Cleanup failed: $e"
         end

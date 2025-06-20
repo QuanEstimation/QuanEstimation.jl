@@ -15,16 +15,19 @@ function test_copt_qfi(; savefile=false)
     @test isapprox(f1, f0; atol=1e-5) || f1 >= f0
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = GRAPE(Adam=true, max_episode=3,)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = GRAPE(Adam=false, max_episode=3,)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     dynamics = Lindblad(H0, dH, tspan, Hc, decay; ctrl=ctrl, dyn_method=:Ode)
     scheme = GeneralScheme(; probe=rho0, param=dynamics)
@@ -33,11 +36,13 @@ function test_copt_qfi(; savefile=false)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = PSO(p_num=3, max_episode=[10, 10])
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 end
 
 function test_copt_qfim(; savefile=false)
@@ -58,26 +63,31 @@ function test_copt_qfim(; savefile=false)
 
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = PSO(p_num=3, max_episode=[10, 10])
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = DE(p_num=3, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
-    # isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = GRAPE(Adam=true, max_episode=3,)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = GRAPE(Adam=false, max_episode=3,)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 end
 
 function test_copt_cfi(; savefile=false)
@@ -98,26 +108,31 @@ function test_copt_cfi(; savefile=false)
     
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = PSO(p_num=3, max_episode=[10, 10])
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = DE(p_num=3, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = GRAPE(Adam=true, max_episode=3,)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = GRAPE(Adam=false, max_episode=3,)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 end
 
 function test_copt_cfim(; savefile=false)
@@ -138,26 +153,31 @@ function test_copt_cfim(; savefile=false)
 
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = PSO(p_num=3, max_episode=[10, 10])
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = DE(p_num=3, max_episode=10)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = GRAPE(Adam=true, max_episode=3,)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 
     alg = GRAPE(Adam=false, max_episode=3,)
     @suppress optimize!(scheme, opt; algorithm=alg, objective=obj, savefile=savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("controls.dat") && rm("controls.dat")
+    isfile("controls.csv") && rm("controls.csv")
 end
 
 

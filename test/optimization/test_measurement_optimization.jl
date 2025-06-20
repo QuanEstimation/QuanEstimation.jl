@@ -14,16 +14,19 @@ function test_mopt_lc_cfi(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("measurements.dat") && rm("measurements.dat")
+    isfile("measurements.csv") && rm("measurements.csv")
 
     alg = PSO(p_num=3, max_episode=[10, 10])
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("measurements.dat") && rm("measurements.dat")
+    isfile("measurements.csv") && rm("measurements.csv")
     
     alg = AD(max_episode = 10)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("measurements.dat") && rm("measurements.dat")
+    isfile("measurements.csv") && rm("measurements.csv")
 
     @test true
 end
@@ -43,11 +46,13 @@ function test_mopt_projection_cfi(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("measurements.dat") && rm("measurements.dat")
+    isfile("measurements.csv") && rm("measurements.csv")
 
     alg = PSO(p_num=3, max_episode=[10, 10])
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("measurements.dat") && rm("measurements.dat")
+    isfile("measurements.csv") && rm("measurements.csv")
 
     @test true
 end
@@ -67,16 +72,19 @@ function test_mopt_rotation_cfi(; savefile = false)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("measurements.dat") && rm("measurements.dat")
+    isfile("measurements.csv") && rm("measurements.csv")
 
     alg = PSO(p_num=3, max_episode=[10, 10])
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("measurements.dat") && rm("measurements.dat")
+    isfile("measurements.csv") && rm("measurements.csv")
     
     alg = AD(max_episode = 10)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("measurements.dat") && rm("measurements.dat")
+    isfile("measurements.csv") && rm("measurements.csv")
 
     @test true
 end

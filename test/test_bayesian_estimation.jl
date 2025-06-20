@@ -27,7 +27,9 @@ function test_bayes()
 
     BCB([x], p, rho)
     isfile("bayes.dat") && rm("bayes.dat")
+    isfile("bayes.csv") && rm("bayes.csv")
     isfile("MLE.dat") && rm("MLE.dat")
+    isfile("MLE.csv") && rm("MLE.csv")    
 end
 
 test_bayes()
