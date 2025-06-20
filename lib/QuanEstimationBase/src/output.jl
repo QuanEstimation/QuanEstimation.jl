@@ -29,7 +29,7 @@ Output(opt::AbstractOpt; save::Bool = false) =
 save_type(::Output{savefile}) = :savefile
 save_type(::Output{no_save}) = :no_save
 
-function SaveFile(output::Output{no_save}, suffix = AbstractString(".dat"))
+function SaveFile(output::Output{no_save}, suffix::AbstractString = ".dat")
     # JLD2 save
     open("f.csv", "w") do f
         writedlm(f, output.f_list)
@@ -52,7 +52,7 @@ end
 
 function SaveFile(output::Output{savefile}) end
 
-function SaveCurrent(output::Output{savefile}, suffix = AbstractString(".dat"))
+function SaveCurrent(output::Output{savefile}, suffix::AbstractString = ".dat")
     # JLD2 save
     open("f.csv", "a") do f
         writedlm(f, output.f_list[end])
