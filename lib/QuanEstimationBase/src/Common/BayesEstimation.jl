@@ -141,7 +141,7 @@ function Bayes(x, p, rho, y; M = nothing, estimator = "mean", savefile = false)
             #     f["x"] = x_out
             # end
 
-            Save results to CSV
+            # Save results to CSV
             df = DataFrame(p = [p], x = x_out)
             CSV.write("bayes.csv", df)
 
