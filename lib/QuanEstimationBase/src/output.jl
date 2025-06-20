@@ -100,9 +100,5 @@ function SaveReward(rewards)
     # JLD2 save
     open("reward.csv", "w") do r
         writedlm(r, rewards)
-    end
-
-    # # CSV save
-    # df = DataFrame(reward = rewards)
-    # CSV.write("reward.csv", df)
+    end    
 end
