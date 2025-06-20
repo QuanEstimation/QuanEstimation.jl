@@ -66,6 +66,7 @@ function SaveCurrent(output::Output{savefile}, suffix = AbstractString(".dat"))
         fs = isfile(file * suffix) ? load(file * suffix)[file] : typeof(res)[]
         jldopen(file * suffix, "w") do f
             f[file] = append!(fs, [res])
+        end
 
         # # CSV save
         # csvfile = file * ".csv"      
