@@ -93,8 +93,7 @@ function SaveReward(output::Output{savefile}, reward::Number) ## TODO: reset fil
     # CSV.write("reward.csv", df; append=true)
 end
 
-function SaveReward(output::Output{no_save}, reward::Number)
-end
+function SaveReward(output::Output{no_save}, reward::Number) end
 
 function SaveReward(rewards)
     # JLD2 save
