@@ -29,7 +29,7 @@ Output(opt::AbstractOpt; save::Bool = false) =
 save_type(::Output{savefile}) = :savefile
 save_type(::Output{no_save}) = :no_save
 
-function SaveFile(output::Output{no_save}; suffix::AbstractString = ".dat")
+function SaveFile(output::Output{no_save})
     # # JLD2 save
     # open("f.csv", "w") do f
     #     writedlm(f, output.f_list)
@@ -46,13 +46,13 @@ function SaveFile(output::Output{no_save}; suffix::AbstractString = ".dat")
 
         # CSV save   
         df = DataFrame(res = res)
-        CSV.write(file * suffix * ".csv", df)
+        CSV.write(file * ".csv", df)
     end
 end
 
 function SaveFile(output::Output{savefile}) end
 
-function SaveCurrent(output::Output{savefile}; suffix::AbstractString = ".dat")
+function SaveCurrent(output::Output{savefile})
     # # JLD2 save
     # open("f.csv", "a") do f
     #     writedlm(f, output.f_list[end])
@@ -68,7 +68,7 @@ function SaveCurrent(output::Output{savefile}; suffix::AbstractString = ".dat")
         #     f[file] = append!(fs, [res])
 
         # CSV save
-        csvfile = file * suffix * ".csv"      
+        csvfile = file * ".csv"      
         if isfile(csvfile)
             df_res = CSV.read(csvfile, DataFrame)
         else

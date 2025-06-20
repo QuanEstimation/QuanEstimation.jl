@@ -47,10 +47,14 @@ function Bayes(x, p, rho, y; M = nothing, estimator = "mean", savefile = false)
                 )
             end
 
-            jldopen("bayes.dat", "w") do f
-                f["p"] = [p]
-                f["x"] = x_out
-            end
+            # jldopen("bayes.dat", "w") do f
+            #     f["p"] = [p]
+            #     f["x"] = x_out
+            # end
+
+            # Save results to CSV
+            df = DataFrame(p = [p], x = x_out)
+            CSV.write("bayes.csv", df)
 
             return p, x_out[end]
         else
@@ -84,10 +88,14 @@ function Bayes(x, p, rho, y; M = nothing, estimator = "mean", savefile = false)
                 )
             end
 
-            jldopen("bayes.dat", "w") do f
-                f["p"] = [p_out]
-                f["x"] = x_out
-            end
+            # jldopen("bayes.dat", "w") do f
+            #     f["p"] = [p_out]
+            #     f["x"] = x_out
+            # end
+
+            # Save results to CSV
+            df = DataFrame(p = [p_out], x = x_out)
+            CSV.write("bayes.csv", df)
 
             return p, x_out[end]
         end
@@ -128,10 +136,14 @@ function Bayes(x, p, rho, y; M = nothing, estimator = "mean", savefile = false)
                 )
             end
 
-            jldopen("bayes.dat", "w") do f
-                f["p"] = [p]
-                f["x"] = x_out
-            end
+            # jldopen("bayes.dat", "w") do f
+            #     f["p"] = [p]
+            #     f["x"] = x_out
+            # end
+
+            Save results to CSV
+            df = DataFrame(p = [p], x = x_out)
+            CSV.write("bayes.csv", df)
 
             return p, x_out[end]
         else
@@ -167,10 +179,14 @@ function Bayes(x, p, rho, y; M = nothing, estimator = "mean", savefile = false)
                 )
             end
 
-            jldopen("bayes.dat", "w") do f
-                f["p"] = p_out
-                f["x"] = x_out
-            end
+            # jldopen("bayes.dat", "w") do f
+            #     f["p"] = p_out
+            #     f["x"] = x_out
+            # end
+
+            # Save results to CSV
+            df = DataFrame(p = p_out, x = x_out)
+            CSV.write("bayes.csv", df)
 
             return p, x_out[end]
         end
@@ -207,10 +223,14 @@ function MLE(x, rho, y; M = nothing, savefile = false)
                 append!(x_out, x[1][indx])
             end
 
-            jldopen("MLE.dat", "w") do f
-                f["L"] = [L_out]
-                f["x"] = x_out
-            end
+            # jldopen("MLE.dat", "w") do f
+            #     f["L"] = [L_out]
+            #     f["x"] = x_out
+            # end
+
+            # Save results to CSV
+            df = DataFrame(L = [L_out], x = x_out)
+            CSV.write("MLE.csv", df)
 
             return L_out, x_out[end]
         else
@@ -226,10 +246,14 @@ function MLE(x, rho, y; M = nothing, savefile = false)
                 append!(x_out, x[1][indx])
             end
 
-            jldopen("MLE.dat", "w") do f
-                f["L"] = L_out
-                f["x"] = x_out
-            end
+            # jldopen("MLE.dat", "w") do f
+            #     f["L"] = L_out
+            #     f["x"] = x_out
+            # end
+
+            # Save results to CSV
+            df = DataFrame(L = L_out, x = x_out)
+            CSV.write("MLE.csv", df)
 
             return L_tp, x_out[end]
         end
@@ -254,10 +278,14 @@ function MLE(x, rho, y; M = nothing, savefile = false)
                 indx = findmax(L_out)[2]
                 append!(x_out, [[x[i][indx[i]] for i = 1:para_num]])
             end
-            jldopen("MLE.dat", "w") do f
-                f["L"] = [L_out]
-                f["x"] = x_out
-            end
+            # jldopen("MLE.dat", "w") do f
+            #     f["L"] = [L_out]
+            #     f["x"] = x_out
+            # end
+            
+            # Save results to CSV
+            df = DataFrame(L = [L_out], x = x_out)
+            CSV.write("MLE.csv", df)
 
             return L_out, x_out[end]
         else
@@ -272,10 +300,14 @@ function MLE(x, rho, y; M = nothing, savefile = false)
                 append!(x_out, [[x[i][indx[i]] for i = 1:para_num]])
             end
 
-            jldopen("MLE.dat", "w") do f
-                f["L"] = L_out
-                f["x"] = x_out
-            end
+            # jldopen("MLE.dat", "w") do f
+            #     f["L"] = L_out
+            #     f["x"] = x_out
+            # end
+
+            # Save results to CSV
+            df = DataFrame(L = L_out, x = x_out)
+            CSV.write("MLE.csv", df)
 
             return L_tp, x_out[end]
         end

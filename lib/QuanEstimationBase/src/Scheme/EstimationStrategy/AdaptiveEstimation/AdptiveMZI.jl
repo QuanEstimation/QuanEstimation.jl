@@ -167,10 +167,13 @@ function calculate_online{MI}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix
 end
 
 function savefile_online(xout, y)
-    jldopen("adaptive.dat", "w") do f
-        f["x"] = xout
-        f["y"] = y
-    end
+    # jldopen("adaptive.dat", "w") do f
+    #     f["x"] = xout
+    #     f["y"] = y
+    # end
+
+    df = DataFrame(x = xout, y = y)
+    CSV.write("adaptive.csv", df; append = true)
 end
 
 ##========== offline ==========##
@@ -492,12 +495,21 @@ function calculate_offline{MI}(delta_phi, x, p, rho0, a, comb, eps)
 end
 
 function savefile_offline(deltaphi, flist)
-    open("deltaphi.csv", "w") do m
-        writedlm(m, deltaphi)
-    end
-    open("f.csv", "w") do n
-        writedlm(n, flist)
-    end
+    # # JLD2 save
+    # open("deltaphi.csv", "w") do m
+    #     writedlm(m, deltaphi)
+    # end
+ 
+    df = DataFrame(deltaphi = deltaphi)
+    CSV.write("deltaphi.csv", df)
+
+    # # JLD2 save
+    # open("f.csv", "w") do n
+    #     writedlm(n, flist)
+    # end
+
+    df = DataFrame(f = flist)
+    CSV.write("f.csv", df)
 end
 
 function a_u(a, x, phi, u)
