@@ -1,5 +1,5 @@
 # QuanEstimation.jl
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/QuanEstimation/QuanEstimation.jl)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/QuanEstimation/QuanEstimation.jl?label=version)
 [![][docs-img]][docs-url]
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![][action-img]][action-url]
@@ -36,4 +36,4 @@ QuanEstimation: An open-source toolkit for quantum parameter estimation,
 [Phys. Rev. Res. **4**, 043057 (2022).](https://doi.org/10.1103/PhysRevResearch.4.043057)
 
 [2] H.-M. Yu and J. Liu, QuanEstimation.jl: An open-source Julia framework for quantum parameter estimation, 
-[Fundam. Res. (2025).](https://doi.org/10.1016/j.fmre.2025.02.020) 
+[Fundam. Res. (2025).](https://doi.org/10.1016/j.fmre.2025.02.020)
