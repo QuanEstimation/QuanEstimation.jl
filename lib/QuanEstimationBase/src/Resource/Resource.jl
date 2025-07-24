@@ -21,6 +21,23 @@ function Jp_full(N)
     return Jp
 end
 
+function Jz_full(N)
+    sz = [1.0 0.0; 0.0 -1.0]
+    Jz, jz_tp = zeros(2^N, 2^N), zeros(2^N, 2^N)
+    for i = 0:N-1
+        if i == 0
+            jz_tp = kron(sz, Matrix(I, 2^(N - 1), 2^(N - 1)))
+        elseif i == N - 1
+            jz_tp = kron(Matrix(I, 2^(N - 1), 2^(N - 1)), sz)
+        else
+            jz_tp =
+                kron(Matrix(I, 2^i, 2^i), kron(sz, Matrix(I, 2^(N - 1 - i), 2^(N - 1 - i))))
+        end
+        Jz += jz_tp
+    end
+    return 0.5 * Jz
+end
+
 """
 
     SpinSqueezing(ρ::AbstractMatrix; basis="Dicke", output="KU")
@@ -29,46 +46,62 @@ Calculate the spin squeezing parameter for the input density matrix. The `basis`
 
 """
 function SpinSqueezing(ρ::AbstractMatrix; basis = "Dicke", output = "KU")
-    N = size(ρ)[1] - 1
-    coef = 4.0 / N
-    j = N / 2
-    if basis == "Pauli"
-        Jp = Jp_full(N)
-    else
-        Jp = J₊(j)
-    end
-    Jx = 0.5 * (Jp + Jp')
-    Jy = -0.5im * (Jp - Jp')
-    Jz = spdiagm(j:-1:-j)
 
+    if basis == "Pauli"
+        # For Pauli basis, the density matrix size should be 2^N
+        N = Int(log2(size(ρ, 1)))
+        j = N / 2
+        Jp = Jp_full(N)
+        Jz = Jz_full(N)
+        # Precompute Jx and Jy for Pauli basis
+        Jx = 0.5 * (Jp + Jp')
+        Jy = -0.5im * (Jp - Jp')
+    elseif basis == "Dicke"
+        j = (size(ρ, 1) - 1) / 2
+        N = 2 * j
+        Jp = J₊(j)
+        Jz = spdiagm(j:-1:-j)
+        # Precompute Jx and Jy for Dicke basis
+        Jx = 0.5 * (Jp + Jp')
+        Jy = -0.5im * (Jp - Jp')
+    else
+        throw(ErrorException("Invalid basis type. Valid options are: Dicke, Pauli"))
+    end
+
+    coef = 4.0 / N
+        
     Jx_mean = tr(ρ * Jx) |> real
     Jy_mean = tr(ρ * Jy) |> real
     Jz_mean = tr(ρ * Jz) |> real
 
-    cosθ = Jz_mean / sqrt(Jx_mean^2 + Jy_mean^2 + Jz_mean^2)
-    sinθ = sin(acos(cosθ))
-    cosϕ = Jx_mean / sqrt(Jx_mean^2 + Jy_mean^2)
-    sinϕ = Jy_mean > 0 ? sin(acos(cosϕ)) : sin(2pi - acos(cosϕ))
+    if Jx_mean == 0 && Jy_mean == 0
+        A = tr(ρ * (Jx * Jx - Jy * Jy))
+        B = tr(ρ * (Jx * Jy + Jy * Jx))
+        C = tr(ρ * (Jx * Jx + Jy * Jy))
+    else    
+        cosθ = Jz_mean / sqrt(Jx_mean^2 + Jy_mean^2 + Jz_mean^2)
+        sinθ = sin(acos(cosθ))
+        cosϕ = Jx_mean / sqrt(Jx_mean^2 + Jy_mean^2)
+        sinϕ = Jy_mean > 0 ? sin(acos(cosϕ)) : sin(2pi - acos(cosϕ))
 
-    Jn1 = -Jx * sinϕ + Jy * cosϕ
-    Jn2 = -Jx * cosθ * cosϕ - Jy * cosθ * sinϕ + Jz * sinθ
-    A = tr(ρ * (Jn1 * Jn1 - Jn2 * Jn2))
-    B = tr(ρ * (Jn1 * Jn2 + Jn2 * Jn1))
-    C = tr(ρ * (Jn1 * Jn1 + Jn2 * Jn2))
+        Jn1 = -Jx * sinϕ + Jy * cosϕ
+        Jn2 = -Jx * cosθ * cosϕ - Jy * cosθ * sinϕ + Jz * sinθ
+        A = tr(ρ * (Jn1 * Jn1 - Jn2 * Jn2))
+        B = tr(ρ * (Jn1 * Jn2 + Jn2 * Jn1))
+        C = tr(ρ * (Jn1 * Jn1 + Jn2 * Jn2))
+    end
 
     V₋ = 0.5 * (C - sqrt(A^2 + B^2)) |> real
     ξ = coef * V₋
     ξ = ξ > 1 ? 1.0 : ξ
 
     if output == "KU"
-        res = ξ
+        return ξ
     elseif output == "WBIMH"
-        res = (N / 2)^2 * ξ / (Jx_mean^2 + Jy_mean^2 + Jz_mean^2)
+        return (N / 2)^2 * ξ / (Jx_mean^2 + Jy_mean^2 + Jz_mean^2)
     else
-        @warn "NameError: output should be choosen in {KU, WBIMH}"
+        throw(ErrorException("Invalid output type. Valid options are: KU, WBIMH"))
     end
-
-    return res
 end
 
 """
