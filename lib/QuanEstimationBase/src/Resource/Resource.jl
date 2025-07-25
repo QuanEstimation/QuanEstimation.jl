@@ -75,9 +75,13 @@ function SpinSqueezing(ρ::AbstractMatrix; basis = "Dicke", output = "KU")
     Jz_mean = tr(ρ * Jz) |> real
 
     if Jx_mean == 0 && Jy_mean == 0
-        A = tr(ρ * (Jx * Jx - Jy * Jy))
-        B = tr(ρ * (Jx * Jy + Jy * Jx))
-        C = tr(ρ * (Jx * Jx + Jy * Jy))
+        if Jz_mean == 0
+            throw(ErrorException("The density matrix does not have a valid spin squeezing."))
+        else
+            A = tr(ρ * (Jx * Jx - Jy * Jy))
+            B = tr(ρ * (Jx * Jy + Jy * Jx))
+            C = tr(ρ * (Jx * Jx + Jy * Jy))
+        end
     else    
         cosθ = Jz_mean / sqrt(Jx_mean^2 + Jy_mean^2 + Jz_mean^2)
         sinθ = sin(acos(cosθ))
@@ -111,18 +115,41 @@ Calculate the minimum time to reach a precision limit of given level. The `func`
 
 """
 function TargetTime(f::Number, tspan::AbstractVector, func::Function, args...; kwargs...)
-    args = zip.(args...) |> a -> [[x for x in x] for x in unzip(a)][1]
-    tnum = length(tspan)
-
-    f_last = func(args[1]...; kwargs...)
-    idx = 2
-    f_now = func(args[idx]...; kwargs...)
-
-    while (f_now - f) * (f_last - f) > 0 && idx < tnum
-        f_last = f_now
-        idx += 1
-        f_now = func(args[idx]...; kwargs...)
+    
+    # Find the first index where func(t) crosses the target f
+    for i in eachindex(tspan)
+        f_val = func(tspan[i], args...; kwargs...)
+        
+        if i == 1
+            # Check if we're already at the target at the first time point
+            if f_val ≈ f
+                return tspan[1]
+            end
+        else
+            # Get the previous value
+            f_prev = func(tspan[i-1], args...; kwargs...)
+            
+            # Check if we've crossed the target
+            if (f_prev ≤ f && f_val ≥ f) || (f_prev ≥ f && f_val ≤ f)
+                # Linear interpolation for more accurate crossing time
+                t1 = tspan[i-1]
+                t2 = tspan[i]
+                y1 = f_prev
+                y2 = f_val
+                
+                # Avoid division by zero
+                if y2 ≈ y1
+                    return t1
+                end
+                
+                # Calculate the crossing time
+                t_cross = t1 + (f - y1) * (t2 - t1) / (y2 - y1)
+                return t_cross
+            end
+        end
     end
-
-    return tspan[idx]
+    
+    # If we never cross the target, return the last time point
+    println("No time is found in the given time span to reach the target.")
+    return nothing
 end
