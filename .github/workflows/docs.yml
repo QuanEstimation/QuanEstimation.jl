@@ -12,9 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v1
       - run: julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
-      - run: julia --project=docs docs/make.jl
+      - run: cd docs && julia --project=. make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: julia -e 'using Documenter; Documenter.deploydocs()'
-        env:
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
