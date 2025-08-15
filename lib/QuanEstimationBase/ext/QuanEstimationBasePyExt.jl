@@ -285,4 +285,54 @@ function QuanEstimationBase.ode_py(
     ρt, ∂ρt
 end
 
-end
+# function QuanEstimationBase.secondorder_derivative(
+#     tspan,
+#     ρ0::AbstractMatrix,
+#     H0::AbstractVecOrMat,
+#     dH::AbstractVector,
+#     d2H::AbstractVector,
+#     Γ::AbstractVector,
+#     γ,
+#     Hc::AbstractVector,
+#     ctrl::AbstractVector,
+# )
+#     param_num = length(dH)
+#     ctrl_num = length(Hc)
+#     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
+#     ctrl =
+#         [repeat_copy(ctrl[i], 1, ctrl_interval) |> transpose |> vec |> Array for i = 1:ctrl_num]
+#     push!.(ctrl, [0.0 for i = 1:ctrl_num])
+#     H(ctrl) = Htot(H0, Hc, ctrl)
+#     dt = tspan[2] - tspan[1]
+#     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
+#     ρt_func!(ρ, ctrl, t) =
+#         -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + (
+#             [
+#                 γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i])) for
+#                 i in eachindex(Γ)
+#             ] |> sum
+#         )
+#     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
+#     ρt = solve(prob_ρ, Tsit5(), saveat = dt).u
+
+#     ∂ρt_func!(∂ρ, (pa, ctrl), t) =
+#         -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -
+#         im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + (
+#             [
+#                 γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i]))
+#                 for i in eachindex(Γ)
+#             ] |> sum
+#         )
+
+#     ∂ρt_tp = []
+#     for pa = 1:param_num
+#         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0 |> zero, (tspan[1], tspan[end]), (pa, ctrl))
+#         push!(∂ρt_tp, solve(prob_∂ρ, Tsit5(), saveat = dt).u)
+#     end
+#     ∂ρt = [[∂ρt_tp[i][j] for i = 1:param_num] for j in eachindex(tspan)]
+
+#     ∂2ρt_func!(∂2ρ, (pa, ctrl), t) = 
+
+
+#     ρt, ∂ρt
+# end

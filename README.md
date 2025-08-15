@@ -1,6 +1,5 @@
 # QuanEstimation.jl
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/QuanEstimation/QuanEstimation.jl?label=version)
-[![][docs-img]][docs-url]
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![][action-img]][action-url]
 [![][codecov-img]][codecov-url]
@@ -10,8 +9,7 @@
 [action-url]: https://github.com/QuanEstimation/QuanEstimation.jl/actions
 [codecov-img]: https://codecov.io/gh/QuanEstimation/QuanEstimation.jl/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/QuanEstimation/QuanEstimation.jl
-[docs-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-url]: https://quanestimation.github.io/QuanEstimation/
+
 
 QuanEstimation.jl is an open-source toolkit for quantum parameter estimation, which can be used to perform general evaluations of many metrological 
 tools and scheme designs in quantum parameter estimation. 
@@ -27,6 +25,16 @@ julia > using Pkg
 
 julia > Pkg.add("QuanEstimation")
 ~~~
+
+## Documentation
+[![][docs-img]][docs-url]
+
+[docs-img]: https://img.shields.io/badge/docs-stable-blue.svg
+[docs-url]: https://quanestimation.github.io/QuanEstimation/
+
+The documentation for both QuanEstimation and QuanEstimation.jl is [here](https://quanestimation.github.io/QuanEstimation/). An independent documentation 
+for QuanEstimation is [here](https://quanestimation.github.io/QuanEstimation.jl/), which is still under construction and we will make it functional 
+as soon as we can. 
 
 ## Citation
 If you use QuanEstimation in your research, please cite the following papers:
