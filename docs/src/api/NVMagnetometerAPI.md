@@ -1,4 +1,4 @@
-# NVMagnetometer
+# NV Magnetometer API
 
 ```@meta
 CurrentModule = NVMagnetometer

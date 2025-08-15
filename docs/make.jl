@@ -13,10 +13,13 @@ makedocs(
     clean = true,
     doctest = true,
     modules = [QuanEstimation],
-    authors = "Hauiming Yu <Huaimingyuuu@gmail.com> and contributors",
+    authors = "QuanEstimation Group (Jing Liu et al.)",
     repo = "https://github.com/QuanEstimation/QuanEstimation.jl/blob/{commit}{path}#{line}",
     sitename = "QuanEstimation.jl",
-    pages = ["API" => ["api/GeneralAPI.md", "api/BaseAPI.md", "api/NVMagnetometerAPI.md"]],
+    pages = [
+        "Home" => ["index.md"], 
+        "API" => ["api/GeneralAPI.md", "api/BaseAPI.md", "api/NVMagnetometerAPI.md"]
+    ],
 )
 
 deploydocs(; repo = "github.com/QuanEstimation/QuanEstimation.jl")
