@@ -19,4 +19,4 @@ makedocs(
     pages = ["API" => ["api/GeneralAPI.md", "api/BaseAPI.md", "api/NVMagnetometerAPI.md"]],
 )
 
-#deploydocs(; repo = "github.com/QuanEstimation/QuanEstimation.jl")
+deploydocs(; repo = "github.com/QuanEstimation/QuanEstimation.jl")
