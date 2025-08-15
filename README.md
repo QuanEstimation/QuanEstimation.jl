@@ -32,9 +32,9 @@ julia > Pkg.add("QuanEstimation")
 [docs-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-url]: https://quanestimation.github.io/QuanEstimation/
 
-The documentation for both QuanEstimation and QuanEstimation.jl is [here](https://quanestimation.github.io/QuanEstimation/). An independent documentation 
-for QuanEstimation is [here](https://quanestimation.github.io/QuanEstimation.jl/), which is still under construction and we will make it functional 
-as soon as we can. 
+The documentation for both QuanEstimation and QuanEstimation.jl is [here](https://quanestimation.github.io/QuanEstimation/). 
+An independent documentation for QuanEstimation.jl is [here](https://quanestimation.github.io/QuanEstimation.jl/), which is 
+still under construction and we will make it functional as soon as we can. 
 
 ## Citation
 If you use QuanEstimation in your research, please cite the following papers:
