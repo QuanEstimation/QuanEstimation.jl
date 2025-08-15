@@ -16,6 +16,7 @@ makedocs(
     authors = "QuanEstimation Group (Jing Liu et al.)",
     repo = "https://github.com/QuanEstimation/QuanEstimation.jl/blob/{commit}{path}#{line}",
     sitename = "QuanEstimation.jl",
+    edit_link = "GitHub",
     pages = [
         "Home" => ["index.md"], 
         "API" => ["api/GeneralAPI.md", "api/BaseAPI.md", "api/NVMagnetometerAPI.md"]
