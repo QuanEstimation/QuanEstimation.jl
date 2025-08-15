@@ -1,9 +1,9 @@
-# General
+# General API
 
 ```@meta
-CurrentModule = QuanEstimation
+CurrentModule = QuanEstimationBase
 ```
 
 ```@autodocs
-Modules = [QuanEstimation]
+Modules = [QuanEstimationBase]
 ```
