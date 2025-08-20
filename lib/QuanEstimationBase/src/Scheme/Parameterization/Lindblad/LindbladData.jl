@@ -1,5 +1,3 @@
-## TODO: reconstruct dynamicsdata structs
-
 abstract type AbstractDecay end
 abstract type NonDecay <: AbstractDecay end
 abstract type Decay <: AbstractDecay end
@@ -125,7 +123,7 @@ function Lindblad(
     )
 end
 
-Decay, NonControl,
+# Decay, NonControl
 function Lindblad(
     ham::Hamiltonian,
     tspan::AbstractVector,

@@ -197,49 +197,49 @@ function expm(
     return expm(tspan, ρ0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
 end
 
-# expm(tspan, ρ0, H0, dH, decay) = expm(tspan, ρ0, H0, dH; decay = decay)
-# expm(tspan, ρ0, H0, dH, decay, Hc) = expm(tspan, ρ0, H0, dH; decay = decay, Hc = Hc)
-# expm(tspan, ρ0, H0, dH, decay, Hc, ctrl) =
-#     expm(tspan, ρ0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
+expm(tspan, ρ0, H0, dH, decay) = expm(tspan, ρ0, H0, dH; decay = decay)
+expm(tspan, ρ0, H0, dH, decay, Hc) = expm(tspan, ρ0, H0, dH; decay = decay, Hc = Hc)
+expm(tspan, ρ0, H0, dH, decay, Hc, ctrl) =
+    expm(tspan, ρ0, H0, dH; decay = decay, Hc = Hc, ctrl = ctrl)
 
-# function secondorder_derivative(
-#     tspan::AbstractVector,
-#     ρ0::AbstractMatrix,
-#     H0::AbstractVecOrMat,
-#     dH::AbstractVector,
-#     dH_∂x::AbstractVector,
-#     decay_opt::Vector{Matrix{T}},
-#     γ,
-#     Hc::Vector{Matrix{T}},
-#     ctrl::Vector{Vector{R}},
-# ) where {T<:Complex,R<:Real}
+function secondorder_derivative(
+    tspan::AbstractVector,
+    ρ0::AbstractMatrix,
+    H0::AbstractVecOrMat,
+    dH::AbstractVector,
+    dH_∂x::AbstractVector,
+    decay_opt::Vector{Matrix{T}},
+    γ,
+    Hc::Vector{Matrix{T}},
+    ctrl::Vector{Vector{R}},
+) where {T<:Complex,R<:Real}
 
-#     param_num = length(dH)
-#     ctrl_num = length(Hc)
-#     ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
-#     ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
+    param_num = length(dH)
+    ctrl_num = length(Hc)
+    ctrl_interval = ((length(tspan) - 1) / length(ctrl[1])) |> Int
+    ctrl = [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
 
-#     H = Htot(H0, Hc, ctrl)
-#     dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
-#     dH_L = [liouville_commu(dH_∂x[i]) for i = 1:param_num]
+    H = Htot(H0, Hc, ctrl)
+    dH_L = [liouville_commu(dH[i]) for i = 1:param_num]
+    dH_L = [liouville_commu(dH_∂x[i]) for i = 1:param_num]
 
-#     ρt = ρ0 |> vec
-#     ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
-#     ∂2ρt_∂x = [ρt |> zero for i = 1:param_num]
-#     for t in eachindex(tspan)[2:end]
-#         Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
-#         exp_L = expL(H[t-1], decay_opt, γ, Δt, t - 1)
-#         ρt = exp_L * ρt
-#         ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
-#         ∂2ρt_∂x =
-#             [
-#                 (-im * Δt * dH_L[i] + Δt * Δt * dH_L[i] * dH_L[i]) * ρt -
-#                 2 * im * Δt * dH_L[i] * ∂ρt_∂x[i] for i = 1:param_num
-#             ] + [exp_L] .* ∂2ρt_∂x
-#     end
-#     # ρt = exp(vec(H[end])' * zero(ρt)) * ρt
-#     ρt |> vec2mat, ∂ρt_∂x |> vec2mat, ∂2ρt_∂x |> vec2mat
-# end
+    ρt = ρ0 |> vec
+    ∂ρt_∂x = [ρt |> zero for i = 1:param_num]
+    ∂2ρt_∂x = [ρt |> zero for i = 1:param_num]
+    for t in eachindex(tspan)[2:end]
+        Δt = tspan[t] - tspan[t-1] # tspan may not be equally spaced 
+        exp_L = expL(H[t-1], decay_opt, γ, Δt, t - 1)
+        ρt = exp_L * ρt
+        ∂ρt_∂x = [-im * Δt * dH_L[i] * ρt for i = 1:param_num] + [exp_L] .* ∂ρt_∂x
+        ∂2ρt_∂x =
+            [
+                (-im * Δt * dH_L[i] + Δt * Δt * dH_L[i] * dH_L[i]) * ρt -
+                2 * im * Δt * dH_L[i] * ∂ρt_∂x[i] for i = 1:param_num
+            ] + [exp_L] .* ∂2ρt_∂x
+    end
+    # ρt = exp(vec(H[end])' * zero(ρt)) * ρt
+    ρt |> vec2mat, ∂ρt_∂x |> vec2mat, ∂2ρt_∂x |> vec2mat
+end
 
 ##========== solve ordinary differential equation (ODE) ==========##
 @doc raw"""
@@ -479,8 +479,6 @@ function evolve(
     ∂ρt_∂x = [(∂ψ∂x[i] * ψt[end]' + ψt[end] * ∂ψ∂x[i]') for i = 1:param_num]
     ρt, ∂ρt_∂x
 end
-
-
 
 #### evolution of density matrix under time-independent Hamiltonian without noise and controls ####
 function evolve(

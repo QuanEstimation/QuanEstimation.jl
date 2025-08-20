@@ -191,43 +191,80 @@ function generate_scheme_bayes_singleparameter()
     return scheme
 end 
 
-# function generate_scheme_bayes_multiparameter()
-#     # Initial state
-#     rho0 = complex(0.5 * [1.0 1.0; 1.0 1.0])
+function generate_scheme_bayes_multiparameter()
+    # Initial state
+    rho0 = complex(0.5 * [1.0 1.0; 1.0 1.0])
     
-#     # Hamiltonian function
-#     b_val, omega0 = 0.5π, 1.0
-#     H0_func(x) = 0.5 * b_val * omega0 * (SigmaX() * cos(x) + SigmaZ() * sin(x))
+    # Hamiltonian function (params[1]: omega0, params[2]: x)
+    b_val = 0.5π
+    H0_func(params) = 0.5 * b_val * params[1] * (SigmaX() * cos(params[2]) + SigmaZ() * sin(params[2]))
     
-#     # Derivative of Hamiltonian
-#     dH_func(x) = [0.5 * b_val * omega0 * (-SigmaX() * sin(x) + SigmaZ() * cos(x))]
+    # Derivative of Hamiltonian (params[1]: omega0, params[2]: x)
+    dH_func(params) = [
+        0.5 * b_val * (SigmaX() * cos(params[2]) + SigmaZ() * sin(params[2])), 
+        0.5 * b_val * params[1] * (-SigmaX() * sin(params[2]) + SigmaZ() * cos(params[2]))
+    ]
+    omega0_true, x_true = 1.5, 0.0 
+    params_true = [omega0_true, x_true] |> Vector
+    ham = Hamiltonian(H0_func, dH_func, params_true)
+    # Time evolution parameters
+    tspan = range(0.0, 1.0, length = 50)
+    dynamics = Lindblad(ham, tspan; dyn_method = :Expm)
     
-#     # Prior distribution parameters
-#     x_values = range(-0.5π, 0.5π, length = 100) |> Vector
-#     mu_val, eta_val = 0.0, 0.2
+    # Prior distribution parameters
+    x_values = range(-0.5π, 0.5π, length = 20) |> Vector
+    omega0_values = range(1, 2, length = 20) |> Vector
+    # all_parameter_values = [omega0_values, x_values] |> Vector
+    all_parameter_values = [[omega0, x] for omega0 in omega0_values for x in x_values]
+    mu_val, eta_val = 0.0, 0.2
 
-#     # Probability density function and its derivative
-#     prob_density(x, mu, eta) = exp(-(x - mu)^2 / (2 * eta^2)) / (eta * √(2π))
-#     d_prob_density(x, mu, eta) = -((x - mu) * exp(-(x - mu)^2 / (2 * eta^2))) / (eta^3 * √(2π))
+    # Joint probability density function (Gaussian for both parameters)
+    mu_omega0, mu_x = 1.5, 0.0
+    eta_omega0, eta_x = 0.2, 0.2
+
+    prob_density(omega0, x) = (
+        exp(-(omega0 - mu_omega0)^2 / (2 * eta_omega0^2)) / (eta_omega0 * sqrt(2π))
+        * exp(-(x - mu_x)^2 / (2 * eta_x^2)) / (eta_x * sqrt(2π))
+    )
+
+    d_prob_density(omega0, x) = (
+        [-(omega0 - mu_omega0) / (eta_omega0^2) * prob_density(omega0, x),
+        -(x - mu_x) / (eta_x^2) * prob_density(omega0, x)]
+    )
     
-#     prob_values = [prob_density(x, mu_val, eta_val) for x in x_values]
-#     d_prob_values = [d_prob_density(x, mu_val, eta_val) for x in x_values]
+    # Generate probability values
+    d_prob_unnormalized = []
+    prob_values_unnormalized = zeros(length(omega0_values), length(x_values))
+    for (i, omega0_i) in enumerate(omega0_values)
+        d_prob_tp = []
+        for (j, x_values_j) in enumerate(x_values)
+            prob_values_unnormalized[i, j] = prob_density(omega0_i, x_values_j)
+            d_prob_density_unnormalized = d_prob_density(omega0_i, x_values_j)
+            push!(d_prob_tp, d_prob_density_unnormalized)
+        end    
+        push!(d_prob_unnormalized, d_prob_tp)
+    end    
+
+    # Normalize the distribution using quadgk 
+        norm_factor, _ = quadgk(
+            omega0 -> quadgk(
+                x -> prob_density(omega0, x), 
+                x_values[1], x_values[end]
+            )[1], 
+            omega0_values[1], omega0_values[end]
+        )
     
-#     # Normalize the distribution using quadgk 
-#     norm_factor, _ = quadgk(x -> prob_density(x, mu_val, eta_val), x_values[1], x_values[end])
-#     prob_normalized = prob_values / norm_factor
-#     d_prob_normalized = d_prob_values / norm_factor
-    
-#     # Time evolution parameters
-#     tspan = range(0.0, 1.0, length = 50)
-#     dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method = :Expm)
-#     scheme = GeneralScheme(; probe = rho0, param = dynamics, x = x_values, p = prob_normalized, dp = d_prob_normalized)
-#     return scheme
-# end 
+    prob_normalized = prob_values_unnormalized / norm_factor
+    d_prob_normalized = d_prob_unnormalized / norm_factor
+
+    # generate scheme
+    scheme = GeneralScheme(; probe = rho0, param = dynamics, x = all_parameter_values, p = prob_normalized, dp = d_prob_normalized)
+    return scheme
+end 
 
 function generate_scheme_adaptive()
     (; rho0, x, p, dp, H0_func, dH_func) = generate_bayes()
-    tspan = range(0.0, stop = 1.0, length = 100)
+    tspan = range(0.0, 1.0, length = 100)
     dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method = :Expm)
     strategy = AdaptiveStrategy(x=x, p=p, dp=dp)
     scheme = GeneralScheme(; probe = rho0, param = dynamics, strat = strategy)
