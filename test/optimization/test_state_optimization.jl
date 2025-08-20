@@ -1,3 +1,25 @@
+using Test
+using LinearAlgebra
+using Suppressor: @suppress
+using Random
+
+using QuanEstimationBase: 
+    Lindblad,
+    GeneralScheme,
+    QFIM_obj,
+    QFIM,
+    StateOpt,
+    AD,
+    optimize!,
+    PSO,
+    DE,
+    NM,
+    RI
+
+if !@isdefined generate_LMG1_dynamics
+    include("../utils.jl")
+end
+
 function test_sopt_qfi(; savefile = false)
     (; tspan, psi, H0, dH, decay) = generate_LMG1_dynamics()
 
@@ -56,13 +78,13 @@ function test_sopt_qfim(; savefile = false)
     scheme = GeneralScheme(; probe = psi, param = dynamics)
 
     obj = QFIM_obj(W = W)
-    f0 = LinearAlgebra.tr(pinv(QFIM(scheme)))
+    f0 = tr(pinv(QFIM(scheme)))
 
     opt = StateOpt(psi = psi, seed = 1234)
     alg = AD(Adam = true, max_episode = 10, epsilon = 0.01, beta1 = 0.90, beta2 = 0.99)
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
 
-    f1 = LinearAlgebra.tr(pinv(QFIM(scheme)))
+    f1 = tr(pinv(QFIM(scheme)))
     @test f1 <= f0 || isapprox(f1, f0; atol=1e-5)
     
     try

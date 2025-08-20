@@ -1,3 +1,26 @@
+using Test
+using LinearAlgebra
+using Suppressor: @suppress
+using SparseArrays: sparse
+using Trapz: trapz
+
+using QuanEstimationBase: 
+    Adapt_MZI,
+    DE,
+    PSO,
+    adapt!,
+    offline,
+    online,
+    basis,
+    Lindblad,
+    AdaptiveStrategy,
+    GeneralScheme,
+    SigmaX, SigmaY, SigmaZ
+
+if !@isdefined generate_scheme_adaptive
+    include("utils.jl")
+end
+
 function test_adaptive_estimation_MZI()
     N = 3
     # probe state
@@ -37,7 +60,7 @@ function test_adaptive_estimation_MZI()
 end
 
 function test_adaptive_estimation()
-    scheme=generate_scheme_adaptive()
+    scheme = generate_scheme_adaptive()
 
     @suppress adapt!(scheme; res=zeros(10), method="FOP", max_episode=10)
     @suppress adapt!(scheme; res=zeros(10), method="MI", max_episode=10)

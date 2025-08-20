@@ -1,3 +1,10 @@
+using Test
+using LinearAlgebra
+
+using QuanEstimationBase: 
+    SpinSqueezing, 
+    TargetTime
+
 function test_resource()    
     ρ = Matrix(Diagonal([1, 0, 0, 0, 0, 0, 0, 0])) 
     
@@ -24,7 +31,7 @@ function test_TargetTime()
     omega = 1. 
     
     # Call TargetTime with the omega array
-    @test TargetTime(0., tspan, testfunc, omega) ≈ pi / 2 atol=1e-6
+    @test TargetTime(0., tspan, testfunc, omega) ≈ pi / 2 atol = 1e-6
     
     # Test print output when target is not found
     @test TargetTime(2., tspan, testfunc, omega) == nothing

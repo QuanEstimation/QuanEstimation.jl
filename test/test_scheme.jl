@@ -1,4 +1,24 @@
-using QuanEstimationBase:evaluate_hamiltonian
+using Test
+using LinearAlgebra
+using Trapz: trapz
+
+using QuanEstimationBase:
+    evaluate_hamiltonian,
+    Lindblad,
+    expm,
+    ode,
+    evolve,
+    GeneralScheme,
+    SigmaX, SigmaY, SigmaZ,
+    ZeroCTRL, LinearCTRL, SineCTRL, SawCTRL, TriangleCTRL, GaussianCTRL, GaussianEdgeCTRL, 
+    Hamiltonian,
+    PlusState, MinusState, BellState, 
+    Kraus,
+    QFIM_Kraus
+
+if !@isdefined generate_qubit_dynamics
+    include("utils.jl")
+end
 
 function test_lindblad(;dyn_method=:Ode)
     (; tspan, rho0, H0, dH, Hc, decay, ctrl, M) = generate_qubit_dynamics()

@@ -1,3 +1,16 @@
+using Test
+using LinearAlgebra
+using QuanEstimationBase:
+    SigmaX, SigmaY, SigmaZ,
+    Lindblad,
+    GeneralScheme,
+    error_evaluation,
+    error_control
+
+if !@isdefined generate_qubit_scheme
+    include("utils.jl")
+end
+
 function test_error_evaluation()
     scheme = generate_qubit_scheme()
 

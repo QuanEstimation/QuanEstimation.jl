@@ -1,4 +1,20 @@
-using QuanEstimationBase:BCB
+using Test
+using LinearAlgebra
+using Random
+using Trapz: trapz
+
+using QuanEstimationBase:
+    BCB,
+    SIC,
+    SigmaX, SigmaY, SigmaZ,
+    expm,
+    Bayes,
+    MLE
+
+if !@isdefined generate_bayes
+    include("utils.jl")
+end
+
 function test_bayes()
     (; rho0, x, p, dp, H0_func, dH_func) = generate_bayes()
     M = SIC(2)
