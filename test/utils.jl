@@ -169,7 +169,7 @@ function generate_scheme_bayes_singleparameter()
     dH_func(x) = [0.5 * b_val * omega0 * (-SigmaX() * sin(x) + SigmaZ() * cos(x))]
     
     # Prior distribution parameters
-    x_values = range(-0.5π, 0.5π, length=100) |> Vector
+    x_values = range(-0.5π, 0.5π, length = 100) |> Vector
     mu_val, eta_val = 0.0, 0.2
 
     # Probability density function and its derivative
@@ -190,6 +190,40 @@ function generate_scheme_bayes_singleparameter()
     scheme = GeneralScheme(; probe = rho0, param = dynamics, x = x_values, p = prob_normalized, dp = d_prob_normalized)
     return scheme
 end 
+
+# function generate_scheme_bayes_multiparameter()
+#     # Initial state
+#     rho0 = complex(0.5 * [1.0 1.0; 1.0 1.0])
+    
+#     # Hamiltonian function
+#     b_val, omega0 = 0.5π, 1.0
+#     H0_func(x) = 0.5 * b_val * omega0 * (SigmaX() * cos(x) + SigmaZ() * sin(x))
+    
+#     # Derivative of Hamiltonian
+#     dH_func(x) = [0.5 * b_val * omega0 * (-SigmaX() * sin(x) + SigmaZ() * cos(x))]
+    
+#     # Prior distribution parameters
+#     x_values = range(-0.5π, 0.5π, length = 100) |> Vector
+#     mu_val, eta_val = 0.0, 0.2
+
+#     # Probability density function and its derivative
+#     prob_density(x, mu, eta) = exp(-(x - mu)^2 / (2 * eta^2)) / (eta * √(2π))
+#     d_prob_density(x, mu, eta) = -((x - mu) * exp(-(x - mu)^2 / (2 * eta^2))) / (eta^3 * √(2π))
+    
+#     prob_values = [prob_density(x, mu_val, eta_val) for x in x_values]
+#     d_prob_values = [d_prob_density(x, mu_val, eta_val) for x in x_values]
+    
+#     # Normalize the distribution using quadgk 
+#     norm_factor, _ = quadgk(x -> prob_density(x, mu_val, eta_val), x_values[1], x_values[end])
+#     prob_normalized = prob_values / norm_factor
+#     d_prob_normalized = d_prob_values / norm_factor
+    
+#     # Time evolution parameters
+#     tspan = range(0.0, 1.0, length = 50)
+#     dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method = :Expm)
+#     scheme = GeneralScheme(; probe = rho0, param = dynamics, x = x_values, p = prob_normalized, dp = d_prob_normalized)
+#     return scheme
+# end 
 
 function generate_scheme_adaptive()
     (; rho0, x, p, dp, H0_func, dH_func) = generate_bayes()

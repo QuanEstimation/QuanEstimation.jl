@@ -54,6 +54,8 @@ function test_bayesian_cramer_rao_bounds_singleparameter()
     @test f_qvtb ≈ expected_qvtb atol=1e-3
 
     f_qzzb = QZZB(scheme)
+    expected_qzzb = 0.028521709437588784 
+    @test f_qzzb ≈ expected_qzzb atol=1e-3
 
 end
 
