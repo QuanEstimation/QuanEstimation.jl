@@ -1,5 +1,36 @@
-using QuanEstimationBase:QFIM_RLD, QFIM_LLD, QFIM_pure
+using SparseArrays: spdiagm
 using LinearAlgebra
+using Test
+using QuanEstimationBase: 
+    QFIM,       
+    CFIM,
+    QFIM_RLD,
+    QFIM_LLD,
+    QFIM_pure,
+    FIM,       
+    HCRB,
+    NHB,        
+    SLD,         
+    SLD_liouville,  
+    SLD_qr,  
+    RLD,
+    LLD,   
+    expm,       
+    basis,       
+    SIC,
+    Kraus,
+    Lindblad,
+    GeneralScheme,
+    evolve,
+    Hamiltonian,
+    SigmaX, SigmaY, SigmaZ,
+    PlusState,
+    QFIM_Bloch,
+    QFIM_Gauss
+
+if !@isdefined generate_qubit_dynamics
+    include("../utils.jl")
+end
 
 function test_cramer_rao_bound_single_param()
     (; tspan, rho0, H0, dH, Hc, decay, ctrl, M) = generate_qubit_dynamics()
@@ -50,11 +81,11 @@ function test_cramer_rao_bound_multi_param()
 end
 
 function test_bounds_with_scheme()
-    H0(u) = (SigmaX()*cos(u)+SigmaZ()*sin(u))/2
-    dH(u) = [(-SigmaX()*sin(u)+SigmaZ()*cos(u))/2] 
+    H0(u) = (SigmaX() * cos(u) + SigmaZ() * sin(u))/2
+    dH(u) = [(-SigmaX() * sin(u) + SigmaZ() * cos(u))/2] 
     ham = Hamiltonian(H0, dH, pi/4)
     dynamics = Lindblad(ham,0:0.01:1,[SigmaY()],[[SigmaZ(), 0.01]]) 
-    scheme = GeneralScheme(; probe=PlusState(),param=dynamics,measurement=SIC(2)) 
+    scheme = GeneralScheme(; probe=PlusState(), param=dynamics, measurement = SIC(2)) 
 
     @test all(eigen(QFIM(scheme; LDtype=:SLD)).values .>= 0)
     @test all(eigen(CFIM(scheme)).values .>= 0) 

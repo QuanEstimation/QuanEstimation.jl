@@ -1,4 +1,3 @@
-
 # dynamics in Lindblad form
 abstract type AbstractDynamics <: AbstractParameterization end
 

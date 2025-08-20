@@ -1,8 +1,33 @@
+using Test
+using LinearAlgebra
+using Suppressor: @suppress
+using Random
+
+using QuanEstimationBase:
+    Lindblad,
+    GeneralScheme,
+    optimize!,
+    SCopt,
+    CMopt,
+    SMopt,
+    SCMopt,
+    AD,
+    DE,
+    PSO,
+    SigmaX, SigmaY, SigmaZ,
+    QFIM_obj,
+    CFIM_obj
+
+    
+if !@isdefined generate_qubit_dynamics
+    include("../utils.jl")
+end
+
 function test_scopt_qfi(; savefile=false)
     (; tspan, rho0, H0, dH, Hc, decay, ctrl) = generate_qubit_dynamics()
 
-    dynamics = Lindblad(H0, dH, tspan, Hc, decay; ctrl=ctrl, dyn_method=:Expm)
-    scheme = GeneralScheme(; probe=rho0, param=dynamics)
+    dynamics = Lindblad(H0, dH, tspan, Hc, decay; ctrl=ctrl, dyn_method = :Expm)
+    scheme = GeneralScheme(; probe = rho0, param = dynamics)
 
     obj = QFIM_obj()
     opt = SCopt(ctrl_bound = [-0.2, 0.2], seed = 1234)

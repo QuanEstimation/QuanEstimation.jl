@@ -2,12 +2,9 @@ function generate_qubit_dynamics()
     tspan = range(0.0, 2.0, length = 100)
     rho0 = complex(0.5 * ones(2, 2))
     omega = 1.0
-    sx = [0.0 1.0; 1.0 0.0im]
-    sy = [0.0 -im; im 0.0]
-    sz = [1.0 0.0im; 0.0 -1.0]
-    H0 = 0.5 * omega * sz
-    dH = [0.5 * sz]
-    Hc = [sx, sy, sz]
+    H0 = 0.5 * omega * SigmaZ()
+    dH = [0.5 * SigmaZ()]
+    Hc = [SigmaX(), SigmaY(), SigmaZ()]
     sp = [0.0 1.0; 0.0 0.0im]
     sm = [0.0 0.0; 1.0 0.0im]
     decay = [[sp, 0.0], [sm, 0.1]]
@@ -43,13 +40,10 @@ function generate_NV_dynamics()
     rho0 = zeros(ComplexF64, 6, 6)
     rho0[1:4:5, 1:4:5] .= 0.5
     dim = size(rho0, 1)
-    sx = [0.0 1.0; 1.0 0.0]
-    sy = [0.0 -im; im 0.0]
-    sz = [1.0 0.0; 0.0 -1.0]
     s1 = [0.0 1.0 0.0; 1.0 0.0 1.0; 0.0 1.0 0.0] / sqrt(2)
     s2 = [0.0 -im 0.0; im 0.0 -im; 0.0 im 0.0] / sqrt(2)
     s3 = [1.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 -1.0]
-    Is = I1, I2, I3 = [kron(I(3), sx), kron(I(3), sy), kron(I(3), sz)]
+    Is = I1, I2, I3 = [kron(I(3), SigmaX()), kron(I(3), SigmaY()), kron(I(3), SigmaZ())]
     S = S1, S2, S3 = [kron(s1, I(2)), kron(s2, I(2)), kron(s3, I(2))]
     B = B1, B2, B3 = [5.0e-4, 5.0e-4, 5.0e-4]
     cons = 100
@@ -62,13 +56,15 @@ function generate_NV_dynamics()
         D * kron(s3^2, I(2)),
         sum(gS * B .* S),
         sum(gI * B .* Is),
-        A1 * (kron(s1, sx) + kron(s2, sy)),
-        A2 * kron(s3, sz),
+        A1 * (kron(s1, SigmaX()) + kron(s2, SigmaY())),
+        A2 * kron(s3, SigmaZ()),
     ])
     dH = gS * S + gI * Is
     Hc = [S1, S2, S3]
     decay = [[S3, 2 * pi / cons]]
-    M = [QuanEstimation.basis(dim, i) * QuanEstimation.basis(dim, i)' for i = 1:dim]
+    # Implement basis function locally
+    basis(d, i) = [k for k in 1:d] .== i
+    M = [Float64.(basis(dim, i) * basis(dim, i)') for i = 1:dim]
     tspan = range(0.0, 2.0, length = 100)
     cnum = length(tspan) - 1
     Random.seed!(1234)
@@ -126,16 +122,15 @@ function generate_LMG2_dynamics()
     tspan = range(0.0, 10.0, length = 100)
     W = [1/3 0.0; 0.0 2/3]
 
-
     return (; tspan = tspan, psi = psi, H0 = H0, dH = dH, decay = decay, W = W)
 end
 
 function generate_bayes()
     function H0_func(x)
-        return 0.5 * pi/2 * (σx() * cos(x) + σz() * sin(x))
+        return 0.5 * pi/2 * (SigmaX() * cos(x) + SigmaZ() * sin(x))
     end
     function dH_func(x)
-        return [0.5 * pi/2 * (-σx() * sin(x) + σz() * cos(x))]
+        return [0.5 * pi/2 * (-SigmaX() * sin(x) + SigmaZ() * cos(x))]
     end
     function p_func(x, mu, eta)
         return exp(-(x - mu)^2 / (2 * eta^2)) / (eta * sqrt(2 * pi))
@@ -161,11 +156,38 @@ function generate_bayes()
         dH_func = dH_func,
     )
 end
-function generate_scheme_bayes()
-    (; rho0, x, p, dp, H0_func, dH_func) = generate_bayes()
-    tspan = range(0.0, stop = 1.0, length = 100)
+
+function generate_scheme_bayes_singleparameter()
+    # Initial state
+    rho0 = complex(0.5 * [1.0 1.0; 1.0 1.0])
+    
+    # Hamiltonian function
+    b_val, omega0 = 0.5π, 1.0
+    H0_func(x) = 0.5 * b_val * omega0 * (SigmaX() * cos(x) + SigmaZ() * sin(x))
+    
+    # Derivative of Hamiltonian
+    dH_func(x) = [0.5 * b_val * omega0 * (-SigmaX() * sin(x) + SigmaZ() * cos(x))]
+    
+    # Prior distribution parameters
+    x_values = range(-0.5π, 0.5π, length=100) |> Vector
+    mu_val, eta_val = 0.0, 0.2
+
+    # Probability density function and its derivative
+    prob_density(x, mu, eta) = exp(-(x - mu)^2 / (2 * eta^2)) / (eta * √(2π))
+    d_prob_density(x, mu, eta) = -((x - mu) * exp(-(x - mu)^2 / (2 * eta^2))) / (eta^3 * √(2π))
+    
+    prob_values = [prob_density(x, mu_val, eta_val) for x in x_values]
+    d_prob_values = [d_prob_density(x, mu_val, eta_val) for x in x_values]
+    
+    # Normalize the distribution using quadgk 
+    norm_factor, _ = quadgk(x -> prob_density(x, mu_val, eta_val), x_values[1], x_values[end])
+    prob_normalized = prob_values / norm_factor
+    d_prob_normalized = d_prob_values / norm_factor
+    
+    # Time evolution parameters
+    tspan = range(0.0, 1.0, length = 50)
     dynamics = Lindblad(H0_func, dH_func, tspan; dyn_method = :Expm)
-    scheme = GeneralScheme(; probe = rho0, param = dynamics, x = x, p = p, dp = dp)
+    scheme = GeneralScheme(; probe = rho0, param = dynamics, x = x_values, p = prob_normalized, dp = d_prob_normalized)
     return scheme
 end 
 

@@ -1,3 +1,23 @@
+using Test
+using LinearAlgebra
+using Suppressor: @suppress
+using Random
+
+using QuanEstimationBase: 
+    SIC,
+    Lindblad,
+    GeneralScheme,
+    CFIM_obj,
+    MeasurementOpt,
+    DE,
+    PSO,
+    AD,
+    optimize!,
+    SigmaX, SigmaY, SigmaZ
+
+if !@isdefined generate_qubit_dynamics
+    include("../utils.jl")
+end
 
 function test_mopt_lc_cfi(; savefile = false)
     (; tspan, rho0, H0, dH, decay) = generate_qubit_dynamics()
@@ -48,7 +68,7 @@ function test_mopt_projection_cfi(; savefile = false)
     isfile("measurements.dat") && rm("measurements.dat")
     isfile("measurements.csv") && rm("measurements.csv")
 
-    alg = PSO(p_num=3, max_episode=[10, 10])
+    alg = PSO(p_num = 3, max_episode = [10, 10])
     @suppress optimize!(scheme, opt; algorithm = alg, objective = obj, savefile = savefile)
     isfile("f.csv") && rm("f.csv")
     isfile("measurements.dat") && rm("measurements.dat")

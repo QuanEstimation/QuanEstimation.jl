@@ -5,6 +5,7 @@ version = "0.2.2"
 
 [deps]
 NVMagnetometer = "28fc4bcf-da03-4841-bbdb-88baaf311b30"
+QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 QuanEstimationBase = "9769ca81-ed10-4016-bab9-e66dc61d4d60"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
@@ -14,6 +15,7 @@ Trapz = "592b5752-818d-11e9-1e9a-2b8ca4a44cd1"
 
 [compat]
 NVMagnetometer = "0.1"
+QuadGK = "2.11.2"
 QuanEstimationBase = "0.1"
 Reexport = "1"
 Suppressor = "0.2.8"

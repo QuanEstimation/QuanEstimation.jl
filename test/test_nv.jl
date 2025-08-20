@@ -1,3 +1,20 @@
+using Test
+using LinearAlgebra
+using Suppressor: @suppress
+
+using QuanEstimationBase:
+    QFIM,
+    CFIM,
+    HCRB,
+    ControlOpt,
+    autoGRAPE,
+    optimize!,
+    error_evaluation,
+    error_control
+
+using NVMagnetometer: NVMagnetometerScheme
+
+
 function test_nv_magnetometer()
     scheme = NVMagnetometerScheme()
     @test isposdef(QFIM(scheme))
