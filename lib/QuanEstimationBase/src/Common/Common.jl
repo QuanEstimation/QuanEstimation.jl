@@ -319,6 +319,12 @@ function initial_ctrl!(opt, ctrl0, scheme, p_num, rng)
                 [[(b - a) * rand(rng) + a for j = 1:ctrl_length] for i = 1:ctrl_num]
         end
     end
+
+    for i = 1:p_num
+        param_data(scheme[i]).ctrl = all_ctrl[i]
+
+    end
+
 end
 
 #### initialization velocity for PSO ####
