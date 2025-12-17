@@ -214,11 +214,12 @@ function MLE(x, rho, y; M = nothing, savefile = false)
         end
         if savefile == false
             x_out = []
-            L_out = ones(length(x[1]))
+            L_out = zeros(length(x[1]))
             for mi = 1:max_episode
                 res_exp = y[mi] |> Int
                 p_tp = real.(tr.(rho .* [M[res_exp]]))
-                L_out = L_out .* p_tp
+                p_safe = clamp.(p_tp, eps(Float64), Inf)
+                L_out .+= log.(p_safe)
                 indx = findmax(L_out)[2]
                 append!(x_out, x[1][indx])
             end
@@ -235,12 +236,12 @@ function MLE(x, rho, y; M = nothing, savefile = false)
             return L_out, x_out[end]
         else
             L_out, x_out = [], []
-            L_tp = ones(length(x[1]))
+            L_tp = zeros(length(x[1]))
             for mi = 1:max_episode
                 res_exp = y[mi] |> Int
                 p_tp = real.(tr.(rho .* [M[res_exp]]))
-                L_tp = L_tp .* p_tp
-
+                p_safe = clamp.(p_tp, eps(Float64), Inf)
+                L_tp .+= log.(p_safe)
                 indx = findmax(L_tp)[2]
                 append!(L_out, [L_tp])
                 append!(x_out, x[1][indx])
@@ -270,11 +271,12 @@ function MLE(x, rho, y; M = nothing, savefile = false)
 
         if savefile == false
             x_out = []
-            L_out = ones(p_shape...)
+            L_out = zeros(p_shape...)
             for mi = 1:max_episode
                 res_exp = y[mi] |> Int
                 p_tp = real.(tr.(rho .* [M[res_exp]]))
-                L_out = L_out .* p_tp
+                p_safe = clamp.(p_tp, eps(Float64), Inf)
+                L_out .+= log.(p_safe)
                 indx = findmax(L_out)[2]
                 append!(x_out, [[x[i][indx[i]] for i = 1:para_num]])
             end
@@ -290,11 +292,12 @@ function MLE(x, rho, y; M = nothing, savefile = false)
             return L_out, x_out[end]
         else
             L_out, x_out = [], []
-            L_tp = ones(p_shape...)
+            L_tp = zeros(p_shape...)
             for mi = 1:max_episode
                 res_exp = y[mi] |> Int
                 p_tp = real.(tr.(rho .* [M[res_exp]]))
-                L_tp = L_tp .* p_tp
+                p_safe = clamp.(p_tp, eps(Float64), Inf)
+                L_tp .+= log.(p_safe)
                 indx = findmax(L_tp)[2]
                 append!(L_out, [L_tp])
                 append!(x_out, [[x[i][indx[i]] for i = 1:para_num]])
