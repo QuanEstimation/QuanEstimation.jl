@@ -1,4 +1,5 @@
 using QuanEstimation, Random
+using LinearAlgebra
 
 function H0_func(x)
     return 0.5 * pi/2 * (σx() * cos(x) + σz() * sin(x))
@@ -28,8 +29,24 @@ for i in eachindex(x)
 end
 
 # Generation of the experimental results
-Random.seed!(1234)
-y = [rand() > 0.7 ? 1 : 0 for _ = 1:500]
+y = []
+
+x_real = 0.2 * π
+    
+H0_real = H0_func(x_real)
+dH_real = dH_func(x_real)
+rho_real, drho_real = QuanEstimation.expm(tspan, rho0, H0_real, dH_real)
+rho_real = rho_real[end]
+
+p1 = real(tr(M[1]*rho_real))
+    
+for i in 1:2500
+    if rand() < p1
+            push!(y, 0)
+    else
+            push!(y, 1)
+    end
+end
 
 #===============Maximum a posteriori estimation===============#
 pout, xout = Bayes([x], p, rho, y; M = M, estimator = "MAP", savefile = false)
