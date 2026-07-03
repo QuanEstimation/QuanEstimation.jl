@@ -3,64 +3,39 @@ using Test
 # Main test suite for QuanEstimation
 @testset "QuanEstimation Tests" begin
 
-    # Objective function tests
-    @testset "Objective Functions" begin
-        @testset "Cramer-Rao Bounds" begin
-            include("objective/test_cramer_rao_bound.jl")
-        end
+    # --- Include sub-package tests ---
+    include("../lib/QuanEstimationBase/test/runtests.jl")
+    include("../lib/NVMagnetometer/test/runtests.jl")
 
-        @testset "Bayesian Cramer-Rao Bounds" begin
-            include("objective/test_bayesian_cramer_rao_bound.jl")
-        end
-    end
+    # --- Root-level integration tests ---
 
-    # Optimization tests
-    @testset "Optimization" begin
-        @testset "Control Optimization" begin
-            include("optimization/test_control_optimization.jl")
-        end
+    # Example system integration tests (sysA-sysE)
+    include("example/analytic_reference.jl")
 
-        @testset "State Optimization" begin
-            include("optimization/test_state_optimization.jl")
+    @testset "Example Systems (Integration)" begin
+        @testset "Sys-A: Qubit Rotation" begin
+            include("example/sysA_qubit_rotation.jl")
         end
-
-        @testset "Measurement Optimization" begin
-            include("optimization/test_measurement_optimization.jl")
+        @testset "Sys-B: Spontaneous Emission" begin
+            include("example/sysB_spontaneous_emission.jl")
         end
-
-        @testset "Comprehensive Optimization" begin
-            include("optimization/test_comprehensive_optimization.jl")
+        @testset "Sys-C: Pure Dephasing" begin
+            include("example/sysC_pure_dephasing.jl")
         end
-    end
-
-    # Bayesian estimation tests
-    @testset "Bayesian Estimation" begin
-        @testset "Bayesian Estimation" begin
-            include("test_bayesian_estimation.jl")
+        @testset "Sys-D: XX Coupling" begin
+            include("example/sysD_xx_coupling.jl")
         end
-        @testset "Adaptive Estimation" begin
-            include("test_adaptive_estimation.jl")
+        @testset "Sys-E: Williamson" begin
+            include("example/sysE_williamson.jl")
+        end
+        @testset "Sys-1: Magnetic Field" begin
+            include("example/sys1_magnetic_field.jl")
         end
     end
 
-    # Core scheme tests
-    @testset "Scheme" begin
-        include("test_scheme.jl")
+    # API compatibility tests
+    @testset "API Compatibility" begin
+        include("api_compat/run_compat.jl")
     end
 
-    # Resource tests
-    @testset "Resource" begin
-        include("test_resource.jl")
-    end
-
-    # NV magnetometer tests
-    @testset "NV" begin
-        include("test_nv.jl")
-    end
-
-    # Error handling tests
-    @testset "Error Evaluation and Control" begin
-        include("test_error.jl")
-    end
-
-end # End of QuanEstimation Tests
+end

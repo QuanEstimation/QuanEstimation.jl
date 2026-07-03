@@ -1,10 +1,56 @@
 using Convex
+
+@doc raw"""
+    decomposition(A)
+
+Perform the LDLᵀ decomposition (Bunch-Kaufman) of a symmetric matrix ``A``
+and return the upper-triangular factor ``R`` such that ``R^{\mathsf{T}}R \approx A``.
+
+This is used internally by [`Holevo_bound`](@ref) to factorize the correlation
+matrix ``S`` in the SDP formulation of the HCRB.
+
+# Arguments
+
+- `A`: Symmetric matrix to decompose.
+
+# Returns
+
+- `Matrix`: The factor ``R`` satisfying ``R^{\mathsf{T}}R \approx A``.
+
+# See Also
+
+- [`Holevo_bound`](@ref): HCRB via SDP using this decomposition.
+raw"""
 function decomposition(A)
     C = bunchkaufman(A; check = false)
     R = sqrt(Array(C.D)) * C.U'C.P
     return R
 end
 
+@doc raw"""
+    HCRB(scheme::AbstractScheme; W=nothing, eps=GLOBAL_EPS)
+
+Compute the Holevo Cramér-Rao bound (HCRB) from a Scheme.
+
+Evolves the state encoded in the scheme and calls [`HCRB`](@ref) on the
+resulting density matrix and derivatives.
+
+# Arguments
+
+- `scheme::AbstractScheme`: The estimation scheme.
+- `W::Union{AbstractMatrix,UniformScaling,Nothing}=nothing`: Weight matrix.
+  Defaults to the identity ``\mathbb{I}``.
+- `eps::Float64=GLOBAL_EPS`: Epsilon threshold.
+
+# Returns
+
+- `Float64`: The HCRB value ``\mathrm{Tr}(W V)``.
+
+# See Also
+
+- [`HCRB`](@ref): Direct HCRB computation from density matrix.
+- [`NHB`](@ref): Nagaoka-Hayashi bound (alternative bound).
+"""
 function HCRB(scheme::AbstractScheme; W = nothing, eps = GLOBAL_EPS)
     if isnothing(W)
         W = I(get_param_num(scheme))
@@ -13,6 +59,29 @@ function HCRB(scheme::AbstractScheme; W = nothing, eps = GLOBAL_EPS)
     return HCRB(rho, drho, W; eps = eps)
 end
 
+@doc raw"""
+    NHB(scheme::AbstractScheme; W=nothing)
+
+Compute the Nagaoka-Hayashi bound (NHB) from a Scheme.
+
+Evolves the state encoded in the scheme and calls [`NHB`](@ref) on the
+resulting density matrix and derivatives.
+
+# Arguments
+
+- `scheme::AbstractScheme`: The estimation scheme.
+- `W::Union{AbstractMatrix,UniformScaling,Nothing}=nothing`: Weight matrix.
+  Defaults to the identity ``\mathbb{I}``.
+
+# Returns
+
+- `Float64`: The NHB value.
+
+# See Also
+
+- [`NHB`](@ref): Direct NHB computation via SDP.
+- [`HCRB`](@ref): Holevo Cramér-Rao bound (tighter bound).
+"""
 function NHB(scheme::AbstractScheme; W = nothing)
     if isnothing(W)
         W = I(get_param_num(scheme))
@@ -21,7 +90,7 @@ function NHB(scheme::AbstractScheme; W = nothing)
     return NHB(rho, drho, W)
 end
 
-"""
+raw"""
 
     HCRB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix; eps=GLOBAL_EPS)
 
@@ -30,7 +99,7 @@ Caltulate the Holevo Cramer-Rao bound (HCRB) via the semidefinite program (SDP).
 - `dρ`: Derivatives of the density matrix on the unknown parameters to be estimated. For example, drho[0] is the derivative vector on the first parameter.
 - `W`: Weight matrix.
 - `eps`: Machine epsilon.
-"""
+raw"""
 function HCRB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix; eps = GLOBAL_EPS)
     if length(dρ) == 1
         println(
@@ -49,6 +118,59 @@ function HCRB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix; eps = 
     end
 end
 
+@doc raw"""
+    Holevo_bound(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix; eps=GLOBAL_EPS)
+
+Compute the Holevo Cramér-Rao bound (HCRB) via semidefinite programming (SDP).
+
+The HCRB is given by the optimization
+
+```math
+\min_{V, X}\;\mathrm{Tr}(W V)
+```
+
+subject to the positive semi-definite constraint
+
+```math
+\begin{pmatrix}
+V & X^\dagger R^\dagger \\
+R X & \mathbb{I}
+\end{pmatrix} \succeq 0,
+```
+
+and the orthogonality conditions
+
+```math
+X_i^\dagger \mathrm{vec}(\partial_j\rho) = \delta_{ij},
+```
+
+where ``R`` is the LDLᵀ factor of the correlation matrix
+``S_{ab} = \mathrm{Tr}(\Lambda_a\Lambda_b\rho)``, and ``\Lambda_a`` are the
+su(d) generators.
+
+# Arguments
+
+- `ρ::AbstractMatrix`: Density matrix.
+- `dρ::AbstractVector`: Vector of derivatives ``\partial_a\rho``, one per parameter.
+- `W::AbstractMatrix`: Weight matrix (must satisfy ``\mathrm{rank}(W)>1`` for
+  non-trivial SDP; otherwise falls back to QFIM).
+- `eps::Float64=GLOBAL_EPS`: Epsilon threshold for LDLᵀ rounding.
+
+# Returns
+
+- `Float64`: The HCRB value ``\min\mathrm{Tr}(W V)``.
+
+# Note
+
+For single-parameter or rank-1 weight matrices, this function falls back to
+the QFI/QFIM and does not invoke the SDP solver.
+
+# See Also
+
+- [`HCRB`](@ref): Top-level dispatch (handles fallback logic).
+- [`decomposition`](@ref): LDLᵀ factorization of ``S``.
+- [`NHB`](@ref): Nagaoka-Hayashi bound (alternative SDP bound).
+"""
 function Holevo_bound(
     ρ::AbstractMatrix,
     dρ::AbstractVector,
@@ -94,10 +216,28 @@ function Holevo_bound(
         end
     end
     problem = minimize(tr(W * V), constraints)
-    Convex.solve!(problem, SCS.Optimizer, silent_solver = true)
+    Convex.solve!(problem, SCS.Optimizer(), silent_solver = true)
     return evaluate(tr(W * V))
 end
 
+"""
+    Holevo_bound_obj(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix; eps=GLOBAL_EPS)
+
+Wrapper around [`Holevo_bound`](@ref) that returns only the scalar objective
+value, extracting the first element from the Convex.jl result.
+
+# Arguments
+
+- Same as [`Holevo_bound`](@ref).
+
+# Returns
+
+- `Float64`: The scalar HCRB value.
+
+# See Also
+
+- [`Holevo_bound`](@ref): Full HCRB computation via SDP.
+"""
 function Holevo_bound_obj(
     ρ::AbstractMatrix,
     dρ::AbstractVector,
@@ -147,6 +287,6 @@ function NHB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix)
         end
     end
     problem = minimize(real(tr(kron(W, ρ) * L)), constraints)
-    Convex.solve!(problem, SCS.Optimizer, silent_solver = true)
+    Convex.solve!(problem, SCS.Optimizer(), silent_solver = true)
     return evaluate(real(tr(kron(W, ρ) * L)))
 end

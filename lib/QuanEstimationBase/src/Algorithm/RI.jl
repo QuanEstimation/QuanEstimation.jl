@@ -1,3 +1,10 @@
+"""
+    optimize!(opt::StateOpt, alg::RI, obj, scheme, output)
+
+Run the Rayleigh-iteration (RI) optimization over quantum probe states.
+At each episode, computes the QFIM with the SLD, constructs the dual-map matrix, and selects the
+dominant eigenvector as the new probe state.
+raw"""
 function optimize!(opt::StateOpt, alg::RI, obj, scheme, output)
     (; max_episode) = alg
 
@@ -30,10 +37,22 @@ function optimize!(opt::StateOpt, alg::RI, obj, scheme, output)
     set_io!(output, f[1, 1])
 end
 
+raw"""
+    DualMap(L, K)
+
+Compute the dual map ``\sum_i K_i^\dagger L K_i`` for a given operator ``L`` and a set of Kraus operators ``K``.
+raw"""
 function DualMap(L, K)
     return [Ki' * L * Ki for Ki in K] |> sum
 end
 
+raw"""
+    d_DualMap(L, K, dK)
+
+Compute the parameter derivatives of the dual map:
+``\Lambda_j = \sum_i (\partial_j K_i^\dagger L K_i + K_i^\dagger L \partial_j K_i)``
+for each parameter index ``j``.
+"""
 function d_DualMap(L, K, dK)
     K_num = length(K)
     para_num = length(dK[1])

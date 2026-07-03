@@ -1,14 +1,55 @@
+"""
+
+    Adapt_MZI
+
+Mutable scheme for adaptive Mach-Zehnder interferometer phase estimation.
+
+**Fields:**
+- `x`: Parameter grid (phases).
+- `p`: Prior distribution.
+- `rho0`: Initial probe state.
+"""
 mutable struct Adapt_MZI <: AbstractScheme
     x::Union{Nothing, AbstractVector}
     p::Union{Nothing, AbstractVector}
     rho0::Union{Nothing, AbstractMatrix}
 end
 
+"""
+    MIZtargetType
+
+Abstract supertype for MZI adaptation target functions (sharpness or mutual information).
+raw"""
 abstract type MIZtargetType end
+raw"""
+    sharpness <: MIZtargetType
+
+Uses sharpness (``|\langle e^{ix}\rangle|``) as the target for MZI feedback.
+"""
 abstract type sharpness <: MIZtargetType end
+"""
+    MI <: MIZtargetType
+
+Uses mutual information as the target for MZI feedback.
+"""
 abstract type MI <: MIZtargetType end
 
+const MZI_TARGET_MAP = Dict{Symbol, Type{<:MIZtargetType}}(
+    :sharpness => sharpness,
+    :MI        => MI,
+)
+
+"""
+    calculate_online{P}
+
+Dispatch struct for online MZI feedback calculation with target type parameter `P`.
+"""
 struct calculate_online{P} end
+"""
+    calculate_offline{P}
+
+Dispatch struct for offline MZI feedback calculation with target type parameter `P`.
+"""
 struct calculate_offline{P} end
 
 ##========== online ==========##
@@ -26,6 +67,12 @@ function online(apt::Adapt_MZI; target::String = "sharpness", output::String = "
     adaptMZI_online(x, p, rho0, Symbol(output),  Symbol(target); res=res)
 end
 
+"""
+    adaptMZI_online(x, p, rho0, output, target; res=nothing)
+
+Core online MZI adaptive estimation loop. Iterates over photon-subtraction steps,
+updates the feedback phase at each episode, and saves results.
+"""
 function adaptMZI_online(x, p, rho0, output, target; res=nothing)
     N = Int(sqrt(size(rho0, 1))) - 1
     a = destroy(N + 1) |> sparse
@@ -55,7 +102,7 @@ function adaptMZI_online(x, p, rho0, output, target; res=nothing)
                     (factorial(N - ei) / factorial(N))
                 a_res[xi] = a_res_tp
             end
-            phi_update = calculate_online{eval(target)}(
+            phi_update = calculate_online{MZI_TARGET_MAP[target]}(
                 x,
                 p,
                 pyx,
@@ -96,7 +143,7 @@ function adaptMZI_online(x, p, rho0, output, target; res=nothing)
                 a_res[xi] = a_res_tp
             end
 
-            phi_update = calculate_online{eval(target)}(
+            phi_update = calculate_online{MZI_TARGET_MAP[target]}(
                 x,
                 p,
                 pyx,
@@ -120,6 +167,12 @@ function adaptMZI_online(x, p, rho0, output, target; res=nothing)
     end
 end
 
+"""
+
+    calculate_online{target}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix)
+
+Compute the optimal tunable phase online using the specified target function (`sharpness` or `MI`).
+"""
 function calculate_online{sharpness}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix)
 
     M_res = zeros(length(phi_span))
@@ -142,6 +195,11 @@ function calculate_online{sharpness}(x, p, pyx, a_res, a, rho0, N, ei, phi_span,
     phi_span[indx_m]
 end
 
+"""
+    calculate_online{MI}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix)
+
+Mutual-information variant: returns the tunable phase that maximizes the mutual information.
+"""
 function calculate_online{MI}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix)
 
     M_res = zeros(length(phi_span))
@@ -166,6 +224,11 @@ function calculate_online{MI}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix
     phi_span[indx_m]
 end
 
+"""
+    savefile_online(xout, y)
+
+Save online adaptive estimation results `xout` and `y` to `adaptive.dat` via JLD2.
+"""
 function savefile_online(xout, y)
     jldopen("adaptive.dat", "w") do f
         f["x"] = xout
@@ -224,7 +287,12 @@ function offline(
         if isnothing(ini_particle)
             ini_particle = ([apt.rho0],)
         end
-        PSO_deltaphiOpt(
+"""
+    PSO_deltaphiOpt(x, p, rho0, comb, p_num, ini_particle, c0, c1, c2, seed::Number, max_episode, target, eps)
+
+Convenience wrapper that converts a numeric `seed` to a `MersenneTwister` RNG and dispatches to the main `PSO_deltaphiOpt`.
+"""
+PSO_deltaphiOpt(
             x,
             p,
             rho0,
@@ -242,6 +310,11 @@ function offline(
     end
 end
 
+"""
+    DE_deltaphiOpt(x, p, rho0, comb, p_num, ini_population, c, cr, rng, max_episode, target, eps)
+
+Optimize feedback phase adjustments using Differential Evolution (DE).
+"""
 function DE_deltaphiOpt(
     x,
     p,
@@ -273,7 +346,7 @@ function DE_deltaphiOpt(
 
     p_fit = [0.0 for i = 1:p_num]
     for pl = 1:N
-        p_fit[pl] = calculate_offline{eval(target)}(deltaphi[pl], x, p, rho0, a, comb, eps)
+        p_fit[pl] = calculate_offline{MZI_TARGET_MAP[target]}(deltaphi[pl], x, p, rho0, a, comb, eps)
     end
 
     f_ini = maximum(p_fit)
@@ -306,7 +379,7 @@ function DE_deltaphiOpt(
                     (x -> x < 0.0 ? 0.0 : x > pi ? pi : x)(deltaphi_cross[cm])
             end
             f_cross =
-                calculate_offline{eval(target)}(deltaphi_cross, x, p, rho0, a, comb, eps)
+                calculate_offline{MZI_TARGET_MAP[target]}(deltaphi_cross, x, p, rho0, a, comb, eps)
             if f_cross > p_fit[pm]
                 p_fit[pm] = f_cross
                 for ck = 1:N
@@ -320,6 +393,12 @@ function DE_deltaphiOpt(
     return deltaphi[findmax(p_fit)[2]]
 end
 
+"""
+
+    PSO_deltaphiOpt(x, p, rho0, comb, p_num, ini_particle, c0, c1, c2, rng, max_episode, target, eps)
+
+Optimize feedback phase adjustments using Particle Swarm Optimization (PSO).
+"""
 function PSO_deltaphiOpt(
     x,
     p,
@@ -367,7 +446,7 @@ function PSO_deltaphiOpt(
     f_list = []
     for ei = 1:(max_episode[1]-1)
         for pm = 1:p_num
-            f_now = calculate_offline{eval(target)}(deltaphi[pm], x, p, rho0, a, comb, eps)
+            f_now = calculate_offline{MZI_TARGET_MAP[target]}(deltaphi[pm], x, p, rho0, a, comb, eps)
             if f_now > p_fit[pm]
                 p_fit[pm] = f_now
                 for ci = 1:N
@@ -412,36 +491,12 @@ function PSO_deltaphiOpt(
     return gbest
 end
 
-PSO_deltaphiOpt(
-    x,
-    p,
-    rho0,
-    comb,
-    p_num,
-    ini_particle,
-    c0,
-    c1,
-    c2,
-    seed::Number,
-    max_episode,
-    target::String,
-    eps,
-) = PSO_deltaphiOpt(
-    x,
-    p,
-    rho0,
-    comb,
-    p_num,
-    ini_particle,
-    c0,
-    c1,
-    c2,
-    MersenneTwister(seed),
-    max_episode,
-    Symbol(target),
-    eps,
-)
+"""
 
+    calculate_offline{target}(delta_phi, x, p, rho0, a, comb, eps)
+
+Compute the objective function value for offline optimization with given phase adjustments.
+"""
 function calculate_offline{sharpness}(delta_phi, x, p, rho0, a, comb, eps)
     N = size(a)[1] - 1
     exp_ix = [exp(1.0im * xi) for xi in x]
@@ -468,6 +523,11 @@ function calculate_offline{sharpness}(delta_phi, x, p, rho0, a, comb, eps)
     return sum(M_res)
 end
 
+"""
+    calculate_offline{MI}(delta_phi, x, p, rho0, a, comb, eps)
+
+Mutual-information variant of offline evaluation for given phase adjustments.
+"""
 function calculate_offline{MI}(delta_phi, x, p, rho0, a, comb, eps)
     N = size(a)[1] - 1
     exp_ix = [exp(1.0im * xi) for xi in x]
@@ -494,6 +554,11 @@ function calculate_offline{MI}(delta_phi, x, p, rho0, a, comb, eps)
     return sum(M_res)
 end
 
+"""
+    savefile_offline(deltaphi, flist)
+
+Save offline optimization results: `deltaphi` to `deltaphi.csv` and objective values `flist` to `f.csv`.
+raw"""
 function savefile_offline(deltaphi, flist)
     # JLD2 save
     open("deltaphi.csv", "w") do m
@@ -512,6 +577,15 @@ function savefile_offline(deltaphi, flist)
     # CSV.write("f.csv", df)
 end
 
+@doc raw"""
+    a_u(a, x, phi, u)
+
+Photon-subtraction operator for the MZI after feedback:
+
+```math
+A_u = a_{\mathrm{in}} \sin\left(\frac{x - \phi}{2} + \frac{\pi u}{2}\right) + b_{\mathrm{in}} \cos\left(\frac{x - \phi}{2} + \frac{\pi u}{2}\right)
+```
+"""
 function a_u(a, x, phi, u)
     N = size(a)[1] - 1
     a_in = kron(a, Matrix(I, N + 1, N + 1))
@@ -521,6 +595,12 @@ function a_u(a, x, phi, u)
     return a_in * sin(value) + b_in * cos(value)
 end
 
+raw"""
+
+    logarithmic(number, N)
+
+Generate a logarithmic sequence of length ``N``: ``[\mathrm{number}/2, \mathrm{number}/4, \dots, \mathrm{number}/2^N]``.
+"""
 function logarithmic(number, N)
     res = zeros(N)
     res_tp = number
@@ -531,6 +611,12 @@ function logarithmic(number, N)
     return res
 end
 
+"""
+
+    brgd(n)
+
+Generate the binary reflected Gray code of length ``2^n`` as a vector of binary strings.
+"""
 function brgd(n)
     if n == 1
         return ["0", "1"]
@@ -544,10 +630,22 @@ function brgd(n)
 end
 
 
+"""
+
+    adapt!(scheme::Adapt_MZI; target=:sharpness, output="phi")
+
+Run online adaptive estimation. Delegates to `online`.
+"""
 function adapt!(scheme::Adapt_MZI; target::Symbol = :sharpness, output::String = "phi")
     return online(scheme, target = target, output = output)
 end
 
+"""
+
+    adapt!(scheme::Adapt_MZI, alg; target=:sharpness, eps=GLOBAL_EPS, seed=1234)
+
+Run offline adaptive estimation with a given optimization algorithm (`DE` or `PSO`). Delegates to `offline`.
+"""
 function adapt!(
     scheme::Adapt_MZI,
     alg;

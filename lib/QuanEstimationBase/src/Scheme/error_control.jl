@@ -1,5 +1,11 @@
 using Setfield
 
+raw"""
+
+    error_control_param(scheme::Scheme; output_error_scaling=1e-6, input_error_scaling=1e-8, max_episode=10)
+
+Refine the time discretization of a Lindblad dynamics parameterization until the parameterization error ``\delta F`` falls below `output_error_scaling`. Doubles the number of time steps each episode.
+"""
 function error_control_param(
     scheme::Scheme{S,LindbladDynamics{HT,DT,CT,Expm,P},M,E};
     output_error_scaling = 1e-6,
@@ -25,6 +31,12 @@ function error_control_param(
 end
 
 
+raw"""
+
+    error_control_eps(scheme::Scheme; SLD_eps=1e-8, max_episode=10)
+
+Iteratively reduce the SLD eigenvalue threshold `SLD_eps` until the resulting QFIM error ``\delta F`` stabilizes.
+"""
 function error_control_eps(scheme::Scheme; SLD_eps = 1e-8, max_episode = 10)
     eps_tp = SLD_eps
     eps_error = SLD_eps_error(scheme, SLD_eps)
@@ -45,6 +57,12 @@ function error_control_eps(scheme::Scheme; SLD_eps = 1e-8, max_episode = 10)
     return nothing
 end
 
+"""
+
+    error_control(scheme::Scheme; objective="QFIM", output_error_scaling=1e-6, input_error_scaling=1e-8, SLD_eps=1e-6, max_episode=10)
+
+Run both parameterization and SLD-epsilon error control for the given scheme. Currently supports `objective="QFIM"`.
+"""
 function error_control(
     scheme::Scheme;
     objective::Union{Symbol, String}="QFIM",

@@ -1,3 +1,9 @@
+"""
+    Base.show(io::IO, ::MIME"text/plain", t::NVMagnetometerScheme)
+
+Pretty-print the contents of an [`NVMagnetometerScheme`](@ref) in a tree-structured format,
+showing the state preparation, Hamiltonian parameters, controls, decay channels, and measurement.
+"""
 function Base.show(io::IO, ::MIME"text/plain", t::NVMagnetometerScheme)
     @unpack data, io_hooks = t
     @unpack D, gS, gI, A1, A2, B1, B2, B3, γ, init_state, ctrl, tspan, M = data

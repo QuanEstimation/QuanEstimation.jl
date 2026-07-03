@@ -4,6 +4,18 @@ using Base.Docs: modules, meta, aliasof, doc
 
 const IGNORE_FIELD_DOC_PREFIX = "IGNORE"
 
+"""
+
+    AnnotatedStructTree
+
+A tree representation of a Julia struct with field names, types, values, and docstrings, used for pretty-printing scheme structures via `AbstractTrees`.
+
+**Fields:**
+- `name`: Field name.
+- `type`: Field type (or `nothing`).
+- `description`: Docstring for the field.
+- `value`: Field value or vector of child `AnnotatedStructTree` nodes.
+"""
 Base.@kwdef struct AnnotatedStructTree
     name::Symbol = Symbol()
     type::Union{Symbol,Nothing} = nothing
@@ -11,12 +23,34 @@ Base.@kwdef struct AnnotatedStructTree
     value::Any = AnnotatedStructTree[]
 end
 
+"""
+    annotated_fields(x)
+
+Return a tuple of field names for the given value (inferred from its type).
+"""
 annotated_fields(x) = annotated_fields(typeof(x))
 
+"""
+    annotated_fields(::Type{T}) where {T}
+
+Return `fieldnames(T)` used during annotation extraction.
+"""
 annotated_fields(::Type{T}) where {T} = fieldnames(T)
 
+"""
+    annotations(x::UnionAll)
+
+Return an empty annotation list for `UnionAll` types (no concrete fields available).
+"""
 annotations(x::UnionAll) = []
 
+"""
+    annotations(x)
+
+Extract annotated field tuples `(name, type, description, value)` from `x` by scanning
+loaded module doc metas for field-level docstrings. Fields whose docstring starts with
+`IGNORE` are skipped.
+"""
 function annotations(x)
     binding = aliasof(typeof(x), typeof(typeof(x)))
     res = []
@@ -43,8 +77,19 @@ function annotations(x)
     return res
 end
 
+"""
+    Base.convert(::Type{AnnotatedStructTree}, x::AnnotatedStructTree)
+
+Identity conversion for `AnnotatedStructTree` (no-op).
+"""
 Base.convert(::Type{AnnotatedStructTree}, x::AnnotatedStructTree) = x
 
+"""
+    Base.convert(::Type{AnnotatedStructTree}, x; name, type, description)
+
+Recursively convert a value `x` into an `AnnotatedStructTree` by annotating its fields.
+Scalar values become leaf nodes; struct values are expanded into children.
+"""
 function Base.convert(::Type{AnnotatedStructTree}, x; name=Symbol(), type=nameof(typeof(x)), description="")
     ants = annotations(x)
     if isempty(ants)
@@ -62,8 +107,18 @@ function Base.convert(::Type{AnnotatedStructTree}, x; name=Symbol(), type=nameof
     end
 end
 
+"""
+    AT.children(t::AnnotatedStructTree)
+
+Return the children of an `AnnotatedStructTree` node: its `value` field if it is a vector of child nodes, otherwise an empty list.
+"""
 AT.children(t::AnnotatedStructTree) = t.value isa Vector{AnnotatedStructTree} ? t.value : []
 
+"""
+    AT.printnode(io::IO, t::AnnotatedStructTree)
+
+Pretty-print a single `AnnotatedStructTree` node with colored name, type, value, and description.
+"""
 function AT.printnode(io::IO, t::AnnotatedStructTree)
     print(io, YELLOW_FG(string(t.name)))
 
@@ -83,12 +138,33 @@ function AT.printnode(io::IO, t::AnnotatedStructTree)
     print(io, "\t", DARK_GRAY_FG(t.description))
 end
 
+"""
+    Base.show(io::IO, ::MIME"text/plain", t::AnnotatedStructTree)
+
+Pretty-print an `AnnotatedStructTree` via `AbstractTrees.print_tree`.
+"""
 Base.show(io::IO, ::MIME"text/plain", t::AnnotatedStructTree) = AT.print_tree(io, t; maxdepth=get(io, :maxdepth, 10))
 
+"""
+    annotated_fields(x::AbstractVecOrMat)
+
+Return an empty tuple — vectors and matrices are treated as leaf values, not expanded.
+"""
 annotated_fields(x::AbstractVecOrMat) = ()
+"""
+    annotated_fields(x::Nothing)
+
+Return an empty tuple for `nothing` leaf values.
+"""
 annotated_fields(x::Nothing) = ()
 
 
 #####
 
+"""
+
+    Base.show(io::IO, m::MIME"text/plain", s::AbstractScheme)
+
+Pretty-print an `AbstractScheme` as an annotated tree.
+"""
 Base.show(io::IO, m::MIME"text/plain", s::AbstractScheme) = show(io, m, convert(AnnotatedStructTree, s))

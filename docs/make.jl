@@ -11,15 +11,19 @@ makedocs(
     source = "src",
     build = "build",
     clean = true,
-    doctest = true,
+    doctest = false,
     modules = [QuanEstimation],
     authors = "QuanEstimation Group (Jing Liu et al.)",
     repo = "https://github.com/QuanEstimation/QuanEstimation.jl/blob/{commit}{path}#{line}",
     sitename = "QuanEstimation.jl",
     edit_link = "GitHub",
     pages = [
-        "Home" => ["index.md"], 
-        "API" => ["api/GeneralAPI.md", "api/BaseAPI.md", "api/NVMagnetometerAPI.md"]
+        "Home" => "index.md",
+        "API Reference" => [
+            "General API" => "api/GeneralAPI.md",
+            "Base API" => "api/BaseAPI.md",
+            "NVMagnetometer API" => "api/NVMagnetometerAPI.md",
+        ],
     ],
 )
 

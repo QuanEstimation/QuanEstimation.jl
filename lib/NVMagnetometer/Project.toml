@@ -1,7 +1,7 @@
 name = "NVMagnetometer"
 uuid = "28fc4bcf-da03-4841-bbdb-88baaf311b30"
 authors = ["QuanEstimation Group (Jing Liu et al.)"]
-version = "0.1.1"
+version = "0.3.0"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -11,11 +11,12 @@ UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 
 [compat]
 UnPack = "1.0"
-QuanEstimationBase = "0.1.2"
+QuanEstimationBase = "0.3"
 julia = "1"
 
 [extras]
+Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Suppressor", "Test"]

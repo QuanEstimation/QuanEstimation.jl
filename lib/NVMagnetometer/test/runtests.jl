@@ -8,3 +8,5 @@ using NVMagnetometer, QuanEstimationBase, LinearAlgebra
     @test isposdef(CFIM(scheme))
     @test HCRB(scheme) > 0
 end # NVMagnetometer.jl tests
+
+include("test_nv.jl")

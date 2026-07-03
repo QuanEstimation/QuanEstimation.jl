@@ -1,4 +1,9 @@
 #### control optimization ####
+"""
+    optimize!(opt::ControlOpt, alg::AbstractautoGRAPE, obj, scheme, output)
+
+Optimize control amplitudes using auto-GRAPE with automatic differentiation.
+"""
 function optimize!(opt::ControlOpt, alg::AbstractautoGRAPE, obj, scheme, output)
     (; max_episode) = alg
     ctrl_length = length(param_data(scheme).ctrl[1])
@@ -14,9 +19,9 @@ function optimize!(opt::ControlOpt, alg::AbstractautoGRAPE, obj, scheme, output)
     show(opt, output, obj, alg)
 
     for ei = 1:(max_episode-1)
-        δ = Flux.gradient(
+        δ = Zygote.gradient(
             () -> objective(obj, scheme)[2],
-            Flux.Params([param_data(scheme).ctrl]),
+            Zygote.Params([param_data(scheme).ctrl]),
         )
         update_ctrl!(alg, obj, scheme, δ[param_data(scheme).ctrl])
         bound!(param_data(scheme).ctrl, opt.ctrl_bound)
@@ -30,6 +35,11 @@ function optimize!(opt::ControlOpt, alg::AbstractautoGRAPE, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
+"""
+    update_ctrl!(alg::autoGRAPE_Adam, obj, scheme, δ)
+
+Update control coefficients using the Adam optimizer (auto-GRAPE variant).
+"""
 function update_ctrl!(alg::autoGRAPE_Adam, obj, scheme, δ)
     (; epsilon, beta1, beta2) = alg
     for ci in eachindex(δ)
@@ -50,11 +60,21 @@ function update_ctrl!(alg::autoGRAPE_Adam, obj, scheme, δ)
     end
 end
 
+"""
+    update_ctrl!(alg::autoGRAPE, obj, scheme, δ)
+
+Update control coefficients using a fixed learning rate (auto-GRAPE variant).
+"""
 function update_ctrl!(alg::autoGRAPE, obj, scheme, δ)
     param_data(scheme).ctrl += alg.epsilon * δ
 end
 
 #### state optimization ####
+"""
+    optimize!(opt::StateOpt, alg::AbstractAD, obj, scheme, output)
+
+Optimize the initial probe state using automatic differentiation.
+"""
 function optimize!(opt::StateOpt, alg::AbstractAD, obj, scheme, output)
     (; max_episode) = alg
     f_ini, _ = objective(obj, scheme)
@@ -63,9 +83,9 @@ function optimize!(opt::StateOpt, alg::AbstractAD, obj, scheme, output)
     set_io!(output, f_ini)
     show(opt, output, obj, alg)
     for ei = 1:(max_episode-1)
-        δ = Flux.gradient(
+        δ = Zygote.gradient(
             () -> objective(obj, scheme)[2],
-            Flux.Params([state_data(scheme)]),
+            Zygote.Params([state_data(scheme)]),
         )
         update_state!(alg, obj, scheme, δ[state_data(scheme)])
         scheme.StatePreparation.data = state_data(scheme) / norm(state_data(scheme))
@@ -78,6 +98,11 @@ function optimize!(opt::StateOpt, alg::AbstractAD, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
+"""
+    update_state!(alg::AD_Adam, obj, scheme, δ)
+
+Update the probe state using the Adam optimizer.
+"""
 function update_state!(alg::AD_Adam, obj, scheme, δ)
     (; epsilon, beta1, beta2) = alg
     mt, vt = 0.0, 0.0
@@ -87,11 +112,21 @@ function update_state!(alg::AD_Adam, obj, scheme, δ)
     end
 end
 
+"""
+    update_state!(alg::AD, obj, scheme, δ)
+
+Update the probe state using a fixed learning rate.
+"""
 function update_state!(alg::AD, obj, scheme, δ)
     scheme.StatePreparation.data += alg.epsilon * δ
 end
 
 #### find the optimal linear combination of a given set of POVM ####
+"""
+    optimize!(opt::Mopt_LinearComb, alg::AbstractAD, obj, scheme, output)
+
+Optimize measurement by finding the best linear combination of a POVM basis.
+"""
 function optimize!(opt::Mopt_LinearComb, alg::AbstractAD, obj, scheme, output)
     (; max_episode) = alg
     (; POVM_basis, M_num) = opt
@@ -111,7 +146,7 @@ function optimize!(opt::Mopt_LinearComb, alg::AbstractAD, obj, scheme, output)
     set_io!(output, f_ini, f_povm, f_opt)
     show(opt, output, obj, alg)
     for ei = 1:(max_episode-1)
-        δ = Flux.gradient(() -> objective(opt, obj, scheme)[2], Flux.Params([opt.B]))
+        δ = Zygote.gradient(() -> objective(opt, obj, scheme)[2], Zygote.Params([opt.B]))
         update_M!(opt, alg, obj, δ[opt.B])
         bound_LC_coeff!(opt.B, rng)
         M = [sum([opt.B[i][j] * POVM_basis[j] for j = 1:basis_num]) for i = 1:M_num]
@@ -125,6 +160,11 @@ function optimize!(opt::Mopt_LinearComb, alg::AbstractAD, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
+"""
+    update_M!(opt::Mopt_LinearComb, alg::AD_Adam, obj, δ)
+
+Update POVM linear-combination coefficients using Adam.
+"""
 function update_M!(opt::Mopt_LinearComb, alg::AD_Adam, obj, δ)
     (; epsilon, beta1, beta2) = alg
     for ci in eachindex(δ)
@@ -136,11 +176,21 @@ function update_M!(opt::Mopt_LinearComb, alg::AD_Adam, obj, δ)
     end
 end
 
+"""
+    update_M!(opt::Mopt_LinearComb, alg::AD, obj, δ)
+
+Update POVM linear-combination coefficients using a fixed learning rate.
+"""
 function update_M!(opt::Mopt_LinearComb, alg::AD, obj, δ)
     opt.B += alg.epsilon * δ
 end
 
 #### find the optimal rotated measurement of a given set of POVM ####
+"""
+    optimize!(opt::Mopt_Rotation, alg::AbstractAD, obj, scheme, output)
+
+Optimize measurement by finding the best unitary rotation of a POVM basis.
+"""
 function optimize!(opt::Mopt_Rotation, alg::AbstractAD, obj, scheme, output)
     (; max_episode) = alg
     (; POVM_basis) = opt
@@ -151,11 +201,6 @@ function optimize!(opt::Mopt_Rotation, alg::AbstractAD, obj, scheme, output)
     append!(opt.Lambda, [Matrix{ComplexF64}(I, dim, dim)])
     append!(opt.Lambda, [suN[i] for i in eachindex(suN)])
 
-    # if isnothing(Lambda)
-    #     opt.Lambda = Matrix{ComplexF64}[]
-    #     append!(opt.Lambda, [Matrix{ComplexF64}(I,dim,dim)])
-    #     append!(opt.Lambda, [suN[i] for i in eachindex(suN)])
-    # end
 
     U = rotation_matrix(opt.s, opt.Lambda)
     M = [U * POVM_basis[i] * U' for i = 1:M_num]
@@ -170,7 +215,7 @@ function optimize!(opt::Mopt_Rotation, alg::AbstractAD, obj, scheme, output)
     set_io!(output, f_ini, f_povm, f_opt)
     show(opt, output, obj, alg)
     for ei = 1:(max_episode-1)
-        δ = Flux.gradient(() -> objective(opt, obj, scheme)[2], Flux.Params([opt.s]))
+        δ = Zygote.gradient(() -> objective(opt, obj, scheme)[2], Zygote.Params([opt.s]))
         update_M!(opt, alg, obj, δ[opt.s])
         bound_rot_coeff!(opt.s)
         U = rotation_matrix(opt.s, opt.Lambda)
@@ -185,6 +230,11 @@ function optimize!(opt::Mopt_Rotation, alg::AbstractAD, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
+"""
+    update_M!(opt::Mopt_Rotation, alg::AD_Adam, obj, δ)
+
+Update POVM rotation parameters using Adam.
+"""
 function update_M!(opt::Mopt_Rotation, alg::AD_Adam, obj, δ)
     (; epsilon, beta1, beta2) = alg
     mt, vt = 0.0, 0.0
@@ -194,11 +244,21 @@ function update_M!(opt::Mopt_Rotation, alg::AD_Adam, obj, δ)
     end
 end
 
+"""
+    update_M!(opt::Mopt_Rotation, alg::AD, obj, δ)
+
+Update POVM rotation parameters using a fixed learning rate.
+"""
 function update_M!(opt::Mopt_Rotation, alg::AD, obj, δ)
     opt.s += alg.epsilon * δ
 end
 
 #### state abd control optimization ####
+"""
+    optimize!(opt::StateControlOpt, alg::AbstractAD, obj, scheme, output)
+
+Jointly optimize the initial probe state and control amplitudes.
+"""
 function optimize!(opt::StateControlOpt, alg::AbstractAD, obj, scheme, output)
     (; max_episode) = alg
     ctrl_length = length(param_data(scheme).ctrl[1])
@@ -214,9 +274,9 @@ function optimize!(opt::StateControlOpt, alg::AbstractAD, obj, scheme, output)
     show(opt, output, obj, alg)
 
     for ei = 1:(max_episode-1)
-        δ = Flux.gradient(
+        δ = Zygote.gradient(
             () -> objective(obj, scheme)[2],
-            Flux.Params([state_data(scheme), param_data(scheme).ctrl]),
+            Zygote.Params([state_data(scheme), param_data(scheme).ctrl]),
         )
         update_state!(alg, obj, scheme, δ[state_data(scheme)])
         update_ctrl!(alg, obj, scheme, δ[param_data(scheme).ctrl])
@@ -232,6 +292,11 @@ function optimize!(opt::StateControlOpt, alg::AbstractAD, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
+"""
+    update_ctrl!(alg::AD_Adam, obj, scheme, δ)
+
+Update control coefficients using the Adam optimizer.
+"""
 function update_ctrl!(alg::AD_Adam, obj, scheme, δ)
     (; epsilon, beta1, beta2) = alg
     for ci in eachindex(δ)
@@ -252,6 +317,11 @@ function update_ctrl!(alg::AD_Adam, obj, scheme, δ)
     end
 end
 
+"""
+    update_ctrl!(alg::AD, obj, scheme, δ)
+
+Update control coefficients using a fixed learning rate.
+"""
 function update_ctrl!(alg::AD, obj, scheme, δ)
     param_data(scheme).ctrl += alg.epsilon * δ
 end

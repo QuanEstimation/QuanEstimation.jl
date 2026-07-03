@@ -142,18 +142,14 @@ const IO_final = Dict(
     (:HCRB, :multi_para) => "\e[2KIteration over, data saved.\nFinal value of HCRB is %f\n",
 )
 
-## io info
-# function Base.show(system::QuanEstSystem)
-#     (; optim, algorithm, obj) = system
-#     println(
-#         (optim isa ControlOpt ? IO_obj[obj_type(obj)] : "") *
-#         IO_opt[opt_target(optim)],
-#     )
-#     println(IO_para[para_type(obj)])
-#     println(IO_alg[alg_type(algorithm)])
-# end
 
 ## io initialization
+"""
+
+    Base.show(opt::AbstractOpt, output::Output, obj::AbstractObj, alg::AbstractAlgorithm)
+
+Print initialization I/O: scenario description, algorithm name, and initial objective value.
+"""
 function Base.show(
     opt::AbstractOpt,
     output::Output,
@@ -169,6 +165,12 @@ function Base.show(
 end
 
 ## io current
+"""
+
+    Base.show(output::Output, obj::AbstractObj)
+
+Print the current objective value during optimization (overwrites the current line).
+"""
 function Base.show(output::Output, obj::AbstractObj)
     (; io_buffer) = output
     @eval @printf $(IO_current[obj_type(obj), para_type(obj)]) $(io_buffer...)
@@ -176,6 +178,12 @@ function Base.show(output::Output, obj::AbstractObj)
 end
 
 ## io final
+"""
+
+    Base.show(obj::AbstractObj, output::AbstractOutput)
+
+Print the final objective value and save results.
+"""
 function Base.show(obj::AbstractObj, output::AbstractOutput)
     (; io_buffer) = output
     @eval @printf $(IO_final[obj_type(obj), para_type(obj)]) $(io_buffer...)

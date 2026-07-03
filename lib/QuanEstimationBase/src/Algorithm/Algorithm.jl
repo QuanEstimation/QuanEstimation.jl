@@ -1,12 +1,50 @@
+"""
+    AbstractAlgorithm
+
+Abstract supertype for all optimization algorithms.
+"""
 abstract type AbstractAlgorithm end
 
+"""
+    AbstractGRAPE <: AbstractAlgorithm
+
+Abstract supertype for GRAPE (GRadient Ascent Pulse Engineering) algorithms.
+"""
 abstract type AbstractGRAPE <: AbstractAlgorithm end
 
+@doc raw"""
+    GRAPE{T<:Number} <: AbstractGRAPE
+
+GRadient Ascent Pulse Engineering for control optimization.
+
+Uses the gradient of the objective function w.r.t. control amplitudes
+to iteratively improve the controls with a fixed learning rate ``\epsilon``.
+
+# Fields
+
+- `max_episode::Int`: Number of optimization iterations.
+- `epsilon::T`: Learning rate (step size).
+"""
 struct GRAPE{T<:Number} <: AbstractGRAPE
     max_episode::Int
     epsilon::T
 end
 
+@doc raw"""
+    GRAPE_Adam{T,N} <: AbstractGRAPE
+
+GRAPE with Adam optimizer.
+
+Uses adaptive moment estimation (Adam) for gradient-based control updates
+with momentum (``\beta_1``) and RMS scaling (``\beta_2``).
+
+# Fields
+
+- `max_episode::Int`: Number of optimization iterations.
+- `epsilon::T`: Learning rate.
+- `beta1::N`: Exponential decay rate for first moment estimates.
+- `beta2::N`: Exponential decay rate for second moment estimates.
+"""
 struct GRAPE_Adam{T<:Number,N<:Number} <: AbstractGRAPE
     max_episode::Int
     epsilon::T
@@ -14,7 +52,11 @@ struct GRAPE_Adam{T<:Number,N<:Number} <: AbstractGRAPE
     beta2::N
 end
 
+"""
+    GRAPE(max_episode, epsilon, beta1, beta2)
 
+Positional constructor — always returns `GRAPE_Adam`.
+"""
 GRAPE(max_episode, epsilon, beta1, beta2) = GRAPE_Adam(max_episode, epsilon, beta1, beta2)
 
 """
@@ -31,12 +73,28 @@ Control optimization algorithm: GRAPE.
 GRAPE(; max_episode = 300, epsilon = 0.01, beta1 = 0.90, beta2 = 0.99, Adam::Bool = true) =
     Adam ? GRAPE_Adam(max_episode, epsilon, beta1, beta2) : GRAPE(max_episode, epsilon)
 
+"""
+    AbstractautoGRAPE <: AbstractAlgorithm
+
+Abstract supertype for auto-GRAPE (automatic differentiation + GRAPE) algorithms.
+"""
 abstract type AbstractautoGRAPE <: AbstractAlgorithm end
+
+"""
+    autoGRAPE{T} <: AbstractautoGRAPE
+
+Auto-GRAPE: automatic differentiation + GRAPE with fixed learning rate.
+"""
 struct autoGRAPE{T<:Number} <: AbstractautoGRAPE
     max_episode::Int
     epsilon::T
 end
 
+"""
+    autoGRAPE_Adam{T,N} <: AbstractautoGRAPE
+
+Auto-GRAPE with Adam optimizer.
+"""
 struct autoGRAPE_Adam{T<:Number,N<:Number} <: AbstractautoGRAPE
     max_episode::Int
     epsilon::T
@@ -44,6 +102,11 @@ struct autoGRAPE_Adam{T<:Number,N<:Number} <: AbstractautoGRAPE
     beta2::N
 end
 
+"""
+    autoGRAPE(max_episode, epsilon, beta1, beta2)
+
+Positional constructor — always returns `autoGRAPE_Adam`.
+"""
 autoGRAPE(max_episode, epsilon, beta1, beta2) =
     autoGRAPE_Adam(max_episode, epsilon, beta1, beta2)
 
@@ -68,12 +131,28 @@ autoGRAPE(;
     Adam ? autoGRAPE_Adam(max_episode, epsilon, beta1, beta2) :
     autoGRAPE(max_episode, epsilon)
 
+"""
+    AbstractAD <: AbstractAlgorithm
+
+Abstract supertype for automatic differentiation (AD) based optimizers.
+"""
 abstract type AbstractAD <: AbstractAlgorithm end
+
+"""
+    AD{T} <: AbstractAD
+
+Gradient-based optimization using automatic differentiation with fixed learning rate.
+"""
 struct AD{T<:Number} <: AbstractAD
     max_episode::Number
     epsilon::T
 end
 
+"""
+    AD_Adam{T,N} <: AbstractAD
+
+Gradient-based optimization using AD with the Adam optimizer.
+"""
 struct AD_Adam{T<:Number,N<:Number} <: AbstractAD
     max_episode::Number
     epsilon::T
@@ -81,6 +160,11 @@ struct AD_Adam{T<:Number,N<:Number} <: AbstractAD
     beta2::N
 end
 
+"""
+    AD(max_episode, epsilon, beta1, beta2)
+
+Positional constructor — always returns `AD_Adam`.
+"""
 AD(max_episode, epsilon, beta1, beta2) = AD_Adam(max_episode, epsilon, beta1, beta2)
 """
 
@@ -96,8 +180,24 @@ Optimization algorithm: AD.
 AD(; max_episode = 300, epsilon = 0.01, beta1 = 0.90, beta2 = 0.99, Adam::Bool = true) =
     Adam ? AD_Adam(max_episode, epsilon, beta1, beta2) : AD(max_episode, epsilon)
 
-## TODO: try using immutable struct here. Consider [Accesors.jl](https://github.com/JuliaObjects/Accessors.jl) or Setfield.jl for update. 
+@doc raw"""
+    PSO{T} <: AbstractAlgorithm
 
+Particle Swarm Optimization (PSO).
+
+A population-based stochastic optimizer where each particle's position
+in the search space is updated based on its own best and the swarm's
+global best position.
+
+# Fields
+
+- `max_episode`: Number of episodes (scalar or ``[\text{global},\text{local}]``).
+- `p_num::Int`: Number of particles.
+- `ini_particle`: Initial particle positions (or `nothing` for random init).
+- `c0::T`: Inertia weight (damping).
+- `c1::T`: Cognitive learning factor (personal best).
+- `c2::T`: Social learning factor (global best).
+"""
 mutable struct PSO{T<:Number} <: AbstractAlgorithm
     max_episode::Union{Int,Vector{Int}}
     p_num::Int
@@ -128,6 +228,22 @@ PSO(;
     c2::Number = 2.0,
 ) = PSO(max_episode, p_num, ini_particle, c0, c1, c2)
 
+@doc raw"""
+    DE{T} <: AbstractAlgorithm
+
+Differential Evolution (DE).
+
+A population-based stochastic optimizer that uses mutation (difference vector)
+and crossover to evolve a population toward the optimum.
+
+# Fields
+
+- `max_episode::Int`: Number of generations.
+- `p_num::Int`: Population size.
+- `ini_population`: Initial population (or `nothing` for random init).
+- `c::T`: Mutation constant.
+- `cr::T`: Crossover probability.
+"""
 mutable struct DE{T<:Number} <: AbstractAlgorithm
     max_episode::Int
     p_num::Int
@@ -155,6 +271,19 @@ DE(;
     cr::Number = 0.5,
 ) = DE(max_episode, p_num, ini_population, c, cr)
 
+"""
+    DDPG{R} <: AbstractAlgorithm
+
+Deep Deterministic Policy Gradient (DDPG). A reinforcement learning algorithm
+using neural networks for policy and value function approximation.
+
+# Fields
+
+- `max_episode::Int`: Number of training episodes.
+- `layer_num::Int`: Number of neural network layers.
+- `layer_dim::Int`: Number of neurons per hidden layer.
+- `rng::R`: Random number generator (StableRNG).
+"""
 struct DDPG{R<:AbstractRNG} <: AbstractAlgorithm
     max_episode::Int
     layer_num::Int
@@ -162,8 +291,19 @@ struct DDPG{R<:AbstractRNG} <: AbstractAlgorithm
     rng::R
 end
 
+"""
+    DDPG(max_episode, layer_num, layer_dim)
+
+Construct DDPG with default seed 1234.
+"""
 DDPG(max_episode, layer_num, layer_dim) =
     DDPG(max_episode, layer_num, layer_dim, StableRNG(1234))
+
+"""
+    DDPG(max_episode, layer_num, layer_dim, seed::Number)
+
+Construct DDPG with a custom random seed.
+"""
 DDPG(max_episode, layer_num, layer_dim, seed::Number) =
     DDPG(max_episode, layer_num, layer_dim, StableRNG(seed))
 """
@@ -183,6 +323,21 @@ DDPG(;
     seed::Number = 1234,
 ) = DDPG(max_episode, layer_num, layer_dim, StableRNG(seed))
 
+@doc raw"""
+    NM{N} <: AbstractAlgorithm
+
+Nelder-Mead simplex algorithm for derivative-free state optimization.
+
+# Fields
+
+- `max_episode::Int`: Maximum iterations.
+- `p_num::Int`: Number of simplex vertices.
+- `ini_state`: Initial simplex (or `nothing`).
+- `ar::N`: Reflection coefficient (default 1.0).
+- `ae::N`: Expansion coefficient (default 2.0).
+- `ac::N`: Contraction coefficient (default 0.5).
+- `as0::N`: Shrink coefficient (default 0.5).
+"""
 struct NM{N<:Number} <: AbstractAlgorithm
     max_episode::Int
     p_num::Int
@@ -216,6 +371,16 @@ NM(;
     as0::Number = 0.5,
 ) = NM(max_episode, p_num, nelder_mead, ar, ae, ac, as0)
 
+"""
+    RI <: AbstractAlgorithm
+
+Random Initialization (RI). Generates random state guesses and selects
+the one with the best objective value.
+
+# Fields
+
+- `max_episode::Int`: Number of random tries.
+"""
 struct RI <: AbstractAlgorithm
     max_episode::Int
 end
@@ -229,6 +394,11 @@ State optimization algorithm: RI.
 """
 RI(; max_episode::Int = 300) = RI(max_episode)
 
+"""
+    alg_type(alg)
+
+Return the algorithm type as a symbol for dispatch purposes.
+"""
 alg_type(::AD) = :AD
 alg_type(::AD_Adam) = :AD
 alg_type(::GRAPE) = :GRAPE

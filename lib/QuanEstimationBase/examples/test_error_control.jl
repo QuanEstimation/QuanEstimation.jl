@@ -28,7 +28,7 @@ dynamics = Lindblad(H0, dH, tspan, Hc, decay, dyn_method = :Expm)
 scheme = GeneralScheme(; probe = rho0, param = dynamics, measurement = M)
 
 
-error_evaluation(scheme; input_error_level = 1e-8, eps_level = 1e-8)
+error_evaluation(scheme; input_error_scaling = 1e-8, SLD_eps = 1e-8)
 
-error_control_param(scheme, error_level = 1e-6, max_episode = 1000)
-error_control_param(scheme, error_level = 1e-7, max_episode = 1000)
+error_control_param(scheme, output_error_scaling = 1e-6, max_episode = 1000)
+error_control_param(scheme, output_error_scaling = 1e-7, max_episode = 1000)

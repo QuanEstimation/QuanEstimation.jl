@@ -42,9 +42,9 @@ function Bayes(x, p, rho, y; M = nothing, estimator = "mean", savefile = false)
                     append!(x_out, x[1][indx])
                 end
             else
-                println(
+                throw(ArgumentError(
                     "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.",
-                )
+                ))
             end
 
             jldopen("bayes.dat", "w") do f
@@ -83,9 +83,9 @@ function Bayes(x, p, rho, y; M = nothing, estimator = "mean", savefile = false)
                     append!(x_out, x[1][indx])
                 end
             else
-                println(
+                throw(ArgumentError(
                     "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.",
-                )
+                ))
             end
 
             jldopen("bayes.dat", "w") do f
@@ -131,9 +131,9 @@ function Bayes(x, p, rho, y; M = nothing, estimator = "mean", savefile = false)
                     append!(x_out, [[x[i][indx[i]] for i = 1:para_num]])
                 end
             else
-                println(
+                throw(ArgumentError(
                     "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.",
-                )
+                ))
             end
 
             jldopen("bayes.dat", "w") do f
@@ -174,9 +174,9 @@ function Bayes(x, p, rho, y; M = nothing, estimator = "mean", savefile = false)
                     append!(x_out, [[x[i][indx[i]] for i = 1:para_num]])
                 end
             else
-                println(
+                throw(ArgumentError(
                     "The input is not a valid value for estimator, supported values are 'mean' and 'MAP'.",
-                )
+                ))
             end
 
             jldopen("bayes.dat", "w") do f
@@ -203,7 +203,7 @@ Bayesian estimation. The estimated value of parameters obtained via the maximum 
 - `y`: The experimental results obtained in practice.
 - `M`: A set of positive operator-valued measure (POVM). The default measurement is a set of rank-one symmetric informationally complete POVM (SIC-POVM).
 - `savefile`: Whether or not to save all the posterior distributions. 
-"""
+raw"""
 function MLE(x, rho, y; M = nothing, savefile = false)
     y = y .+ 1
     para_num = length(x)
@@ -317,6 +317,36 @@ function MLE(x, rho, y; M = nothing, savefile = false)
     end
 end
 
+@doc raw"""
+    integ(x, p)
+
+Compute the posterior mean estimate for a multi-parameter Bayesian estimation
+by marginalising the posterior distribution.
+
+For ``d`` parameters with grids ``x_1,\dots,x_d``, the mean estimate for
+parameter ``i`` is
+
+```math
+\hat{x}_i = \int x_i\,p(\mathbf{x})\,\prod_{k\neq i}\mathrm{d}x_k.
+```
+
+The function sequentially integrates out all dimensions except ``i`` using
+[`trapz`](@ref), then computes ``\int x_i\,p_{\mathrm{marg}}(x_i)\,\mathrm{d}x_i``.
+
+# Arguments
+
+- `x::Vector{AbstractVector}`: Grid vectors for each parameter.
+- `p::AbstractArray`: ``d``-dimensional posterior distribution array.
+
+# Returns
+
+- `Vector{Float64}`: Vector of mean estimates ``(\hat{x}_1,\dots,\hat{x}_d)``.
+
+# See Also
+
+- [`trapz`](@ref): Trapezoidal integration.
+- [`Bayes`](@ref): Bayesian estimation using this for multi-parameter mean.
+"""
 function integ(x, p)
     para_num = length(x)
     mean = [0.0 for i = 1:para_num]
@@ -403,7 +433,7 @@ function BayesCost(x, p, xest, rho, M; W = nothing, eps = GLOBAL_EPS)
     end
 end
 
-"""
+raw"""
 
     BCB(x, p, rho; W=nothing, eps=GLOBAL_EPS)
 
@@ -413,7 +443,7 @@ Calculation of the minimum Bayesian cost with a quadratic cost function.
 - `rho`: Parameterized density matrix.
 - `W`: Weight matrix.
 - `eps`: Machine epsilon.
-"""
+raw"""
 function BCB(x, p, rho; W = nothing, eps = GLOBAL_EPS)
     para_num = length(x)
     trapzm(x, integrands, slice_dim) = [
@@ -488,6 +518,38 @@ function BCB(x, p, rho; W = nothing, eps = GLOBAL_EPS)
 end
 
 
+@doc raw"""
+    Lambda_avg(rho_avg::Matrix{T}, rho_pri::Matrix{T}; eps=GLOBAL_EPS) where {T<:Complex}
+
+Compute the average cost operator ``\Lambda`` for the minimum Bayesian cost
+bound (BCB).
+
+Solves the Lyapunov-type equation
+
+```math
+\frac{1}{2}\bigl(\bar{\rho}\Lambda + \Lambda\bar{\rho}\bigr) = \bar{\rho}_{\mathrm{pri}},
+```
+
+where ``\bar{\rho} = \int p(x)\rho(x)\,\mathrm{d}x`` is the prior-averaged
+density matrix and ``\bar{\rho}_{\mathrm{pri}} = \int p(x)\,x\,\rho(x)\,\mathrm{d}x``
+is the prior-weighted average. This is analogous to the SLD equation with
+``\bar{\rho}_{\mathrm{pri}}`` playing the role of ``\partial\rho``.
+
+# Arguments
+
+- `rho_avg::Matrix{T}`: Prior-averaged density matrix ``\bar{\rho}``.
+- `rho_pri::Matrix{T}`: Prior-weighted density matrix ``\bar{\rho}_{\mathrm{pri}}``.
+- `eps::Float64=GLOBAL_EPS`: Eigenvalue truncation threshold.
+
+# Returns
+
+- `Matrix{ComplexF64}`: The average cost operator ``\Lambda``.
+
+# See Also
+
+- [`Lambda_avg`](@ref): Multi-parameter dispatch.
+- [`BCB`](@ref): Bayesian cost bound using ``\Lambda``.
+raw"""
 function Lambda_avg(
     rho_avg::Matrix{T},
     rho_pri::Matrix{T};
@@ -508,11 +570,36 @@ function Lambda_avg(
         end
     end
     Lambda_eig[findall(Lambda_eig == Inf)] .= 0.0
+    Lambda_eig[findall(abs.(Lambda_eig) .> 1e10)] .= 0.0
 
     Lambda = vec * (Lambda_eig * vec')
     return Lambda
 end
 
+@doc raw"""
+    Lambda_avg(rho_avg::Matrix{T}, rho_pri::Vector{Matrix{T}}; eps=GLOBAL_EPS) where {T<:Complex}
+
+Multi-parameter version of [`Lambda_avg`](@ref). Computes one ``\Lambda_a``
+operator per parameter by broadcasting the single-parameter SLD solver over
+each ``\bar{\rho}_{\mathrm{pri}}^{(a)}`` matrix.
+
+# Arguments
+
+- `rho_avg::Matrix{T}`: Prior-averaged density matrix ``\bar{\rho}``.
+- `rho_pri::Vector{Matrix{T}}`: Vector of prior-weighted matrices
+  ``\bar{\rho}_{\mathrm{pri}}^{(a)}``, one per parameter.
+- `eps::Float64=GLOBAL_EPS`: Eigenvalue truncation threshold.
+
+# Returns
+
+- `Vector{Matrix{ComplexF64}}`: Vector of ``\Lambda_a`` operators.
+
+# See Also
+
+- [`Lambda_avg`](@ref): Single-parameter dispatch.
+- [`SLD`](@ref): The underlying SLD solver used for each parameter.
+- [`BCB`](@ref): Bayesian cost bound.
+"""
 function Lambda_avg(
     rho_avg::Matrix{T},
     rho_pri::Vector{Matrix{T}};

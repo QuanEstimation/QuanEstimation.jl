@@ -1,4 +1,8 @@
-#### control optimization ####
+"""
+    optimize!(opt::ControlOpt, alg::DE, obj, scheme, output)
+
+Differential evolution for control optimization.
+"""
 function optimize!(opt::ControlOpt, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
     if isnothing(ini_population)
@@ -76,7 +80,11 @@ function optimize!(opt::ControlOpt, alg::DE, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### state optimization ####
+"""
+    optimize!(opt::StateOpt, alg::DE, obj, scheme, output)
+
+Differential evolution for state optimization.
+"""
 function optimize!(opt::StateOpt, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
     if isnothing(ini_population)
@@ -144,7 +152,11 @@ function optimize!(opt::StateOpt, alg::DE, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### projective measurement optimization ####
+"""
+    optimize!(opt::Mopt_Projection, alg::DE, obj, scheme, output)
+
+Differential evolution for projective measurement optimization.
+"""
 function optimize!(opt::Mopt_Projection, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
     if isnothing(ini_population)
@@ -228,7 +240,11 @@ function optimize!(opt::Mopt_Projection, alg::DE, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### find the optimal linear combination of a given set of POVM ####
+"""
+    optimize!(opt::Mopt_LinearComb, alg::DE, obj, scheme, output)
+
+Differential evolution for optimizing the linear combination of a given POVM basis.
+"""
 function optimize!(opt::Mopt_LinearComb, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
     (; B, POVM_basis, M_num) = opt
@@ -321,7 +337,11 @@ function optimize!(opt::Mopt_LinearComb, alg::DE, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### find the optimal rotated measurement of a given set of POVM ####
+"""
+    optimize!(opt::Mopt_Rotation, alg::DE, obj, scheme, output)
+
+Differential evolution for optimizing the rotation of a given POVM basis.
+"""
 function optimize!(opt::Mopt_Rotation, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
     (; s, POVM_basis, Lambda) = opt
@@ -335,11 +355,6 @@ function optimize!(opt::Mopt_Rotation, alg::DE, obj, scheme, output)
     append!(Lambda, [Matrix{ComplexF64}(I, dim, dim)])
     append!(Lambda, [suN[i] for i in eachindex(suN)])
 
-    # if isnothing(Lambda)
-    #     Lambda = Matrix{ComplexF64}[]
-    #     append!(Lambda, [Matrix{ComplexF64}(I,dim,dim)])
-    #     append!(Lambda, [suN[i] for i in eachindex(suN)])
-    # end
 
     M_num = length(POVM_basis)
     populations = [zeros(dim^2) for i = 1:p_num]
@@ -416,7 +431,11 @@ function optimize!(opt::Mopt_Rotation, alg::DE, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### state and control optimization ####
+"""
+    optimize!(opt::StateControlOpt, alg::DE, obj, scheme, output)
+
+Differential evolution for state and control optimization.
+"""
 function optimize!(opt::StateControlOpt, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
     if isnothing(ini_population)
@@ -441,7 +460,7 @@ function optimize!(opt::StateControlOpt, alg::DE, obj, scheme, output)
     f_noctrl, f_comp = objective(obj, scheme_copy)
 
     set_f!(output, p_out[1])
-    set_buffer!(output, state_data(populations[1]), param_data(populations[1]))
+    set_buffer!(output, state_data(populations[1]), param_data(populations[1]).ctrl)
     set_io!(output, f_noctrl, p_out[1])
     show(opt, output, obj, alg)
 
@@ -517,14 +536,18 @@ function optimize!(opt::StateControlOpt, alg::DE, obj, scheme, output)
         end
         idx = findmax(p_fit)[2]
         set_f!(output, p_out[idx])
-        set_buffer!(output, state_data(populations[idx]), param_data(populations[idx]))
+        set_buffer!(output, state_data(populations[idx]), param_data(populations[idx]).ctrl)
         set_io!(output, p_out[idx], ei)
         show(output, obj)
     end
     set_io!(output, output.f_list[end])
 end
 
-#### state and measurement optimization ####
+"""
+    optimize!(opt::StateMeasurementOpt, alg::DE, obj, scheme, output)
+
+Differential evolution for state and measurement optimization.
+"""
 function optimize!(opt::StateMeasurementOpt, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
     if isnothing(ini_population)
@@ -633,7 +656,11 @@ function optimize!(opt::StateMeasurementOpt, alg::DE, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### control and measurement optimization ####
+"""
+    optimize!(opt::ControlMeasurementOpt, alg::DE, obj, scheme, output)
+
+Differential evolution for control and measurement optimization.
+"""
 function optimize!(opt::ControlMeasurementOpt, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
     if isnothing(ini_population)
@@ -752,7 +779,11 @@ function optimize!(opt::ControlMeasurementOpt, alg::DE, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### state, control and measurement optimization ####
+"""
+    optimize!(opt::StateControlMeasurementOpt, alg::DE, obj, scheme, output)
+
+Differential evolution for comprehensive (state, control, and measurement) optimization.
+"""
 function optimize!(opt::StateControlMeasurementOpt, alg::DE, obj, scheme, output)
     (; max_episode, p_num, ini_population, c, cr) = alg
     if isnothing(ini_population)

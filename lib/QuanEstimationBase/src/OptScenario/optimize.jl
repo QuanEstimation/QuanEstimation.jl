@@ -1,3 +1,9 @@
+"""
+    optimize!(scheme, opt; algorithm=autoGRAPE(), objective=QFIM_obj(), savefile=false)
+
+Top-level optimization entry point. Initializes the optimizer, build the objective, creates an
+`Output`, and dispatches to the algorithm-specific `optimize!`.
+"""
 function optimize!(
     scheme,
     opt;
