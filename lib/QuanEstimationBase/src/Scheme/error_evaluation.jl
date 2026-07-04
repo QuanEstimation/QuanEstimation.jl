@@ -1,3 +1,9 @@
+"""
+
+    error_evaluation(scheme::Scheme; verbose=true, objective=:QFIM, input_error_scaling=1e-8, SLD_eps=1e-6, abstol=1e-6, reltol=1e-3)
+
+Evaluate the total error scaling for a scheme, combining both parameterization error and SLD eigenvalue threshold error.
+raw"""
 function error_evaluation(
     scheme::Scheme;
     verbose::Bool = true,
@@ -20,6 +26,12 @@ function error_evaluation(
     println("\nOverall error scaling ≈ ", param_error + eps_error)
 end
 
+raw"""
+
+    param_error_evaluation(scheme::Scheme, input_error_scaling; verbose=true, objective=:QFIM, abstol=1e-6, reltol=1e-3)
+
+Estimate the QFIM error ``\delta F`` due to finite-precision input data (controls, state) via gradient-based propagation. For ODE-based dynamics, returns ``\mathrm{abstol} + \mathrm{reltol} \cdot \mathrm{input\_error\_scaling}``.
+raw"""
 function param_error_evaluation(
     scheme::Scheme{S,LindbladDynamics{HT,DT,CT,Expm,P},M,E},
     input_error_scaling;
@@ -30,7 +42,7 @@ function param_error_evaluation(
 ) where {S,HT,DT,CT,P,M,E}
     ctrl = scheme.Parameterization.data.ctrl
     rho = scheme.StatePreparation.data
-    grad = Flux.gradient(() -> QFIM(scheme)[1], Flux.Params([ctrl, rho]))
+    grad = Zygote.gradient(() -> QFIM(scheme)[1], Zygote.Params([ctrl, rho]))
     gs_c = grad[ctrl]
     gs_s = grad[rho]
     δF =
@@ -65,6 +77,12 @@ function param_error_evaluation(
     return δF
 end
 
+raw"""
+
+    SLD_eps_error(scheme, eps)
+
+Compute the QFIM error ``\delta F`` induced by the SLD eigenvalue threshold `eps`.
+"""
 function SLD_eps_error(scheme, eps)
     println("\nError evaluation for SLD calculation")
     println("Source: eps = $(eps)")
@@ -73,6 +91,12 @@ function SLD_eps_error(scheme, eps)
     return δF[1]
 end  # function SLD_eps_error
 
+"""
+
+    QFIM_with_error(scheme::Scheme; verbose=false, eps=GLOBAL_EPS)
+
+Compute the QFIM and its error due to SLD truncation.
+"""
 function QFIM_with_error(scheme::Scheme; verbose::Bool = false, eps = GLOBAL_EPS)
     rho, drho = evolve(scheme)
 
@@ -99,11 +123,18 @@ function QFIM_with_error(scheme::Scheme; verbose::Bool = false, eps = GLOBAL_EPS
     return F, δF
 end
 
+"""
+
+    SLD_with_error(ρ, dρ; eps=GLOBAL_EPS)
+
+Compute the symmetric logarithmic derivative (SLD) together with its error contribution from eigenvalues below the threshold `eps`.
+"""
 function SLD_with_error(ρ::Matrix{T}, dρ::Matrix{T}; eps = GLOBAL_EPS) where {T<:Complex}
 
     dim = size(ρ)[1]
 
-    val, vec = eigen(ρ)
+    ρ_h = (ρ + ρ') / 2
+    val, vec = eigen(ρ_h)
     val = val |> real
     SLD_eig = zeros(T, dim, dim)
     SLD_eig_err = zeros(T, dim, dim)
@@ -118,7 +149,7 @@ function SLD_with_error(ρ::Matrix{T}, dρ::Matrix{T}; eps = GLOBAL_EPS) where {
         end
     end
     SLD_eig[findall(SLD_eig == Inf)] .= 0.0
-
+    SLD_eig[findall(abs.(SLD_eig) .> 1e10)] .= 0.0
 
     return vec * (SLD_eig * vec'), vec * ((SLD_eig + SLD_eig_err) * vec')
 end
@@ -134,6 +165,12 @@ end
 
 
 
+"""
+
+    QFIM_SLD_with_error(ρ, dρ; eps=GLOBAL_EPS)
+
+Compute the QFIM element via the SLD approach, with error estimation.
+"""
 function QFIM_SLD_with_error(
     ρ::Matrix{T},
     dρ::Matrix{T};
@@ -145,26 +182,44 @@ function QFIM_SLD_with_error(
     F |> real
 end
 
+"""
+
+    QFIM_RLD_with_error(ρ, dρ; eps=GLOBAL_EPS)
+
+Compute the QFIM element via the right logarithmic derivative (RLD), with error estimation.
+"""
 function QFIM_RLD_with_error(
     ρ::Matrix{T},
     dρ::Matrix{T};
     eps = GLOBAL_EPS,
 ) where {T<:Complex}
-    RLD_tp = pinv(ρ, reltol = eps) * dρ
-    F = tr(ρ * RLD_tp * RLD_tp')
+    R = RLD(ρ, dρ; eps = eps)
+    F = tr(ρ * R * R')
     F |> real
 end
 
+"""
+
+    QFIM_LLD_with_error(ρ, dρ; eps=GLOBAL_EPS)
+
+Compute the QFIM element via the left logarithmic derivative (LLD), with error estimation.
+raw"""
 function QFIM_LLD_with_error(
     ρ::Matrix{T},
     dρ::Matrix{T};
     eps = GLOBAL_EPS,
 ) where {T<:Complex}
-    LLD_tp = (dρ * pinv(ρ, reltol = eps))'
-    F = tr(ρ * LLD_tp * LLD_tp')
+    L = LLD(ρ, dρ; eps = eps)
+    F = tr(ρ * L' * L)
     F |> real
 end
 
+raw"""
+
+    QFIM_pure_with_error(ρ, ∂ρ_∂x)
+
+Compute the QFIM element for a pure state ``\rho = |\psi\rangle\langle\psi|``. For pure states, ``L = 2\partial\rho/\partial x``.
+"""
 function QFIM_pure_with_error(ρ::Matrix{T}, ∂ρ_∂x::Matrix{T}) where {T<:Complex}
     SLD = 2 * ∂ρ_∂x
     SLD2_tp = SLD * SLD
@@ -174,6 +229,13 @@ end
 
 #==========================================================#
 ####################### calculate QFIM #####################
+"""
+    QFIM_SLD_with_error(ρ, dρ::Vector{Matrix}; eps=GLOBAL_EPS)
+
+Multi-parameter QFIM via SLD with error estimation.
+
+See also: [`QFIM_SLD_with_error(ρ, dρ::Matrix; eps)`](@ref) for the single-parameter version.
+"""
 function QFIM_SLD_with_error(
     ρ::Matrix{T},
     dρ::Vector{Matrix{T}};
@@ -181,55 +243,52 @@ function QFIM_SLD_with_error(
 ) where {T<:Complex}
     p_num = length(dρ)
     LD_tp = (x -> SLD(ρ, x; eps = eps)).(dρ)
-    (
-        [0.5 * ρ] .*
-        (kron(LD_tp, reshape(LD_tp, 1, p_num)) + kron(reshape(LD_tp, 1, p_num), LD_tp))
-    ) .|>
-    tr .|>
-    real
+    return [real(tr(0.5 * ρ * (LD_tp[i] * LD_tp[j] + LD_tp[j] * LD_tp[i]))) for i in 1:p_num, j in 1:p_num]
 end
 
+"""
+    QFIM_RLD_with_error(ρ, dρ::Vector{Matrix}; eps=GLOBAL_EPS)
+
+Multi-parameter QFIM via RLD with error estimation.
+
+See also: [`QFIM_RLD_with_error(ρ, dρ::Matrix; eps)`](@ref) for the single-parameter version.
+"""
 function QFIM_RLD_with_error(
     ρ::Matrix{T},
     dρ::Vector{Matrix{T}};
     eps = GLOBAL_EPS,
 ) where {T<:Complex}
     p_num = length(dρ)
-    LD_tp = (x -> (pinv(ρ, reltol = eps) * x)).(dρ)
-    LD_dag = [LD_tp[i]' for i = 1:p_num]
-    ([ρ] .* (kron(LD_tp, reshape(LD_dag, 1, p_num)))) .|> tr
+    R = RLD(ρ, dρ; eps = eps)
+    return [tr(ρ * R[i] * R[j]') for i in 1:p_num, j in 1:p_num]
 end
 
+"""
+    QFIM_LLD_with_error(ρ, dρ::Vector{Matrix}; eps=GLOBAL_EPS)
+
+Multi-parameter QFIM via LLD with error estimation.
+
+See also: [`QFIM_LLD_with_error(ρ, dρ::Matrix; eps)`](@ref) for the single-parameter version.
+"""
 function QFIM_LLD_with_error(
     ρ::Matrix{T},
     dρ::Vector{Matrix{T}};
     eps = GLOBAL_EPS,
 ) where {T<:Complex}
     p_num = length(dρ)
-    LD_tp = (x -> (x * pinv(ρ, reltol = eps))').(dρ)
-    LD_dag = [LD_tp[i]' for i = 1:p_num]
-    ([ρ] .* (kron(LD_tp, reshape(LD_dag, 1, p_num)))) .|> tr
+    L = LLD(ρ, dρ; eps = eps)
+    return [tr(ρ * L[i]' * L[j]) for i in 1:p_num, j in 1:p_num]
 end
 
-function QFIM_liouville_with_error(ρ, dρ)
-    p_num = length(dρ)
-    LD_tp = SLD_lio
-    uville(ρ, dρ)
-    (
-        [0.5 * ρ] .*
-        (kron(LD_tp, reshape(LD_tp, 1, p_num)) + kron(reshape(LD_tp, 1, p_num), LD_tp))
-    ) .|>
-    tr .|>
-    real
-end
+"""
+    QFIM_pure_with_error(ρ, ∂ρ_∂x::Vector{Matrix})
 
+Multi-parameter QFIM for pure states with error estimation.
+
+See also: [`QFIM_pure_with_error(ρ, ∂ρ_∂x::Matrix)`](@ref) for the single-parameter version.
+"""
 function QFIM_pure_with_error(ρ::Matrix{T}, ∂ρ_∂x::Vector{Matrix{T}}) where {T<:Complex}
     p_num = length(∂ρ_∂x)
     sld = [2 * ∂ρ_∂x[i] for i = 1:p_num]
-    (
-        [0.5 * ρ] .*
-        (kron(sld, reshape(sld, 1, p_num)) + kron(reshape(sld, 1, p_num), sld))
-    ) .|>
-    tr .|>
-    real
+    return [real(tr(0.5 * ρ * (sld[i] * sld[j] + sld[j] * sld[i]))) for i in 1:p_num, j in 1:p_num]
 end

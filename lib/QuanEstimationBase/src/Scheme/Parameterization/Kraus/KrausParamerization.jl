@@ -1,8 +1,18 @@
+"""
+    evaluate_kraus(scheme::Scheme{S,Kraus{KT,DKT,NK,NP},M,E})
+
+Return pre-computed Kraus operators and their derivatives from the scheme.
+"""
 function evaluate_kraus(scheme::Scheme{S,Kraus{KT,DKT,NK,NP},M,E}) where {S,KT,DKT,NK,NP,M,E}
     (; K, dK) = param_data(scheme)
     return K, dK
 end
 
+"""
+    evaluate_kraus(scheme::Scheme{S,Kraus{F1,F2,NK,NP},M,E})
+
+Evaluate Kraus operators and their derivatives by calling the stored parameterized functions.
+"""
 function evaluate_kraus(
     scheme::Scheme{S,Kraus{F1,F2,NK,NP},M,E},
 ) where {S,M,E,F1<:Function,F2<:Function,NK,NP}

@@ -1,3 +1,9 @@
+"""
+    optimize!(opt::StateOpt, alg::NM, obj, scheme, output)
+
+Run the Nelder-Mead simplex optimization over quantum probe states.
+Iteratively performs reflection, expansion, contraction, and shrink operations on a simplex of `p_num` states.
+"""
 function optimize!(opt::StateOpt, alg::NM, obj, scheme, output)
     (; max_episode, p_num, ini_state, ar, ae, ac, as0) = alg
     if isnothing(ini_state)

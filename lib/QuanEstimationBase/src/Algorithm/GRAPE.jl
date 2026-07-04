@@ -1,3 +1,9 @@
+"""
+    optimize!(opt::ControlOpt, alg::AbstractGRAPE, obj::QFIM_obj, scheme, output)
+
+Run GRAPE control optimization with a QFIM objective. Iteratively computes analytic QFIM gradients,
+updates control fields, and bounds them for `max_episode` steps.
+"""
 function optimize!(opt::ControlOpt, alg::AbstractGRAPE, obj::QFIM_obj, scheme, output)
     (; max_episode) = alg
     pdata = param_data(scheme)
@@ -24,6 +30,12 @@ function optimize!(opt::ControlOpt, alg::AbstractGRAPE, obj::QFIM_obj, scheme, o
     set_io!(output, output.f_list[end])
 end
 
+"""
+    optimize!(opt::ControlOpt, alg::AbstractGRAPE, obj::CFIM_obj, scheme, output)
+
+Run GRAPE control optimization with a CFIM objective. Iteratively computes analytic CFIM gradients,
+updates control fields, and bounds them for `max_episode` steps.
+"""
 function optimize!(opt::ControlOpt, alg::AbstractGRAPE, obj::CFIM_obj, scheme, output)
     (; max_episode) = alg
     pdata = param_data(scheme)
@@ -50,6 +62,16 @@ function optimize!(opt::ControlOpt, alg::AbstractGRAPE, obj::CFIM_obj, scheme, o
     set_io!(output, output.f_list[end])
 end
 
+"""
+    scheme_analy(scheme, dim, tnum, para_num, ctrl_num)
+
+Evolve the density matrix and compute derivatives needed for analytic GRAPE gradients.
+Returns `(ρt_T, ∂ρt_T, δρt_δV, ∂xδρt_δV)`:
+- `ρt_T`: final density matrix.
+- `∂ρt_T`: derivatives w.r.t. parameters.
+- `δρt_δV`: derivatives of the trajectory w.r.t. each control field at each time step.
+- `∂xδρt_δV`: cross-derivatives w.r.t. parameters and control fields.
+"""
 function scheme_analy(scheme, dim, tnum, para_num, ctrl_num)
     pdata = param_data(scheme)
     rho0 = state_data(scheme)
@@ -82,8 +104,8 @@ function scheme_analy(scheme, dim, tnum, para_num, ctrl_num)
     end
 
     for ti = 2:tnum
-        ##TODO replace here to `get_decay_operator` function
-        decay_opt, γ = [d[1] for d in decay], [d[2] for d in decay]
+        decay_opt, γ = isnothing(decay) ? (Matrix{ComplexF64}[], Float64[]) :
+                       ([d[1] for d in decay], [d[2] for d in decay])
 
         exp_L = expL(H[ti-1], decay_opt, γ, Δt, ti)
         ρt[ti] = exp_L * ρt[ti-1]
@@ -116,6 +138,11 @@ function scheme_analy(scheme, dim, tnum, para_num, ctrl_num)
     return ρt_T, ∂ρt_T, δρt_δV, ∂xδρt_δV
 end
 
+"""
+    gradient_QFIM_analy(alg::GRAPE_Adam, obj, scheme)
+
+Compute analytic QFIM-based gradient and update control fields using the Adam optimizer.
+"""
 function gradient_QFIM_analy(alg::GRAPE_Adam, obj, scheme)
     pdata = param_data(scheme)
 
@@ -239,6 +266,11 @@ function gradient_QFIM_analy(alg::GRAPE_Adam, obj, scheme)
     end
 end
 
+"""
+    gradient_QFIM_analy(alg::GRAPE, obj, scheme)
+
+Compute analytic QFIM-based gradient and update control fields via gradient ascent with fixed step size `alg.epsilon`.
+"""
 function gradient_QFIM_analy(alg::GRAPE, obj, scheme)
     pdata = param_data(scheme)
 
@@ -266,43 +298,6 @@ function gradient_QFIM_analy(alg::GRAPE, obj, scheme)
                 pdata.ctrl[cm][tm] = pdata.ctrl[cm][tm] + alg.epsilon * δF
             end
         end
-    # elseif para_num == 2
-    #     coeff1 = real(det(F))
-    #     coeff2 =
-    #         obj.W[1, 1] * F_T[2, 2] + obj.W[2, 2] * F_T[1, 1] - obj.W[1, 2] * F_T[2, 1] -
-    #         obj.W[2, 1] * F_T[1, 2]
-    #     cost_function =
-    #         (abs(det(F_T)) < obj.eps ? (1.0 / obj.eps) : real(tr(obj.W * inv(F_T))))
-    #     for cm = 1:ctrl_num
-    #         for tm = 1:(tnum-1)
-    #             δF_all = [[0.0 for i = 1:para_num] for j = 1:para_num]
-    #             ∂ρt_T_δV = δρt_δV[cm][tm] |> vec2mat
-    #             for pm = 1:para_num
-    #                 for pn = 1:para_num
-    #                     ∂xδρt_T_δV_a = ∂xδρt_δV[pm][cm][tm] |> vec2mat
-    #                     ∂xδρt_T_δV_b = ∂xδρt_δV[pn][cm][tm] |> vec2mat
-    #                     term1 = tr(∂xδρt_T_δV_a * Lx[pn])
-    #                     term2 = tr(∂xδρt_T_δV_b * Lx[pm])
-
-    #                     anti_commu = Lx[pm] * Lx[pn] + Lx[pn] * Lx[pm]
-    #                     term2 = tr(∂ρt_T_δV * anti_commu)
-    #                     δF_all[pm][pn] = ((2 * term1 - 0.5 * term2) |> real)
-    #                 end
-    #             end
-    #             item1 =
-    #                 -coeff2 * (
-    #                     F_T[2, 2] * δF_all[1][1] + F_T[1, 1] * δF_all[2][2] -
-    #                     F_T[2, 1] * δF_all[1][2] - F_T[1, 2] * δF_all[2][1]
-    #                 ) / coeff1^2
-    #             item2 =
-    #                 (
-    #                     obj.W[1, 1] * δF_all[2][2] + obj.W[2, 2] * δF_all[1][1] -
-    #                     obj.W[1, 2] * δF_all[2][1] - obj.W[2, 1] * δF_all[1][2]
-    #                 ) / coeff1
-    #             δF = -(item1 + item2) * cost_function^2
-    #             pdata.ctrl[cm][tm] = pdata.ctrl[cm][tm] + alg.epsilon * δF
-    #         end
-    #     end
     else
         cost_function =
             (abs(det(F_T)) < obj.eps ? (1.0 / obj.eps) : real(tr(obj.W * inv(F_T))))
@@ -330,6 +325,12 @@ function gradient_QFIM_analy(alg::GRAPE, obj, scheme)
     end
 end
 
+"""
+    gradient_CFIM_analy(alg, obj, scheme)
+
+Compute analytic CFIM-based gradient and update control fields via gradient ascent with step size `alg.epsilon`.
+Supports single- and multi-parameter cases.
+"""
 function gradient_CFIM_analy(alg, obj, scheme)
     pdata = param_data(scheme)
 
@@ -346,7 +347,8 @@ function gradient_CFIM_analy(alg, obj, scheme)
         L1_tidle = zeros(ComplexF64, dim, dim)
         L2_tidle = zeros(ComplexF64, dim, dim)
 
-        for mi = 1:dim
+        M_len = length(obj.M)
+        for mi = 1:M_len
             p = (tr(ρt_T * obj.M[mi]) |> real)
             dp = (tr(∂ρt_T[1] * obj.M[mi]) |> real)
             if p > obj.eps
@@ -365,75 +367,15 @@ function gradient_CFIM_analy(alg, obj, scheme)
                 pdata.ctrl[cm][tm] = pdata.ctrl[cm][tm] + alg.epsilon * δF
             end
         end
-    # elseif para_num == 2
-    #     F_T = CFIM(ρt_T, ∂ρt_T, obj.M; eps = obj.eps)
-    #     L1_tidle = [zeros(ComplexF64, dim, dim) for i = 1:para_num]
-    #     L2_tidle = [[zeros(ComplexF64, dim, dim) for i = 1:para_num] for j = 1:para_num]
-
-    #     for para_i = 1:para_num
-    #         for mi = 1:dim
-    #             p = (tr(ρt_T * obj.M[mi]) |> real)
-    #             dp = (tr(∂ρt_T[para_i] * obj.M[mi]) |> real)
-    #             if p > obj.eps
-    #                 L1_tidle[para_i] = L1_tidle[para_i] + dp * obj.M[mi] / p
-    #             end
-    #         end
-    #     end
-
-    #     for para_i = 1:para_num
-    #         dp_a = (tr(∂ρt_T[para_i] * obj.M[mi]) |> real)
-    #         for para_j = 1:para_num
-    #             dp_b = (tr(∂ρt_T[para_j] * obj.M[mi]) |> real)
-    #             for mi = 1:dim
-    #                 p = (tr(ρt_T * obj.M[mi]) |> real)
-    #                 if p > obj.eps
-    #                     L2_tidle[para_i][para_j] =
-    #                         L2_tidle[para_i][para_j] + dp_a * dp_b * obj.M[mi] / p^2
-    #                 end
-    #             end
-    #         end
-    #     end
-    #     coeff1 = real(det(F))
-    #     coeff2 =
-    #         obj.W[1, 1] * F_T[2, 2] + obj.W[2, 2] * F_T[1, 1] - obj.W[1, 2] * F_T[2, 1] -
-    #         obj.W[2, 1] * F_T[1, 2]
-    #     cost_function =
-    #         (abs(det(F_T)) < obj.eps ? (1.0 / obj.eps) : real(tr(obj.W * inv(F_T))))
-    #     for cm = 1:ctrl_num
-    #         for tm = 1:(tnum-1)
-    #             δF_all = [[0.0 for i = 1:para_num] for j = 1:para_num]
-    #             ∂ρt_T_δV = δρt_δV[cm][tm] |> vec2mat
-    #             for pm = 1:para_num
-    #                 for pn = 1:para_num
-    #                     ∂xδρt_T_δV_a = ∂xδρt_δV[pm][cm][tm] |> vec2mat
-    #                     ∂xδρt_T_δV_b = ∂xδρt_δV[pn][cm][tm] |> vec2mat
-    #                     term1 = tr(∂xδρt_T_δV_a * L1_tidle[pn])
-    #                     term2 = tr(∂xδρt_T_δV_b * L1_tidle[pm])
-    #                     term3 = tr(∂ρt_T_δV * L2_tidle[pm][pn])
-    #                     δF_all[pm][pn] = ((term1 + term2 - term3) |> real)
-    #                 end
-    #             end
-    #             item1 =
-    #                 -coeff2 * (
-    #                     F_T[2, 2] * δF_all[1][1] + F_T[1, 1] * δF_all[2][2] -
-    #                     F_T[2, 1] * δF_all[1][2] - F_T[1, 2] * δF_all[2][1]
-    #                 ) / coeff1^2
-    #             item2 =
-    #                 (
-    #                     obj.W[1, 1] * δF_all[2][2] + obj.W[2, 2] * δF_all[1][1] -
-    #                     obj.W[1, 2] * δF_all[2][1] - obj.W[2, 1] * δF_all[1][2]
-    #                 ) / coeff1
-    #             δF = -(item1 + item2) * cost_function^2
-    #             pdata.ctrl[cm][tm] = pdata.ctrl[cm][tm] + alg.epsilon * δF
-    #         end
     #     end
     else
         F_T = CFIM(ρt_T, ∂ρt_T, obj.M; eps = obj.eps)
         L1_tidle = [zeros(ComplexF64, dim, dim) for i = 1:para_num]
         L2_tidle = [zeros(ComplexF64, dim, dim) for i = 1:para_num]
 
+        M_len = length(obj.M)
         for para_i = 1:para_num
-            for mi = 1:dim
+            for mi = 1:M_len
                 p = (tr(ρt_T * obj.M[mi]) |> real)
                 dp = (tr(∂ρt_T[para_i] * obj.M[mi]) |> real)
                 if p > obj.eps

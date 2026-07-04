@@ -9,6 +9,11 @@
 *.log
 .vscode/
 coverage/
+lcov.info
+coverage-report/
 
 *.csv
 *.dat
+*.jld2
+*.npy
+.CondaPkg/

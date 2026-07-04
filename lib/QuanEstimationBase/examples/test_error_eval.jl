@@ -27,10 +27,10 @@ tspan = range(0.0, 10.0, length = 2500)
 dynamics = Lindblad(H0, dH, tspan, Hc, decay, dyn_method = :Expm)
 scheme = GeneralScheme(; probe = rho0, param = dynamics, measurement = M)
 
-error_evaluation(scheme; input_error_scaling = 1e-8, eps_scaling = 1e-8)
-error_evaluation(scheme; input_error_scaling = 1e-6, eps_scaling = 1e-8)
+error_evaluation(scheme; input_error_scaling = 1e-8, SLD_eps = 1e-8)
+error_evaluation(scheme; input_error_scaling = 1e-6, SLD_eps = 1e-8)
 
 dynamics = Lindblad(H0, dH, tspan, Hc, decay, dyn_method = :Ode)
 scheme = GeneralScheme(; probe = rho0, param = dynamics, measurement = M)
 
-error_evaluation(scheme; input_error_scaling = 1e-8, eps_scaling = 1e-8)
+error_evaluation(scheme; input_error_scaling = 1e-8, SLD_eps = 1e-8)

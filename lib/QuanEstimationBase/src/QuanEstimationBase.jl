@@ -1,10 +1,20 @@
+@doc raw"""
+    QuanEstimationBase
+
+Core computational engine for quantum parameter estimation. Provides:
+
+- **Dynamics**: Lindblad, Hamiltonian, and Kraus evolution.
+- **Objective functions**: QFIM, CFIM, HCRB, NHB, and various Bayesian/von Neumann bounds.
+- **Optimization**: GRAPE, auto-GRAPE, AD, PSO, DE, DDPG, Nelder-Mead, and reverse-iterative algorithms for control, state, and measurement optimization.
+- **Adaptive estimation**: FOP, MI, and MZI-based adaptive schemes with online/offline modes.
+- **Utilities**: SU(N) generators, SIC-POVM, spin squeezing, error control, and evaluation tools.
+"""
 module QuanEstimationBase
 
 export GeneralScheme,
     GeneralEstimation,
     GeneralMeasurement,
     GeneralState,
-    GeneralParameterization,
     AbstractScheme
 export optimize!, init_opt
 export ControlOpt,
@@ -15,6 +25,7 @@ export ControlOpt,
     StateControlOpt,
     StateControlMeasurementOpt
 export Copt, Sopt, Mopt, SMopt, CMopt, SCopt, SCMopt
+export Mopt_Projection, Mopt_LinearComb, Mopt_Rotation
 export evolve
 export Lindblad, Hamiltonian, LindbladDynamics, Kraus, QubitDephasing
 export QFIM, CFIM, HCRB, NHB, SLD, SLD_liouville, SLD_qr, FIM, FI_Expt, QFIM_Gauss, QFIM_Bloch, QFIM_Kraus, RLD, LLD
@@ -26,10 +37,13 @@ export Scheme, DensityMatrix, Decay, Control, Expm, Ode, Strategy, POVM
 export error_evaluation, error_control, error_control_param, error_control_eps
 export state_data, param_data, meas_data, strat_data
 export expm, ode
+export expm_py, ode_py, liouville_commu_py, liouville_dissip_py
+export Htot
 export SigmaX, SigmaY, SigmaZ, σx, σy, σz
 export PlusState, MinusState, BellState
 export ZeroCTRL, LinearCTRL, SineCTRL, SawCTRL, TriangleCTRL, GaussianCTRL, GaussianEdgeCTRL
 export AdaptiveStrategy, adapt!, Adapt_MZI, online, offline, Bayes, MLE
+export DE_deltaphiOpt, PSO_deltaphiOpt
 
 using Random
 using LinearAlgebra
@@ -37,7 +51,6 @@ using Zygote
 using SparseArrays
 using DelimitedFiles
 using StatsBase
-using Flux
 using JLD2
 # using ReinforcementLearning
 using SCS
@@ -50,6 +63,13 @@ const pkgpath = @__DIR__
 
 const GLOBAL_RNG = MersenneTwister(1234)
 const GLOBAL_EPS = 1e-8
+
+# PyExt function stubs — methods defined in ext/QuanEstimationBasePyExt.jl
+function expm_py end
+function ode_py end
+function liouville_commu_py end
+function liouville_dissip_py end
+
 include("OptScenario/OptScenario.jl")
 include("Common/Common.jl")
 include("Scheme/Scheme.jl")

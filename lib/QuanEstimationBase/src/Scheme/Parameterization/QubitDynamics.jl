@@ -1,3 +1,30 @@
+@doc raw"""
+    QubitDephasing(r::Vector{Float64}, para_est::String, gamma::Float64, tspan)
+
+Construct a Lindblad dynamics for a single qubit undergoing dephasing.
+
+The Hamiltonian is ``H = r_x\sigma_x + r_y\sigma_y + r_z\sigma_z`` with
+dephasing channel ``\Gamma = \sigma_z`` at rate ``\gamma``.
+
+# Arguments
+
+- `r::Vector{Float64}`: Bloch vector components ``[r_x, r_y, r_z]``.
+- `para_est::String`: Parameter to estimate (`"x"`, `"y"`, or `"z"`), determining
+  which Pauli matrix derivative to use.
+- `gamma::Float64`: Dephasing rate.
+- `tspan`: Time span for evolution.
+
+# Returns
+
+- `LindbladDynamics`: A Lindblad dynamics object with ODE solver, single-parameter,
+  with decay and no control.
+
+# Example
+
+```julia
+dyn = QubitDephasing([1.0, 0.0, 0.0], "z", 0.1, 0:0.1:10)
+```
+"""
 function QubitDephasing(r::Vector{Float64}, 
                         para_est::String,
                         gamma::Float64,  

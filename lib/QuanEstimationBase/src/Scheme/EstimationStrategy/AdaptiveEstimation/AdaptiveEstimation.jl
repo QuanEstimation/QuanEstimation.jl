@@ -1,16 +1,42 @@
+@doc raw"""
+    AdaptiveStrategy(x, p, dp)
+
+Adaptive estimation strategy that updates parameter estimates based on measurement outcomes.
+
+**Fields:**
+- `x`: Parameter grid points.
+- `p`: Prior distribution ``p(x)``.
+- `dp`: Pre-computed prior differences.
+"""
 struct AdaptiveStrategy <: EstimationStrategy
     x::Union{Nothing, AbstractVector}
     p #PriorDistribution
     dp
 end
 
+"""
+    AdaptiveStrategy(; x=nothing, p=nothing, dp=nothing)
+
+Construct an `AdaptiveStrategy` from keyword arguments, converting `x` to a `Vector` if provided.
+"""
 AdaptiveStrategy(;x::AbstractVector=nothing, p::AbstractArray=nothing,dp::AbstractArray=nothing) =
     AdaptiveStrategy(isnothing(x) ? x : Vector(x), p, dp)
 
+"""
+    adapt_param!(scheme::Scheme{S,P,M,AdaptiveStrategy}, x)
+
+Set the Hamiltonian parameters in `scheme` to the values in `x`.
+"""
 function adapt_param!(scheme::Scheme{S,P,M,AdaptiveStrategy}, x) where {S,P,M}
     scheme.Parameterization.data.hamiltonian.params = [x...]
 end
 
+raw"""
+    adapt_scheme!(scheme, x_list, M, W, eps)
+
+Evaluate the CFIM and the weighted cost ``\operatorname{tr}(W F^{-1})`` at each parameter point in `x_list`.
+Returns `(ρ_all, F_all)` — the density matrices and objective values at all grid points.
+"""
 function adapt_scheme!(
     scheme::Scheme{ST,PT,MT,AdaptiveStrategy},
     x_list,
@@ -29,6 +55,13 @@ function adapt_scheme!(
     return ρ_all, F_all
 end
 
+@doc raw"""
+    adapt!(scheme::Scheme; method="FOP", savefile=false, max_episode=1000, W=nothing, res=nothing, eps=GLOBAL_EPS)
+
+Run adaptive estimation on the scheme. The `method` can be:
+- `"FOP"`: fixed optimal point — tunes toward the parameter that maximizes the objective.
+- `"MI"`: mutual information — chooses tunable parameters to maximize mutual information.
+"""
 function adapt!(
     scheme::Scheme{ST,PT,MT,AdaptiveStrategy};
     method = "FOP",
@@ -107,6 +140,12 @@ function adapt!(
     end
 end
 
+"""
+
+    iter_FOP(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, res, ei)
+
+Perform one iteration of fixed optimal point (FOP) adaptive estimation. Updates the posterior distribution and returns the new estimate.
+"""
 function iter_FOP(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, res, ei)
     rho = Array{Matrix{ComplexF64}}(undef, p_num)
     for hj = 1:p_num
@@ -144,6 +183,7 @@ function iter_FOP(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, res, ei)
         end
     end
     p = reshape(p_list, size(p))
+    p ./= trapz(tuple(x...), p)
 
     p_idx = findmax(p)[2]
     x_out = [x[i][p_idx[i]] for i = 1:para_num]
@@ -153,7 +193,7 @@ function iter_FOP(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, res, ei)
     if mod(ei, 50) == 0
         for un = 1:para_num
             if (x_out[un] + u[un]) > x[un][end] || (x_out[un] + u[un]) < x[un][1]
-                throw("Please increase the regime of the parameters.")
+                throw(DomainError(u[un], "Please increase the regime of the parameters."))
             end
         end
     end
@@ -161,6 +201,12 @@ function iter_FOP(p, p_num, para_num, x, x_list, u, rho_all, M, x_opt, res, ei)
 end
 
 
+"""
+
+    iter_MI(p, p_num, para_num, x, x_list, u, rho_all, M, res, ei)
+
+Perform one iteration of mutual information (MI) based adaptive estimation. Updates the posterior and chooses the next tunable parameter to maximize mutual information.
+"""
 function iter_MI(p, p_num, para_num, x, x_list, u, rho_all, M, res, ei)
     rho = Array{Matrix{ComplexF64}}(undef, p_num)
     for hj = 1:p_num
@@ -198,6 +244,7 @@ function iter_MI(p, p_num, para_num, x, x_list, u, rho_all, M, res, ei)
         end
     end
     p = reshape(p_list, size(p))
+    p ./= trapz(tuple(x...), p)
 
     p_idx = findmax(p)[2]
     x_out = [x[i][p_idx[i]] for i = 1:para_num]
@@ -217,7 +264,7 @@ function iter_MI(p, p_num, para_num, x, x_list, u, rho_all, M, res, ei)
         value_tp = zeros(size(p))
         for mi in eachindex(M)
             pyx_list_tp = real.(tr.(rho_u .* [M[mi]]))
-            pyx_tp = reshape(pyx_list, size(p))
+            pyx_tp = reshape(pyx_list_tp, size(p))
             mean_tp = trapz(tuple(x...), p .* pyx_tp)
             value_tp += pyx_tp .* log.(2, pyx_tp / mean_tp)
         end
@@ -244,13 +291,18 @@ function iter_MI(p, p_num, para_num, x, x_list, u, rho_all, M, res, ei)
     if mod(ei, 50) == 0
         for un = 1:para_num
             if (x_out[un] + u[un]) > x[un][end] || (x_out[un] + u[un]) < x[un][1]
-                throw("Please increase the regime of the parameters.")
+                throw(DomainError(u[un], "Please increase the regime of the parameters."))
             end
         end
     end
     return p, x_out, res_exp, u
 end
 
+"""
+    savefile_true(p, xout, y)
+
+Append the current posterior `p`, estimator `xout`, and result `y` to `adaptive.dat` using JLD2.
+"""
 function savefile_true(p, xout, y)
     fp = isfile("adaptive.dat") ? load("adaptive.dat")["p"] : []
     fx = isfile("adaptive.dat") ? load("adaptive.dat")["x"] : []
@@ -261,26 +313,13 @@ function savefile_true(p, xout, y)
         f["y"] = append!(fy, [y])
     end
     
-    # Check if CSV file exists
-    # if isfile("adaptive.csv")
-    #     # Load existing data
-    #     df = CSV.read("adaptive.csv", DataFrame)
-    # else
-    #     # Create new DataFrame if file doesn't exist
-    #     df = DataFrame()
-    #     df[!, :p] = []
-    #     df[!, :x] = []
-    #     df[!, :y] = []
-    # end
-    
-    # # Append new data
-    # new_row = (p=p, x=xout, y=y)
-    # push!(df, new_row)
-    
-    # # Save updated DataFrame
-    # CSV.write("adaptive.csv", df)
 end
 
+"""
+    savefile_false(p, xout, y)
+
+Overwrite `adaptive.dat` with the current posterior `p`, estimator `xout`, and result `y` using JLD2.
+"""
 function savefile_false(p, xout, y)
     jldopen("adaptive.dat", "w") do f
         f["p"] = [p]

@@ -1,4 +1,8 @@
-#### control optimization ####
+"""
+    optimize!(opt::ControlOpt, alg::PSO, obj, scheme, output)
+
+Particle swarm optimization for control optimization.
+"""
 function optimize!(opt::ControlOpt, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
 
@@ -105,7 +109,11 @@ function optimize!(opt::ControlOpt, alg::PSO, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### state optimization ####
+"""
+    optimize!(opt::StateOpt, alg::PSO, obj, scheme, output)
+
+Particle swarm optimization for state optimization.
+"""
 function optimize!(opt::StateOpt, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
 
@@ -188,7 +196,11 @@ function optimize!(opt::StateOpt, alg::PSO, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### projective measurement optimization ####
+"""
+    optimize!(opt::Mopt_Projection, alg::PSO, obj, scheme, output)
+
+Particle swarm optimization for projective measurement optimization.
+"""
 function optimize!(opt::Mopt_Projection, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
 
@@ -286,7 +298,11 @@ function optimize!(opt::Mopt_Projection, alg::PSO, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### find the optimal linear combination of a given set of POVM ####
+"""
+    optimize!(opt::Mopt_LinearComb, alg::PSO, obj, scheme, output)
+
+Particle swarm optimization for optimizing the linear combination of a given POVM basis.
+"""
 function optimize!(opt::Mopt_LinearComb, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
     (; B, POVM_basis, M_num) = opt
@@ -386,7 +402,11 @@ function optimize!(opt::Mopt_LinearComb, alg::PSO, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### find the optimal rotated measurement of a given set of POVM ####
+"""
+    optimize!(opt::Mopt_Rotation, alg::PSO, obj, scheme, output)
+
+Particle swarm optimization for optimizing the rotation of a given POVM basis.
+"""
 function optimize!(opt::Mopt_Rotation, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
     if isnothing(ini_particle)
@@ -401,11 +421,6 @@ function optimize!(opt::Mopt_Rotation, alg::PSO, obj, scheme, output)
     append!(Lambda, [Matrix{ComplexF64}(I, dim, dim)])
     append!(Lambda, [suN[i] for i in eachindex(suN)])
 
-    # if isnothing(Lambda)
-    #     Lambda = Matrix{ComplexF64}[]
-    #     append!(Lambda, [Matrix{ComplexF64}(I,dim,dim)])
-    #     append!(Lambda, [suN[i] for i in eachindex(suN)])
-    # end
 
     particles = repeat_copy(s, p_num)
 
@@ -492,7 +507,11 @@ function optimize!(opt::Mopt_Rotation, alg::PSO, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### state and control optimization ####
+"""
+    optimize!(opt::StateControlOpt, alg::PSO, obj, scheme, output)
+
+Particle swarm optimization for state and control optimization.
+"""
 function optimize!(opt::StateControlOpt, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
     if isnothing(ini_particle)
@@ -619,7 +638,11 @@ function optimize!(opt::StateControlOpt, alg::PSO, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### state and measurement optimization ####
+"""
+    optimize!(opt::StateMeasurementOpt, alg::PSO, obj, scheme, output)
+
+Particle swarm optimization for state and measurement optimization.
+"""
 function optimize!(opt::StateMeasurementOpt, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
     if isnothing(ini_particle)
@@ -739,7 +762,11 @@ function optimize!(opt::StateMeasurementOpt, alg::PSO, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### control and measurement optimization ####
+"""
+    optimize!(opt::ControlMeasurementOpt, alg::PSO, obj, scheme, output)
+
+Particle swarm optimization for control and measurement optimization.
+"""
 function optimize!(opt::ControlMeasurementOpt, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
     if isnothing(ini_particle)
@@ -877,7 +904,11 @@ function optimize!(opt::ControlMeasurementOpt, alg::PSO, obj, scheme, output)
     set_io!(output, output.f_list[end])
 end
 
-#### state, control and measurement optimization ####
+"""
+    optimize!(opt::StateControlMeasurementOpt, alg::PSO, obj, scheme, output)
+
+Particle swarm optimization for comprehensive (state, control, and measurement) optimization.
+"""
 function optimize!(opt::StateControlMeasurementOpt, alg::PSO, obj, scheme, output)
     (; max_episode, p_num, ini_particle, c0, c1, c2) = alg
     if isnothing(ini_particle)

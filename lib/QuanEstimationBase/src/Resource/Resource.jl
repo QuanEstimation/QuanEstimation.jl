@@ -1,9 +1,23 @@
 using SparseArrays
 
+@doc raw"""
+    J₊(j::Number)
+
+Construct the angular momentum raising operator ``J_+`` for spin ``j`` in the Dicke basis.
+
+```math
+J_+ |j,m\rangle = \sqrt{j(j+1) - m(m+1)} \, |j,m+1\rangle
+```
+raw"""
 function J₊(j::Number)
     spdiagm(1 => [sqrt(j * (j + 1) - m * (m + 1)) for m = j:-1:-j][2:end])
 end
 
+@doc raw"""
+    Jp_full(N)
+
+Construct the collective raising operator ``J_+ = \sum_{i=1}^{N} \sigma_+^{(i)}`` for ``N`` spin-``1/2`` particles in the Pauli basis (``2^N``-dimensional Hilbert space).
+"""
 function Jp_full(N)
     sp = [0.0 1.0; 0.0 0.0]
     Jp, jp_tp = zeros(2^N, 2^N), zeros(2^N, 2^N)
@@ -21,6 +35,11 @@ function Jp_full(N)
     return Jp
 end
 
+@doc raw"""
+    Jz_full(N)
+
+Construct the collective ``z``-component angular momentum operator ``J_z = \frac{1}{2} \sum_{i=1}^{N} \sigma_z^{(i)}`` for ``N`` spin-``1/2`` particles in the Pauli basis.
+"""
 function Jz_full(N)
     sz = [1.0 0.0; 0.0 -1.0]
     Jz, jz_tp = zeros(2^N, 2^N), zeros(2^N, 2^N)
