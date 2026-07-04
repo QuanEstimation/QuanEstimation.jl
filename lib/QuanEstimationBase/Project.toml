@@ -1,6 +1,6 @@
 name = "QuanEstimationBase"
 uuid = "9769ca81-ed10-4016-bab9-e66dc61d4d60"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["QuanEstimation Group (Jing Liu et al.)"]
 
 [deps]
@@ -50,7 +50,7 @@ StableRNGs = "1.0"
 StatsBase = "0.34"
 Trapz = "2.0"
 Zygote = "0.6"
-julia = "1"
+julia = "1.11"
 
 [extras]
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
