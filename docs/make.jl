@@ -5,7 +5,7 @@ using DocumenterCitations
 bib = CitationBibliography("src/refs.bib")
 
 makedocs(
-    bib;
+    bibliography = bib;
     root = ".",
     source = "src",
     build = "build",
