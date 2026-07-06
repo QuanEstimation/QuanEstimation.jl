@@ -1,6 +1,5 @@
 using QuanEstimation
 using Documenter
-using DocumenterMarkdown
 using DocumenterCitations
 
 bib = CitationBibliography("src/refs.bib")
