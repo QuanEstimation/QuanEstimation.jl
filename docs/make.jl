@@ -2,16 +2,21 @@ using QuanEstimation
 using Documenter
 using DocumenterCitations
 
+format = Documenter.HTML(
+    size_threshold = nothing,  # BaseAPI.md generates >200 KiB
+)
+
 bib = CitationBibliography("src/refs.bib")
 
 makedocs(
-    plugins = [bib];
+    format = format,
+    plugins = [bib],
     root = ".",
     source = "src",
     build = "build",
     clean = true,
     doctest = false,
-    warnonly = [:autodocs_block, :cross_references],
+    warnonly = [:cross_references],
     modules = [QuanEstimation],
     authors = "QuanEstimation Group (Jing Liu et al.)",
     repo = "https://github.com/QuanEstimation/QuanEstimation.jl/blob/{commit}{path}#{line}",
@@ -30,7 +35,6 @@ makedocs(
             "Output Files" => "guide/output_files.md",
         ],
         "API Reference" => [
-            "General API" => "api/GeneralAPI.md",
             "Base API" => "api/BaseAPI.md",
             "NVMagnetometer API" => "api/NVMagnetometerAPI.md",
         ],
