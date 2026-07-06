@@ -11,6 +11,7 @@ makedocs(
     build = "build",
     clean = true,
     doctest = false,
+    warnonly = [:autodocs_block, :cross_references],
     modules = [QuanEstimation],
     authors = "QuanEstimation Group (Jing Liu et al.)",
     repo = "https://github.com/QuanEstimation/QuanEstimation.jl/blob/{commit}{path}#{line}",
