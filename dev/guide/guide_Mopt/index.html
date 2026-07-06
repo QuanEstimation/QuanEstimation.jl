@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Measurement Optimization · QuanEstimation.jl</title><meta name="title" content="Measurement Optimization · QuanEstimation.jl"/><meta property="og:title" content="Measurement Optimization · QuanEstimation.jl"/><meta property="twitter:title" content="Measurement Optimization · QuanEstimation.jl"/><meta name="description" content="Documentation for QuanEstimation.jl."/><meta property="og:description" content="Documentation for QuanEstimation.jl."/><meta property="twitter:description" content="Documentation for QuanEstimation.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">QuanEstimation.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Users Guide</span><ul><li><a class="tocitem" href="../guide_dynamics/">Parameterization</a></li><li><a class="tocitem" href="../guide_bounds/">Metrological Tools</a></li><li><a class="tocitem" href="../guide_Copt/">Control Optimization</a></li><li><a class="tocitem" href="../guide_Sopt/">State Optimization</a></li><li class="is-active"><a class="tocitem" href>Measurement Optimization</a><ul class="internal"><li><a class="tocitem" href="#**PSO**"><span><strong>PSO</strong></span></a></li><li><a class="tocitem" href="#**DE**"><span><strong>DE</strong></span></a></li><li><a class="tocitem" href="#**AD**"><span><strong>AD</strong></span></a></li><li><a class="tocitem" href="#**Bibliography**"><span><strong>Bibliography</strong></span></a></li></ul></li><li><a class="tocitem" href="../guide_Compopt/">Comprehensive Optimization</a></li><li><a class="tocitem" href="../guide_adaptive/">Adaptive Schemes</a></li><li><a class="tocitem" href="../guide_resources/">Resources</a></li><li><a class="tocitem" href="../output_files/">Output Files</a></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../api/BaseAPI/">Base API</a></li><li><a class="tocitem" href="../../api/NVMagnetometerAPI/">NVMagnetometer API</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Users Guide</a></li><li class="is-active"><a href>Measurement Optimization</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Measurement Optimization</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/QuanEstimation/QuanEstimation.jl/blob/main/docs/src/guide/guide_Mopt.md#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="**Measurement-optimization**"><a class="docs-heading-anchor" href="#**Measurement-optimization**"><strong>Measurement optimization</strong></a><a id="**Measurement-optimization**-1"></a><a class="docs-heading-anchor-permalink" href="#**Measurement-optimization**" title="Permalink"></a></h1><p>In QuanEstimation, three measurement optimization scenarios are considered. The first one is to optimize a set of rank-one projective measurement, it can be written in a specific basis <span>$\{|\phi_i\rangle\}$</span> with <span>$|\phi_i\rangle=\sum_j C_{ij}|j\rangle$</span> in the Hilbert space  as <span>$\{|\phi_i\rangle\langle\phi_i|\}$</span>. In this case, the goal is to search a set of optimal  coefficients <span>$C_{ij}$</span>. The second scenario is to find the optimal linear combination of  an input measurement <span>$\{\Pi_j\}$</span>. The third scenario is to find the optimal rotated  measurement of an input measurement. After rotation, the new measurement is <span>$\{U\Pi_i U^{\dagger}\}$</span>, where <span>$U=\prod_k \exp(i s_k\lambda_k)$</span> with <span>$\lambda_k$</span> a SU(<span>$N$</span>)  generator and <span>$s_k$</span> a real number in the regime <span>$[0,2\pi]$</span>. In this scenario, the goal is  to search a set of optimal coefficients <span>$s_k$</span>. Here different algorithms are invoked to  search the optimal measurement include particle swarm optimization (PSO) <a href="#Kennedy1995">[1]</a>,  differential evolution (DE) <a href="#Storn1997">[2]</a>, and automatic differentiation (AD)  <a href="#Baydin2018">[3]</a>. The codes for executing measurement optimization are</p><pre><code class="language-jl hljs">using QuanEstimation
+
+opt = MeasurementOpt(mtype=:Projection, seed=1234)
+alg = DE(kwargs...)
+dynamics = Lindblad(opt, tspan, rho0, H0, dH; Hc=missing, 
+                    ctrl=missing, decay=missing, dyn_method=:Expm)
+obj = CFIM_obj(W=missing)
+run(opt, alg, obj, dynamics; savefile=false)</code></pre><p><code>mtype</code> represents the type of measurement optimization which defaults to <code>:Projection</code>.  In this setting, rank-one projective measurement optimization will be performed. For the other  two measurement optimization scenarios this variable becomes <code>mtype=:LC</code> and <code>mtype=:Rotation</code>.  If the users want to find the optimal linear combination of an input measurement, the input  rule of <code>opt</code> is <code>MeasurementOpt(mtype=:LC, POVM_basis=[Pi1,Pi2,...], M_num=m)</code> with  <code>[Pi1,Pi2,...]</code> a set of POVM and <code>m</code> the number of operators of the output measurement.  For finding the optimal rotated measurement of an input measurement, the code <code>opt</code> is  <code>MeasurementOpt(mtype=:Rotation, POVM_basis=[Pi1,Pi2,...])</code>. <code>seed</code> is the random seed which can  ensure the reproducibility of results.</p><p>If the dynamics of the system can be described by the master equation, then the dynamics data  <code>tspan</code>, <code>rho0</code>, <code>H0</code> and <code>dH</code> should be input. <code>tspan</code> is the time length for the evolution,  <code>rho0</code> represents the density matrix of the initial state, <code>H0</code> and <code>dH</code> are the free  Hamiltonian and its derivatives on the unknown parameters to be estimated. <code>H0</code> is a matrix  when the free Hamiltonian is time-independent and a list of matrices with the length equal to  <code>tspan</code> when it is time-dependent. <code>dH</code> should be input as <span>$[\partial_a{H_0}, \partial_b{H_0}, \cdots]$</span>.  <code>Hc</code> and <code>ctrl</code> are two lists representing the control Hamiltonians and the corresponding control  coefficients. <code>decay</code> contains decay operators <span>$(\Gamma_1,\Gamma_2, \cdots)$</span> and the  corresponding decay rates <span>$(\gamma_1, \gamma_2, \cdots)$</span> with the input rule  <code>decay=[[Γ₁, γ₁], [Γ₂, γ₂],...]</code>. The default values for <code>decay</code>,  <code>Hc</code> and <code>ctrl</code> are <code>missing</code> which means the dynamics is unitary and only governed by the free  Hamiltonian. <code>dyn_method=:Expm</code> represents the method for solving the dynamics is  matrix exponential, it can also be set as <code>dyn_method=:Ode</code> which means the dynamics  (differential equation) is directly solved with the ODE solvers.</p><p>The objective function for measurement optimization are CFI and <span>$\mathrm{Tr}(W\mathcal{I}^ {-1})$</span> with <span>$\mathcal{I}$</span> the CFIM. <span>$W$</span> corresponds to <code>W</code> in the objective function is the  weight matrix which defaults to the identity matrix. The variable <code>savefile</code> means whether to  save all the measurements. If set <code>false</code> the measurements in the final episode and the values  of the objective function in all episodes will be saved, if <code>savefile=true</code> the measurements  and the values of the objective function obtained in all episodes will be saved during the  training. The algorithm used for optimizing the measurements are PSO, DE and AD. <code>kwargs...</code>  is the keywords and default values corresponding to the optimization algorithm which will be  introduced in detail below.</p><hr/><h2 id="**PSO**"><a class="docs-heading-anchor" href="#**PSO**"><strong>PSO</strong></a><a id="**PSO**-1"></a><a class="docs-heading-anchor-permalink" href="#**PSO**" title="Permalink"></a></h2><p>The code for measurement optimization with PSO is as follows</p><pre><code class="language-jl hljs">alg = PSO(p_num=10, ini_particle=missing, max_episode=[1000,100], 
+          c0=1.0, c1=2.0, c2=2.0)</code></pre><p>The keywords and the default values of PSO can be seen in the following table</p><table><tr><th style="text-align: center"><span>$~~~~~~~~~~$</span>keywords<span>$~~~~~~~~~~$</span></th><th style="text-align: center"><span>$~~~~$</span>default values<span>$~~~~$</span></th></tr><tr><td style="text-align: center"><code>p_num</code></td><td style="text-align: center">10</td></tr><tr><td style="text-align: center"><code>ini_particle</code></td><td style="text-align: center">missing</td></tr><tr><td style="text-align: center"><code>max_episode</code></td><td style="text-align: center">[1000,100]</td></tr><tr><td style="text-align: center"><code>c0</code></td><td style="text-align: center">1.0</td></tr><tr><td style="text-align: center"><code>c1</code></td><td style="text-align: center">2.0</td></tr><tr><td style="text-align: center"><code>c2</code></td><td style="text-align: center">2.0</td></tr></table><p><code>p_num</code> is the number of particles, <code>c0</code>, <code>c1</code>, and <code>c2</code> are the PSO parameters representing  the inertia weight, cognitive learning factor, and social learning factor, respectively.  <code>max_episode</code> accepts both integers and arrays with two elements. If it is an integer,  for example <code>max_episode=1000</code>, it means the program will continuously run 1000 episodes.  However, if it is an array, for example <code>max_episode=[1000,100]</code>, the program will run 1000  episodes in total but replace control coefficients of all the particles with global best  every 100 episodes. <code>ini_particle</code> in the algorithm is a list representing the initial guesses  of measurements. In the case of projective measurement optimization, the entry of <code>ini_particle</code>  is a list of arrays with the length equal to the dimension of the system. In the cases of  finding the optimal linear combination and the optimal rotation of a given set of measurement,  the entry of <code>ini_particle</code> is a 2D-array and array, respectively. Here, an example of  generating <code>ini_particle</code> is given as follows</p><p><strong>Example 7.1</strong></p><h3 id="Projection"><a class="docs-heading-anchor" href="#Projection">Projection</a><a id="Projection-1"></a><a class="docs-heading-anchor-permalink" href="#Projection" title="Permalink"></a></h3><pre><code class="language-jl hljs">using QuanEstimation
+
+# the dimension of the system
+dim = 6
+# generation of the entry of `measurement0`
+C = [ComplexF64[] for _ in 1:dim]
+for i in 1:dim
+    r_ini = 2*rand(dim) - ones(dim)
+    r = r_ini/norm(r_ini)
+    ϕ = 2pi*rand(dim)
+    C[i] = [r*exp(im*ϕ) for (r,ϕ) in zip(r,ϕ)] 
+end
+C = QuanEstimation.gramschmidt(C)
+measurement0 = ([C],)</code></pre><h3 id="LC"><a class="docs-heading-anchor" href="#LC">LC</a><a id="LC-1"></a><a class="docs-heading-anchor-permalink" href="#LC" title="Permalink"></a></h3><pre><code class="language-jl hljs">using QuanEstimation
+
+# the dimension of the system
+dim = 6
+# a given set of measurement
+POVM_basis = QuanEstimation.SIC(dim)
+# the number of operators of the output measurement
+m = 4
+# generation of the entry of `measurement0`
+B = [rand(length(POVM_basis)) for _ in 1:m]
+measurement0 = ([B],)</code></pre><h3 id="Rotation"><a class="docs-heading-anchor" href="#Rotation">Rotation</a><a id="Rotation-1"></a><a class="docs-heading-anchor-permalink" href="#Rotation" title="Permalink"></a></h3><pre><code class="language-jl hljs">using QuanEstimation
+
+# the dimension of the system
+dim = 6
+# a given set of measurement
+POVM_basis = QuanEstimation.SIC(dim)
+# generation of the entry of `measurement0`
+s = rand(dim^2)
+measurement0 = ([s],)</code></pre><p>In this algorithm, the length of <code>measurement0</code> should be less than or equal to <code>p_num</code>.</p><h2 id="**DE**"><a class="docs-heading-anchor" href="#**DE**"><strong>DE</strong></a><a id="**DE**-1"></a><a class="docs-heading-anchor-permalink" href="#**DE**" title="Permalink"></a></h2><p>The code for measurement optimization with DE is as follows</p><pre><code class="language-jl hljs">alg = DE(p_num=10, ini_population=missing, max_episode=1000, 
+         c=1.0, cr=0.5)</code></pre><p>The keywords and the default values of DE can be seen in the following table</p><table><tr><th style="text-align: center"><span>$~~~~~~~~~~$</span>keywords<span>$~~~~~~~~~~$</span></th><th style="text-align: center"><span>$~~~~$</span>default values<span>$~~~~$</span></th></tr><tr><td style="text-align: center"><code>p_num</code></td><td style="text-align: center">10</td></tr><tr><td style="text-align: center"><code>ini_population</code></td><td style="text-align: center">missing</td></tr><tr><td style="text-align: center"><code>max_episode</code></td><td style="text-align: center">1000</td></tr><tr><td style="text-align: center"><code>c</code></td><td style="text-align: center">1.0</td></tr><tr><td style="text-align: center"><code>cr</code></td><td style="text-align: center">0.5</td></tr></table><p><code>p_num</code> represents the number of populations, <code>c</code> and <code>cr</code> are the mutation constant  and the crossover constant. Here <code>max_episode</code> is an integer representing the number of  episodes, the variable <code>ini_population</code> is the same with <code>ini_particle</code> in PSO.</p><h2 id="**AD**"><a class="docs-heading-anchor" href="#**AD**"><strong>AD</strong></a><a id="**AD**-1"></a><a class="docs-heading-anchor-permalink" href="#**AD**" title="Permalink"></a></h2><p>The code for measurement optimization with AD is as follows</p><pre><code class="language-jl hljs">alg = AD(Adam=false, max_episode=300, epsilon=0.01, beta1=0.90, 
+         beta2=0.99)</code></pre><p>The keywords and the default values of AD can be seen in the following  table</p><table><tr><th style="text-align: center"><span>$~~~~~~~~~~$</span>keywords<span>$~~~~~~~~~~$</span></th><th style="text-align: center"><span>$~~~~$</span>default values<span>$~~~~$</span></th></tr><tr><td style="text-align: center"><code>Adam</code></td><td style="text-align: center">false</td></tr><tr><td style="text-align: center"><code>max_episode</code></td><td style="text-align: center">300</td></tr><tr><td style="text-align: center"><code>epsilon</code></td><td style="text-align: center">0.01</td></tr><tr><td style="text-align: center"><code>beta1</code></td><td style="text-align: center">0.90</td></tr><tr><td style="text-align: center"><code>beta2</code></td><td style="text-align: center">0.99</td></tr></table><p>The measurements will update according to the learning rate <code>epsilon</code> for <code>Adam=false</code>.  However, Adam algorithm can be introduced to update the measurements which can be realized by  setting <code>Adam=true</code>. In this case, the Adam parameters include learning rate, the exponential  decay rate for the first moment estimates, and the second moment estimates can be set by the  user via <code>epsilon</code>, <code>beta1</code>, and <code>beta2</code>.</p><p><strong>Example 7.2</strong>   &lt;a id=&quot;example7_2&quot;&gt;&lt;/a&gt; A single qubit system whose dynamics is governed by</p><p class="math-container">\[\begin{align}
+\partial_t\rho=-i[H, \rho]+ \gamma_{+}\left(\sigma_{+}\rho\sigma_{-}-\frac{1}{2}\{\sigma_{-}
+\sigma_{+},\rho\}\right)+ \gamma_{-}\left(\sigma_{-}\rho\sigma_{+}-\frac{1}{2}\{\sigma_{+}
+\sigma_{-},\rho\}\right),
+\end{align}\]</p><p>where <span>$H = \frac{1}{2}\omega \sigma_3$</span> is the free Hamiltonian with <span>$\omega$</span> the frequency,  <span>$\sigma_{\pm}=(\sigma_1 \pm \sigma_2)/2$</span> and <span>$\gamma_{+}$</span>, <span>$\gamma_{-}$</span> are decay rates. Here <span>$\sigma_{i}$</span> for <span>$(i=1,2,3)$</span> is the Pauli matrix.</p><p>In this case, the probe state is taken as <span>$\frac{1}{\sqrt{2}}(|0\rangle +|1\rangle)$</span>,  <span>$|0\rangle$</span> <span>$(|1\rangle)$</span> is the eigenstate of <span>$\sigma_3$</span> with respect to the eigenvalue  <span>$1$</span> <span>$(-1)$</span>. </p><pre><code class="language-jl hljs">using QuanEstimation
+using Random
+using StableRNGs
+using LinearAlgebra
+using DelimitedFiles
+
+# initial state
+rho0 = 0.5*ones(2, 2)
+# free Hamiltonian
+omega = 1.0
+sx = [0. 1.; 1. 0.0im]
+sy = [0. -im; im 0.]
+sz = [1. 0.0im; 0. -1.]
+H0 = 0.5*omega*sz
+# derivative of the free Hamiltonian on omega
+dH = [0.5*sz]
+# dissipation
+sp = [0. 1.; 0. 0.0im]
+sm = [0. 0.; 1. 0.0im]
+decay = [[sp, 0.], [sm, 0.1]]
+# generation of a set of POVM basis
+dim = size(rho0, 1)
+POVM_basis = QuanEstimation.SIC(dim)
+M_num = dim
+# time length for the evolution
+tspan = range(0., 10., length=2500)</code></pre><h3 id="Projection-2"><a class="docs-heading-anchor" href="#Projection-2">Projection</a><a class="docs-heading-anchor-permalink" href="#Projection-2" title="Permalink"></a></h3><pre><code class="language-jl hljs">opt = QuanEstimation.MeasurementOpt(mtype=:Projection, seed=1234)</code></pre><h4 id="DE"><a class="docs-heading-anchor" href="#DE">DE</a><a id="DE-1"></a><a class="docs-heading-anchor-permalink" href="#DE" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: DE
+alg = QuanEstimation.DE(p_num=10, ini_population=missing, 
+                        max_episode=1000, c=1.0, cr=0.5)</code></pre><h4 id="PSO"><a class="docs-heading-anchor" href="#PSO">PSO</a><a id="PSO-1"></a><a class="docs-heading-anchor-permalink" href="#PSO" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: PSO
+alg = QuanEstimation.PSO(p_num=10, ini_particle=missing, 
+                         max_episode=[1000,100], c0=1.0, c1=2.0, 
+                         c2=2.0)</code></pre><h3 id="LC-2"><a class="docs-heading-anchor" href="#LC-2">LC</a><a class="docs-heading-anchor-permalink" href="#LC-2" title="Permalink"></a></h3><pre><code class="language-jl hljs">opt = QuanEstimation.MeasurementOpt(mtype=:LC, 
+                                    POVM_basis=POVM_basis, M_num=M_num, 
+                                    seed=1234)</code></pre><h4 id="DE-2"><a class="docs-heading-anchor" href="#DE-2">DE</a><a class="docs-heading-anchor-permalink" href="#DE-2" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: DE
+alg = QuanEstimation.DE(p_num=10, ini_population=missing, 
+                        max_episode=1000, c=1.0, cr=0.5)</code></pre><h4 id="PSO-2"><a class="docs-heading-anchor" href="#PSO-2">PSO</a><a class="docs-heading-anchor-permalink" href="#PSO-2" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: PSO
+alg = QuanEstimation.PSO(p_num=10, ini_particle=missing, 
+                         max_episode=[1000,100], c0=1.0, c1=2.0, 
+                         c2=2.0)</code></pre><h4 id="AD"><a class="docs-heading-anchor" href="#AD">AD</a><a id="AD-1"></a><a class="docs-heading-anchor-permalink" href="#AD" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: AD
+alg = QuanEstimation.AD(Adam=true, max_episode=300, epsilon=0.01, 
+                        beta1=0.90, beta2=0.99)</code></pre><h3 id="Rotation-2"><a class="docs-heading-anchor" href="#Rotation-2">Rotation</a><a class="docs-heading-anchor-permalink" href="#Rotation-2" title="Permalink"></a></h3><pre><code class="language-jl hljs">opt = QuanEstimation.MeasurementOpt(mtype=:Rotation, 
+                                    POVM_basis=POVM_basis, seed=1234)</code></pre><h4 id="DE-3"><a class="docs-heading-anchor" href="#DE-3">DE</a><a class="docs-heading-anchor-permalink" href="#DE-3" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: DE
+alg = QuanEstimation.DE(p_num=10, ini_population=missing, 
+                        max_episode=1000, c=1.0, cr=0.5)</code></pre><h4 id="PSO-3"><a class="docs-heading-anchor" href="#PSO-3">PSO</a><a class="docs-heading-anchor-permalink" href="#PSO-3" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: PSO
+alg = QuanEstimation.PSO(p_num=10, ini_particle=missing, 
+                         max_episode=[1000,100], c0=1.0, c1=2.0, 
+                         c2=2.0)</code></pre><h4 id="AD-2"><a class="docs-heading-anchor" href="#AD-2">AD</a><a class="docs-heading-anchor-permalink" href="#AD-2" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: AD
+alg = QuanEstimation.AD(Adam=true, max_episode=300, epsilon=0.01, 
+                        beta1=0.90, beta2=0.99)</code></pre><pre><code class="language-jl hljs"># input the dynamics data
+dynamics = QuanEstimation.Lindblad(opt, tspan ,rho0, H0, dH, 
+                                   decay=decay, dyn_method=:Expm)
+# objective function: CFI
+obj = QuanEstimation.CFIM_obj()
+# run the measurement optimization problem
+QuanEstimation.run(opt, alg, obj, dynamics; savefile=false)
+
+# convert the flattened data into a list of matrix
+M_ = readdlm(&quot;measurements.csv&quot;,&#39;\t&#39;, Complex{Float64})
+M = [[reshape(M_[i,:], dim, dim) for i in 1:M_num] 
+    for j in 1:Int(length(M_[:,1])/M_num)][end]</code></pre><p><strong>Example 7.3</strong>   &lt;a id=&quot;example7_3&quot;&gt;&lt;/a&gt; In the multiparameter scenario, the dynamics of electron and nuclear coupling in NV<span>$^{-}$</span> can be expressed as</p><p class="math-container">\[\begin{align}
+\partial_t\rho=-i[H_0,\rho]+\frac{\gamma}{2}(S_3\rho S_3-S^2_3\rho-\rho S^2_3)
+\end{align}\]</p><p>with <span>$\gamma$</span> the dephasing rate. And</p><p class="math-container">\[\begin{align}
+H_0/\hbar=DS^2_3+g_{\mathrm{S}}\vec{B}\cdot\vec{S}+g_{\mathrm{I}}\vec{B}\cdot\vec{I}+\vec{S}^{\,\mathrm{T}}\mathcal{A}\vec{I}
+\end{align}\]</p><p>is the free evolution Hamiltonian, where <span>$\vec{S}=(S_1,S_2,S_3)^{\mathrm{T}}$</span> and <span>$\vec{I}=(I_1,I_2,I_3)^{\mathrm{T}}$</span>  with <span>$S_i=s_i\otimes I$</span> and <span>$I_i=I\otimes \sigma_i$</span> <span>$(i=1,2,3)$</span> the electron and nuclear operators.  <span>$s_1, s_2, s_3$</span> are spin-1 operators with </p><p class="math-container">\[\begin{align*}
+s_1 = \frac{1}{\sqrt{2}}\left(\begin{array}{ccc}
+0 &amp; 1 &amp; 0 \\
+1 &amp; 0 &amp; 1 \\
+0 &amp; 1 &amp; 0
+\end{array}\right),
+s_2 = \frac{1}{\sqrt{2}}\left(\begin{array}{ccc}
+0 &amp; -i &amp; 0\\
+i &amp; 0 &amp; -i\\
+0 &amp; i &amp; 0
+\end{array}\right),
+\end{align*}\]</p><p>and <span>$s_3=\mathrm{diag}(1,0,-1)$</span> and <span>$\sigma_i (i=1,2,3)$</span> is Pauli matrix. <span>$\mathcal{A}=\mathrm{diag} (A_1,A_1,A_2)$</span> is the hyperfine tensor with <span>$A_1$</span> and <span>$A_2$</span> the axial and transverse magnetic hyperfine coupling coefficients. The coefficients <span>$g_{\mathrm{S}}=g_\mathrm{e}\mu_\mathrm{B}/\hbar$</span> and <span>$g_{\mathrm{I}}=g_\mathrm{n}\mu_\mathrm{n}/\hbar$</span>,  where <span>$g_\mathrm{e}$</span> (<span>$g_\mathrm{n}$</span>) is the <span>$g$</span> factor of the electron (nuclear), <span>$\mu_\mathrm{B}$</span> (<span>$\mu_\mathrm{n}$</span>) is  the Bohr (nuclear) magneton and <span>$\hbar$</span> is the Plank&#39;s constant. <span>$\vec{B}$</span> is the magnetic field which be estimated.</p><p>In this case, the initial state is taken as <span>$\frac{1}{\sqrt{2}}(|1\rangle+|\!-\!1\rangle)\otimes|\!\!\uparrow\rangle$</span>,  where <span>$\frac{1}{\sqrt{2}}(|1\rangle+|\!-\!1\rangle)$</span> is an electron state with <span>$|1\rangle$</span> (<span>$|\!-\!1\rangle$</span>) the  eigenstate of <span>$s_3$</span> with respect to the eigenvalue <span>$1$</span> (<span>$-1$</span>). <span>$|\!\!\uparrow\rangle$</span> is a nuclear state and  the eigenstate of <span>$\sigma_3$</span> with respect to the eigenvalue 1. <span>$W$</span> is set to be <span>$I$</span>.</p><p>Here three types of measurement optimization are considered, projective measurement, linear combination of a given set of positive operator-valued measure (POVM) and optimal rotated measurement of an input measurement.</p><pre><code class="language-jl hljs">using QuanEstimation
+using Random
+using LinearAlgebra
+using DelimitedFiles
+
+# initial state
+rho0 = zeros(ComplexF64, 6, 6)
+rho0[1:4:5, 1:4:5] .= 0.5
+# Hamiltonian
+sx = [0. 1.; 1. 0.]
+sy = [0. -im; im 0.]
+sz = [1. 0.; 0. -1.]
+s1 = [0. 1. 0.; 1. 0. 1.; 0. 1. 0.]/sqrt(2)
+s2 = [0. -im 0.; im 0. -im; 0. im 0.]/sqrt(2)
+s3 = [1. 0. 0.; 0. 0. 0.; 0. 0. -1.]
+Is = I1, I2, I3 = [kron(I(3), sx), kron(I(3), sy), kron(I(3), sz)]
+S = S1, S2, S3 = [kron(s1, I(2)), kron(s2, I(2)), kron(s3, I(2))]
+B = B1, B2, B3 = [5.0e-4, 5.0e-4, 5.0e-4]
+# All numbers are divided by 100 in this example 
+# for better calculation accuracy
+cons = 100
+D = (2pi*2.87*1000)/cons
+gS = (2pi*28.03*1000)/cons
+gI = (2pi*4.32)/cons
+A1 = (2pi*3.65)/cons
+A2 = (2pi*3.03)/cons
+H0 = sum([D*kron(s3^2, I(2)), sum(gS*B.*S), sum(gI*B.*Is),
+            A1*(kron(s1, sx) + kron(s2, sy)), A2*kron(s3, sz)])
+# derivatives of the free Hamiltonian on B1, B2 and B3
+dH = gS*S+gI*Is
+# control Hamiltonians 
+Hc = [S1, S2, S3]
+# dissipation
+decay = [[S3, 2pi/cons]]
+# generation of a set of POVM basis
+dim = size(rho0, 1)
+POVM_basis = [QuanEstimation.basis(dim, i)*QuanEstimation.basis(dim, i)&#39; 
+              for i in 1:dim]
+# time length for the evolution
+tspan = range(0., 2., length=4000)</code></pre><h3 id="Projection-3"><a class="docs-heading-anchor" href="#Projection-3">Projection</a><a class="docs-heading-anchor-permalink" href="#Projection-3" title="Permalink"></a></h3><pre><code class="language-jl hljs">M_num = dim
+opt = QuanEstimation.MeasurementOpt(mtype=:Projection, seed=1234)</code></pre><h4 id="DE-4"><a class="docs-heading-anchor" href="#DE-4">DE</a><a class="docs-heading-anchor-permalink" href="#DE-4" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: DE
+alg = QuanEstimation.DE(p_num=10, ini_population=missing, 
+                        max_episode=1000, c=1.0, cr=0.5)</code></pre><h4 id="PSO-4"><a class="docs-heading-anchor" href="#PSO-4">PSO</a><a class="docs-heading-anchor-permalink" href="#PSO-4" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: PSO
+alg = QuanEstimation.PSO(p_num=10, ini_particle=missing, 
+                         max_episode=[1000,100], c0=1.0, c1=2.0, 
+                         c2=2.0)</code></pre><h3 id="LC-3"><a class="docs-heading-anchor" href="#LC-3">LC</a><a class="docs-heading-anchor-permalink" href="#LC-3" title="Permalink"></a></h3><pre><code class="language-jl hljs">M_num = 4
+opt = QuanEstimation.MeasurementOpt(mtype=:LC, 
+                                    POVM_basis=POVM_basis, M_num=M_num, 
+                                    seed=1234)</code></pre><h4 id="DE-5"><a class="docs-heading-anchor" href="#DE-5">DE</a><a class="docs-heading-anchor-permalink" href="#DE-5" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: DE
+alg = QuanEstimation.DE(p_num=10, ini_population=missing, 
+                        max_episode=1000, c=1.0, cr=0.5)</code></pre><h4 id="PSO-5"><a class="docs-heading-anchor" href="#PSO-5">PSO</a><a class="docs-heading-anchor-permalink" href="#PSO-5" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: PSO
+alg = QuanEstimation.PSO(p_num=10, ini_particle=missing, 
+                         max_episode=[1000,100], c0=1.0, c1=2.0, 
+                         c2=2.0)</code></pre><h4 id="AD-3"><a class="docs-heading-anchor" href="#AD-3">AD</a><a class="docs-heading-anchor-permalink" href="#AD-3" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: AD
+alg = QuanEstimation.AD(Adam=true, max_episode=300, epsilon=0.01, 
+                        beta1=0.90, beta2=0.99)</code></pre><h3 id="Rotation-3"><a class="docs-heading-anchor" href="#Rotation-3">Rotation</a><a class="docs-heading-anchor-permalink" href="#Rotation-3" title="Permalink"></a></h3><pre><code class="language-jl hljs">M_num = dim
+opt = QuanEstimation.MeasurementOpt(mtype=:Rotation, 
+                                    POVM_basis=POVM_basis, seed=1234)</code></pre><h4 id="DE-6"><a class="docs-heading-anchor" href="#DE-6">DE</a><a class="docs-heading-anchor-permalink" href="#DE-6" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: DE
+alg = QuanEstimation.DE(p_num=10, ini_population=missing, 
+                        max_episode=1000, c=1.0, cr=0.5)</code></pre><h4 id="PSO-6"><a class="docs-heading-anchor" href="#PSO-6">PSO</a><a class="docs-heading-anchor-permalink" href="#PSO-6" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: PSO
+alg = QuanEstimation.PSO(p_num=10, ini_particle=missing, 
+                         max_episode=[1000,100], c0=1.0, c1=2.0, 
+                         c2=2.0)</code></pre><h4 id="AD-4"><a class="docs-heading-anchor" href="#AD-4">AD</a><a class="docs-heading-anchor-permalink" href="#AD-4" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: AD
+alg = QuanEstimation.AD(Adam=true, max_episode=300, epsilon=0.01, 
+                        beta1=0.90, beta2=0.99)</code></pre><pre><code class="language-jl hljs"># input the dynamics data
+dynamics = QuanEstimation.Lindblad(opt, tspan ,rho0, H0, dH, 
+                                   decay=decay, dyn_method=:Expm)
+# objective function: CFI
+obj = QuanEstimation.CFIM_obj()
+# run the measurement optimization problem
+QuanEstimation.run(opt, alg, obj, dynamics; savefile=false)
+M_ = readdlm(&quot;measurements.csv&quot;,&#39;\t&#39;, Complex{Float64})
+M = [[reshape(M_[i,:], dim, dim) for i in 1:M_num] 
+    for j in 1:Int(length(M_[:,1])/M_num)][end]</code></pre><p>If the parameterization process is implemented with the Kraus operators, then the corresponding  parameters should be input via</p><pre><code class="language-jl hljs">opt = MeasurementOpt(mtype=:Projection, seed=1234)
+alg = DE(kwargs...)
+dynamics = Kraus(opt, K, dK)
+obj = CFIM_obj(W=missing)
+run(opt, alg, obj, dynamics; savefile=false)</code></pre><p>where <code>K</code> and <code>dK</code> are the Kraus operators and its derivatives with respect to the  unknown parameters.</p><p><strong>Example 7.4</strong>   The Kraus operators for the amplitude damping channel are</p><p class="math-container">\[\begin{align*}
+K_1 = \left(\begin{array}{cc}
+1 &amp; 0  \\
+0 &amp; \sqrt{1-\gamma}
+\end{array}\right),
+K_2 = \left(\begin{array}{cc}
+0 &amp; \sqrt{\gamma} \\
+0 &amp; 0
+\end{array}\right),
+\end{align*}\]</p><p>where <span>$\gamma$</span> is the unknown parameter to be estimated which represents the decay  probability. In this example, the probe state is taken as <span>$|+\rangle\langle+|$</span> with  <span>$|+\rangle=\frac{1}{\sqrt{2}}(|0\rangle+|1\rangle)$</span>. Here <span>$|0\rangle$</span> <span>$(|1\rangle)$</span> is  the eigenstate of <span>$\sigma_3$</span> (Pauli matrix) with respect to the eigenvalue <span>$1$</span> <span>$(-1)$</span>.</p><pre><code class="language-jl hljs">using QuanEstimation
+using DelimitedFiles
+
+# initial state
+rho0 = 0.5*ones(2, 2)
+# Kraus operators for the amplitude damping channel
+gamma = 0.1
+K1 = [1. 0.; 0. sqrt(1-gamma)]
+K2 = [0. sqrt(gamma); 0. 0.]
+K = [K1, K2]
+# derivatives of Kraus operators on gamma
+dK1 = [1. 0.; 0. -0.5/sqrt(1-gamma)]
+dK2 = [0. 0.5/sqrt(gamma); 0. 0.]
+dK = [[dK1], [dK2]]
+# measurement
+dim = size(rho0,1)
+POVM_basis = QuanEstimation.SIC(dim)
+M_num = 2</code></pre><h3 id="Projection-4"><a class="docs-heading-anchor" href="#Projection-4">Projection</a><a class="docs-heading-anchor-permalink" href="#Projection-4" title="Permalink"></a></h3><pre><code class="language-jl hljs">opt = QuanEstimation.MeasurementOpt(mtype=:Projection, seed=1234)</code></pre><h4 id="DE-7"><a class="docs-heading-anchor" href="#DE-7">DE</a><a class="docs-heading-anchor-permalink" href="#DE-7" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: DE
+alg = QuanEstimation.DE(p_num=10, ini_population=missing, 
+                        max_episode=1000, c=1.0, cr=0.5)</code></pre><h4 id="PSO-7"><a class="docs-heading-anchor" href="#PSO-7">PSO</a><a class="docs-heading-anchor-permalink" href="#PSO-7" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: PSO
+alg = QuanEstimation.PSO(p_num=10, ini_particle=missing, 
+                         max_episode=[1000,100], c0=1.0, c1=2.0, 
+                         c2=2.0)</code></pre><h3 id="LC-4"><a class="docs-heading-anchor" href="#LC-4">LC</a><a class="docs-heading-anchor-permalink" href="#LC-4" title="Permalink"></a></h3><pre><code class="language-jl hljs">opt = QuanEstimation.MeasurementOpt(mtype=:LC, 
+                                    POVM_basis=POVM_basis, M_num=2, 
+                                    seed=1234)</code></pre><h4 id="DE-8"><a class="docs-heading-anchor" href="#DE-8">DE</a><a class="docs-heading-anchor-permalink" href="#DE-8" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: DE
+alg = QuanEstimation.DE(p_num=10, ini_population=missing, 
+                        max_episode=1000, c=1.0, cr=0.5)</code></pre><h4 id="PSO-8"><a class="docs-heading-anchor" href="#PSO-8">PSO</a><a class="docs-heading-anchor-permalink" href="#PSO-8" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: PSO
+alg = QuanEstimation.PSO(p_num=10, ini_particle=missing, 
+                         max_episode=[1000,100], c0=1.0, c1=2.0, 
+                         c2=2.0)</code></pre><h4 id="AD-5"><a class="docs-heading-anchor" href="#AD-5">AD</a><a class="docs-heading-anchor-permalink" href="#AD-5" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: AD
+alg = QuanEstimation.AD(Adam=true, max_episode=300, epsilon=0.01, 
+                        beta1=0.90, beta2=0.99)</code></pre><h3 id="Rotation-4"><a class="docs-heading-anchor" href="#Rotation-4">Rotation</a><a class="docs-heading-anchor-permalink" href="#Rotation-4" title="Permalink"></a></h3><pre><code class="language-jl hljs">opt = QuanEstimation.MeasurementOpt(mtype=:Rotation, 
+                                    POVM_basis=POVM_basis, seed=1234)</code></pre><h4 id="DE-9"><a class="docs-heading-anchor" href="#DE-9">DE</a><a class="docs-heading-anchor-permalink" href="#DE-9" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: DE
+alg = QuanEstimation.DE(p_num=10, ini_population=missing, 
+                        max_episode=1000, c=1.0, cr=0.5)</code></pre><h4 id="PSO-9"><a class="docs-heading-anchor" href="#PSO-9">PSO</a><a class="docs-heading-anchor-permalink" href="#PSO-9" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: PSO
+alg = QuanEstimation.PSO(p_num=10, ini_particle=missing, 
+                         max_episode=[1000,100], c0=1.0, c1=2.0, 
+                         c2=2.0)</code></pre><h4 id="AD-6"><a class="docs-heading-anchor" href="#AD-6">AD</a><a class="docs-heading-anchor-permalink" href="#AD-6" title="Permalink"></a></h4><pre><code class="language-jl hljs"># measurement optimization algorithm: AD
+alg = QuanEstimation.AD(Adam=true, max_episode=300, epsilon=0.01, 
+                        beta1=0.90, beta2=0.99)</code></pre><pre><code class="language-jl hljs"># input the dynamics data
+dynamics = QuanEstimation.Kraus(opt, rho0, K, dK)
+# objective function: CFI
+obj = QuanEstimation.CFIM_obj()
+# run the measurement optimization problem
+QuanEstimation.run(opt, alg, obj, dynamics; savefile=false)
+# convert the flattened data into a list of matrix
+M_ = readdlm(&quot;measurements.csv&quot;,&#39;\t&#39;, Complex{Float64})
+M = [[reshape(M_[i,:], dim, dim) for i in 1:M_num] 
+    for j in 1:Int(length(M_[:,1])/M_num)][end]</code></pre><hr/><h2 id="**Bibliography**"><a class="docs-heading-anchor" href="#**Bibliography**"><strong>Bibliography</strong></a><a id="**Bibliography**-1"></a><a class="docs-heading-anchor-permalink" href="#**Bibliography**" title="Permalink"></a></h2><p><strong>[1]</strong> J. Kennedy and R. Eberhart, Particle swarm optimization, <a href="https://doi.org/10.1109/ICNN.1995.488968">Proc. 1995 IEEE International Conference on Neural Networks <strong>4</strong>, 1942-1948 (1995). </a></p><p><strong>[2]</strong> R. Storn and K. Price, Differential Evolution-A Simple and Efficient Heuristic for global Optimization over Continuous Spaces, <a href="https://doi.org/10.1023/A:1008202821328">J. Global Optim. <strong>11</strong>, 341 (1997).</a></p><p><strong>[3]</strong> A. G. Baydin, B. A. Pearlmutter, A. A. Radul, and J. M. Siskind, Automatic differentiation in machine learning: a survey, <a href="http://jmlr.org/papers/v18/17-468.html">J. Mach. Learn. Res. <strong>18</strong>, 1-43 (2018).</a></p><p><strong>See also</strong>: <a href="../guide_dynamics/">Parameterization process</a> — construct the system dynamics. <a href="../guide_bounds/">Quantum metrological tools</a> — the objective functions being optimized. <a href="../output_files/">Output files</a> — how to load the saved <code>measurements.npy</code> results.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../guide_Sopt/">« State Optimization</a><a class="docs-footer-nextpage" href="../guide_Compopt/">Comprehensive Optimization »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 6 July 2026 14:31">Monday 6 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Metrological Tools · QuanEstimation.jl</title><meta name="title" content="Metrological Tools · QuanEstimation.jl"/><meta property="og:title" content="Metrological Tools · QuanEstimation.jl"/><meta property="twitter:title" content="Metrological Tools · QuanEstimation.jl"/><meta name="description" content="Documentation for QuanEstimation.jl."/><meta property="og:description" content="Documentation for QuanEstimation.jl."/><meta property="twitter:description" content="Documentation for QuanEstimation.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">QuanEstimation.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Users Guide</span><ul><li><a class="tocitem" href="../guide_dynamics/">Parameterization</a></li><li class="is-active"><a class="tocitem" href>Metrological Tools</a><ul class="internal"><li><a class="tocitem" href="#**Quantum-Cramér-Rao-bounds**"><span><strong>Quantum Cramér-Rao bounds</strong></span></a></li><li><a class="tocitem" href="#**Holevo-Cramér-Rao-bound**"><span><strong>Holevo Cramér-Rao bound</strong></span></a></li><li><a class="tocitem" href="#**Nagaoka-Hayashi-bound**"><span><strong>Nagaoka-Hayashi bound</strong></span></a></li><li><a class="tocitem" href="#**Bayesian-Cramér-Rao-bounds**"><span><strong>Bayesian Cramér-Rao bounds</strong></span></a></li><li><a class="tocitem" href="#**Quantum-Ziv-Zakai-bound**"><span><strong>Quantum Ziv-Zakai bound</strong></span></a></li><li><a class="tocitem" href="#**Bayesian-estimation**"><span><strong>Bayesian estimation</strong></span></a></li><li><a class="tocitem" href="#**Bibliography**"><span><strong>Bibliography</strong></span></a></li></ul></li><li><a class="tocitem" href="../guide_Copt/">Control Optimization</a></li><li><a class="tocitem" href="../guide_Sopt/">State Optimization</a></li><li><a class="tocitem" href="../guide_Mopt/">Measurement Optimization</a></li><li><a class="tocitem" href="../guide_Compopt/">Comprehensive Optimization</a></li><li><a class="tocitem" href="../guide_adaptive/">Adaptive Schemes</a></li><li><a class="tocitem" href="../guide_resources/">Resources</a></li><li><a class="tocitem" href="../output_files/">Output Files</a></li></ul></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../api/BaseAPI/">Base API</a></li><li><a class="tocitem" href="../../api/NVMagnetometerAPI/">NVMagnetometer API</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Users Guide</a></li><li class="is-active"><a href>Metrological Tools</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Metrological Tools</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/QuanEstimation/QuanEstimation.jl/blob/main/docs/src/guide/guide_bounds.md#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="**Quantum-metrological-tools**"><a class="docs-heading-anchor" href="#**Quantum-metrological-tools**"><strong>Quantum metrological tools</strong></a><a id="**Quantum-metrological-tools**-1"></a><a class="docs-heading-anchor-permalink" href="#**Quantum-metrological-tools**" title="Permalink"></a></h1><p>QuanEstimation can be used to calculate several well-used metrological tools including  Quantum Cramér-Rao bounds, Holevo Cramér-Rao bound, Bayesian Cramér-Rao bounds, Quantum  Ziv-Zakai bound and perform Bayesian estimation.</p><p>Notes: Results may vary due to numerical precision (e.g., the retained significant digits in calculations). This difference has no effect on optimization. To get consistent results, use the same number of significant digits (e.g., keep 8 decimal places).</p><h2 id="**Quantum-Cramér-Rao-bounds**"><a class="docs-heading-anchor" href="#**Quantum-Cramér-Rao-bounds**"><strong>Quantum Cramér-Rao bounds</strong></a><a id="**Quantum-Cramér-Rao-bounds**-1"></a><a class="docs-heading-anchor-permalink" href="#**Quantum-Cramér-Rao-bounds**" title="Permalink"></a></h2><p>In quantum metrology, quantum Cramér-Rao bounds are well used metrological tools for  parameter estimation. It can be expressed as <a href="#Helstrom1976">[1,2,3]</a></p><p class="math-container">\[\begin{align}
+\mathrm{cov}\left(\hat{\textbf{x}}, \{\Pi_y\}\right) \geq \frac{1}{n}\mathcal{I}^{-1}
+\left(\{\Pi_y\}\right) \geq \frac{1}{n} \mathcal{F}^{-1},
+\end{align}\]</p><p>where <span>$\mathrm{cov}(\hat{\textbf{x}},\{\Pi_y\})=\sum_y\mathrm{Tr}(\rho\Pi_y)(\hat{\textbf{x}} -\textbf{x})(\hat{\textbf{x}}-\textbf{x})^{\mathrm{T}}$</span> is the covariance matrix for the  unknown parameters <span>$\hat{\textbf{x}}=(\hat{x}_0,\hat{x}_1,\dots)^{\mathrm{T}}$</span> to be estimated.  <span>$\{\Pi_y\}$</span> is a set of positive operator-valued measure (POVM) and <span>$\rho$</span> represents the  parameterized density matrix. <span>$n$</span> is the repetition of the experiment, <span>$\mathcal{I}$</span> and  <span>$\mathcal{F}$</span> are the classical Fisher information matrix (CFIM) and quantum Fisher information  matrix (QFIM), respectively. The <span>$ab$</span>th entry of CFIM is defined as</p><p class="math-container">\[\begin{align}
+\mathcal{I}_{ab}=\sum_y\frac{1}{p(y|\textbf{x})}[\partial_a p(y|\textbf{x})][\partial_b 
+p(y|\textbf{x})]
+\end{align}\]</p><p>with <span>$p(y|\textbf{x})=\mathrm{Tr}(\rho\Pi_y)$</span>. The most well-used type of the QFIM is  SLD-based QFIM of the form</p><p class="math-container">\[\begin{align}
+\mathcal{F}_{ab}=\frac{1}{2}\mathrm{Tr}[\rho (L_aL_b+ L_bL_a)]
+\end{align}\]</p><p>with <span>$\mathcal{F}_{ab}$</span> the <span>$ab$</span>th entry of <span>$\mathcal{F}$</span> and <span>$L_{a}(L_{b})$</span> the symmetric  logarithmic derivative (SLD) operator for <span>$x_{a}(x_b)$</span>. The SLD operator is determined by</p><p class="math-container">\[\begin{align}
+\partial_{a}\rho=\frac{1}{2}(\rho L_{a}+L_{a}\rho).
+\end{align}\]</p><p>The <span>$ij$</span>th entry of SLD can be calculated by</p><p class="math-container">\[\begin{align}
+\langle\lambda_i|L_{a}|\lambda_j\rangle=\frac{2\langle\lambda_i| \partial_{a}\rho 
+|\lambda_j\rangle}
+{\lambda_i+\lambda_j}, ~~\lambda_i (\lambda_j)\neq 0 .
+\end{align}\]</p><p>For <span>$\lambda_i (\lambda_j)=0$</span>, the above equation is set to be zero.</p><p>Besides, there are right logarithmic derivative (RLD) and left logarithmic derivative (LLD)  defined by <span>$\partial_{a}\rho=\rho \mathcal{R}_a$</span> and <span>$\partial_{a}\rho=\mathcal{R}_a^{\dagger} \rho$</span> with the  corresponding QFIM  <span>$\mathcal{F}_{ab}=\mathrm{Tr}(\rho \mathcal{R}_a  \mathcal{R}^{\dagger}_b)$</span>. The RLD and LLD operators are calculated via</p><p class="math-container">\[\begin{align}
+\langle\lambda_i| \mathcal{R}_{a} |\lambda_j\rangle
+&amp;= \frac{1}{\lambda_i}\langle\lambda_i| \partial_{a}\rho |\lambda_j\rangle,~~\lambda_i\neq 0, \\
+\langle\lambda_i| \mathcal{R}_{a}^{\dagger} |\lambda_j\rangle
+&amp;= \frac{1}{\lambda_j}\langle\lambda_i| \partial_{a}\rho |\lambda_j\rangle,~~\lambda_j\neq 0.
+\end{align}\]</p><p>In QuanEstimation, three types of the logarithmic derivatives can be solved by calling the  codes</p><pre><code class="language-jl hljs">SLD(rho, drho; rep=&quot;original&quot;, eps=1e-8)</code></pre><pre><code class="language-jl hljs">RLD(rho, drho; rep=&quot;original&quot;, eps=1e-8)</code></pre><pre><code class="language-jl hljs">LLD(rho, drho; rep=&quot;original&quot;, eps=1e-8)</code></pre><p>where <code>rho</code> and <code>drho</code> are the density matrix of the state and its derivatives with respect to the unknown parameters to be estimated. <code>drho</code> should be input as <span>$[\partial_a{\rho},  \partial_b{\rho}, \cdots]$</span>. For single parameter estimation (the length of <code>drho</code> is equal to  one), the output is a matrix and for multiparameter estimation (the length of <code>drho</code> is more  than one), it returns a vector. There are two output choices for the logarithmic derivatives  basis which can be set through <code>rep</code>. The default basis (<code>rep=&quot;original&quot;</code>) of the logarithmic  derivatives is the same with <code>rho</code> and the users can also request the logarithmic derivatives  written in the eigenspace of <code>rho</code> by <code>rep=&quot;eigen&quot;</code>. <code>eps</code> represents the machine epsilon which  defaults to <span>$10^{-8}$</span>.</p><p>In QuanEstimation, the QFI and QFIM can be calculated via the following function</p><pre><code class="language-jl hljs">QFIM(rho, drho; LDtype=:SLD, exportLD=false, eps=1e-8)</code></pre><p><code>LDtype</code> represents the types of QFI (QFIM) can be set. Options are <code>LDtype=:SLD</code> (default),  <code>LDtype=:RLD</code> and <code>LDtype=:LLD</code>. This function will return QFI (QFIM) if <code>exportLD=false</code>, however, if the users set <code>exportLD=true</code>, it will return logarithmic derivatives apart  from QFI (QFIM).</p><p><strong>Example 3.1</strong>   &lt;a id=&quot;example3<em>1&quot;&gt;&lt;/a&gt; The Hamiltonian of a single qubit system is H=\frac{1}{2}\omega \sigma</em>3$ with <span>$\omega$</span>  the frequency and <span>$\sigma_3$</span> a Pauli matrix. The dynamics of the system is governed by</p><p class="math-container">\[\begin{align}
+\partial_t\rho=-i[H, \rho]+ \gamma_{+}\left(\sigma_{+}\rho\sigma_{-}-\frac{1}{2}\{\sigma_{-}
+\sigma_{+},\rho\}\right)+ \gamma_{-}\left(\sigma_{-}\rho\sigma_{+}-\frac{1}{2}\{\sigma_{+}
+\sigma_{-},\rho\}\right),
+\end{align}\]</p><p>where <span>$\sigma_{\pm}=\frac{1}{2}(\sigma_1 \pm \sigma_2)$</span> with <span>$\sigma_{1}$</span>, <span>$\sigma_{2}$</span> Pauli  matrices and <span>$\gamma_{+}$</span>, <span>$\gamma_{-}$</span> are decay rates. The probe state is taken as <span>$|+\rangle$</span>  with <span>$|+\rangle=\frac{1}{\sqrt{2}}(|0\rangle+|1\rangle)$</span>. Here <span>$|0\rangle$</span> and <span>$|1\rangle$</span> are  the eigenstates of <span>$\sigma_3$</span> with respect to the eigenvalues <span>$1$</span> and <span>$-1$</span>.</p><pre><code class="language-jl hljs">using QuanEstimation
+
+# initial state
+rho0 = 0.5*ones(2, 2)
+# free Hamiltonian
+omega = 1.0
+sx = [0. 1.; 1. 0.0im]
+sy = [0. -im; im 0.]
+sz = [1. 0.0im; 0. -1.]
+H0 = 0.5*omega*sz
+# derivative of the free Hamiltonian on omega
+dH = [0.5*sz]
+# dissipation
+sp = [0. 1.; 0. 0.0im]
+sm = [0. 0.; 1. 0.0im]
+decay = [[sp, 0.0], [sm, 0.1]]
+# time length for the evolution
+tspan = range(0., 50., length=2000)
+# dynamics
+rho, drho = QuanEstimation.expm(tspan, rho0, H0, dH, decay)
+# calculation of the QFI
+F = Float64[]
+for ti in 2:length(tspan)
+    # QFI
+    F_tp = QuanEstimation.QFIM(rho[ti], drho[ti])
+    append!(F, F_tp)
+end</code></pre><p>If the parameterization process is executed via the Kraus operators, the QFI (QFIM) can be  calculated by calling the function</p><pre><code class="language-jl hljs">QFIM_Kraus(rho0, K, dK; LDtype=:SLD, exportLD=false, eps=1e-8)</code></pre><p>where <code>K</code> and <code>dK</code> are the Kraus operators and the derivatives with respect to the unknown  parameters to be estimated.</p><p><strong>Example 3.2</strong>   The Kraus operators for the amplitude damping channel are</p><p class="math-container">\[\begin{align*}
+K_1 = \left(\begin{array}{cc}
+1 &amp; 0  \\
+0 &amp; \sqrt{1-\gamma}
+\end{array}\right),
+K_2 = \left(\begin{array}{cc}
+0 &amp; \sqrt{\gamma} \\
+0 &amp; 0
+\end{array}\right),
+\end{align*}\]</p><p>where <span>$\gamma$</span> is unknown parameter to be estimated which represents the decay probability.  In this example, the probe state is taken as <span>$|+\rangle\langle+|$</span> with <span>$|+\rangle:=\frac{1} {\sqrt{2}}(|0\rangle+|1\rangle)$</span>. <span>$|0\rangle$</span> <span>$(|1\rangle)$</span> is the eigenstate of <span>$\sigma_3$</span>  (Pauli matrix) with respect to the eigenvalue <span>$1$</span> <span>$(-1)$</span>.</p><pre><code class="language-jl hljs">using QuanEstimation
+
+# initial state
+rho0 = [0.5+0im 0.5; 0.5 0.5]
+# Kraus operators for the amplitude damping channel
+gamma = 0.1
+K1 = [1. 0.; 0. sqrt(1-gamma)]
+K2 = [0. sqrt(gamma); 0. 0.]
+K = [K1, K2]
+# derivatives of Kraus operators on gamma
+dK1 = [1. 0.; 0. -0.5/sqrt(1-gamma)]
+dK2 = [0. 0.5/sqrt(gamma); 0. 0.]
+dK = [[dK1], [dK2]]
+F = QuanEstimation.QFIM_Kraus(rho0, K, dK)</code></pre><p>The FI (FIM) for a set of the probabilities <code>p</code> can be calculated by</p><pre><code class="language-jl hljs">FIM(p, dp; eps=1e-8)</code></pre><p>where <code>dp</code> is a vector representing the derivatives of the probabilities <code>p</code> with respect to  the unknown parameters.</p><p><strong>Example 3.3</strong>  </p><pre><code class="language-jl hljs">using QuanEstimation
+
+p = [0.54, 0.46]
+dp = [[0.54], [-0.54]]
+F = QuanEstimation.FIM(p, dp)</code></pre><p>The FI can also be calculated based on the experiment data</p><pre><code class="language-jl hljs">FI_Expt(y1, y2, dx; ftype=:norm)</code></pre><p><code>y1</code> and <code>y2</code> are two arrays representing the experimental data obtained at <span>$x$</span> and <span>$x+\delta x$</span>, respectively.  <span>$\delta x$</span> is a known small drift corresponds to <code>dx</code>.  <code>ftype</code> represents the distribution that the data follows, which can be chosen as <code>:norm</code>,  <code>:gamma</code>, <code>:rayleigh</code>, and <code>:poisson</code>.  <code>ftype=:norm</code> represents the normal (Gaussian) distribution with the probability density function</p><p class="math-container">\[\begin{align}
+f(x)=\frac{1}{\sigma\sqrt{2\pi}}e^{-(x-\mu)^2/2\sigma^2}
+\end{align}\]</p><p>for distribution fitting, where <span>$\mu$</span> and <span>$\sigma$</span> are the mean and variance of the distribution,  respectively. </p><p><code>ftype=:gamma</code> represents the gamma distribution of the form</p><p class="math-container">\[\begin{align}
+f(x)=\frac{x^{\alpha-1}e^{-\beta x}\beta^\alpha}{\Gamma(\alpha)}
+\end{align}\]</p><p>with <span>$\alpha$</span> the shape and <span>$\beta$</span> the rate of the distribution. <span>$\Gamma(\alpha)$</span> is the gamma function.</p><p>If the data follows a rayleigh distribution, the data can be fit through setting  <code>ftype=:rayleigh</code>. The probability density function of the rayleigh distribution is</p><p class="math-container">\[\begin{align}
+f(x)=\frac{x-\mu}{\sigma^2}e^{-(x-\mu)^2/2\sigma^2}
+\end{align}\]</p><p>with <span>$\mu$</span> and <span>$\sigma$</span> the mean and variance of the distribution.</p><p><code>ftype=:poisson</code> represents a discrete Poisson distribution with the probability mass function</p><p class="math-container">\[\begin{align}
+f(k)=\frac{\lambda^k e^{-\lambda}}{k!},
+\end{align}\]</p><p>where <span>$k=0,1,2,\cdots$</span> represents the number of occurrences, <span>$\lambda$</span> represents the variance of the data, <span>$!$</span> is the factorial function. </p><p>In quantum metrology, the CFI (CFIM) are solved by</p><pre><code class="language-jl hljs">CFIM(rho, drho; M=missing, eps=1e-8)</code></pre><p>Here <code>M</code> represents a set of positive operator-valued measure (POVM) with default value <code>missing</code>.  In this function, a set of rank-one symmetric informationally complete POVM (SIC-POVM) is used  when <code>M=missing</code>. SIC-POVM is calculated by the Weyl-Heisenberg covariant SIC-POVM fiducial state  which can be downloaded from <a href="http://www.physics.umb.edu/Research/QBism/solutions.html">here</a>. </p><p><strong>Example 3.4</strong>   &lt;a id=&quot;example3<em>4&quot;&gt;&lt;/a&gt; The Hamiltonian of a single qubit system is H=\frac{1}{2}\omega \sigma</em>3$ with <span>$\omega$</span>  the frequency and <span>$\sigma_3$</span> a Pauli matrix. The dynamics of the system is governed by</p><p class="math-container">\[\begin{align}
+\partial_t\rho=-i[H, \rho]+ \gamma_{+}\left(\sigma_{+}\rho\sigma_{-}-\frac{1}{2}\{\sigma_{-}
+\sigma_{+}, \rho\}\right)+ \gamma_{-}\left(\sigma_{-}\rho\sigma_{+}-\frac{1}{2}\{\sigma_{+}
+\sigma_{-},\rho\}\right),
+\end{align}\]</p><p>where <span>$\sigma_{\pm}=\frac{1}{2}(\sigma_1 \pm \sigma_2)$</span> with <span>$\sigma_{1}$</span>, <span>$\sigma_{2}$</span> Pauli  matrices and <span>$\gamma_{+}$</span>, <span>$\gamma_{-}$</span> are decay rates. The probe state is taken as <span>$|+\rangle$</span>  and the measurement for CFI is <span>$\{|+\rangle\langle+|, |-\rangle\langle-|\}$</span> with <span>$|\pm\rangle=\frac{1}{\sqrt{2}}(|0\rangle\pm|1\rangle)$</span>. Here <span>$|0\rangle$</span> and <span>$|1\rangle$</span> are  the eigenstates of <span>$\sigma_3$</span> with respect to the eigenvalues <span>$1$</span> and <span>$-1$</span>.</p><pre><code class="language-jl hljs">using QuanEstimation
+
+# initial state
+rho0 = 0.5*ones(2, 2)
+# free Hamiltonian
+omega = 1.0
+sx = [0. 1.; 1. 0.0im]
+sy = [0. -im; im 0.]
+sz = [1. 0.0im; 0. -1.]
+H0 = 0.5*omega*sz
+# derivative of the free Hamiltonian on omega
+dH = [0.5*sz]
+# dissipation
+sp = [0. 1.; 0. 0.0im]
+sm = [0. 0.; 1. 0.0im]
+decay = [[sp, 0.0], [sm, 0.1]]
+# measurement
+M1 = 0.5*[1.0+0.0im  1.; 1.  1.]
+M2 = 0.5*[1.0+0.0im -1.; -1.  1.]
+M = [M1, M2]
+# time length for the evolution
+tspan = range(0., 50., length=2000)
+# dynamics
+rho, drho = QuanEstimation.expm(tspan, rho0, H0, dH, decay)
+# calculation of the CFI
+Im = Float64[]
+for ti in 2:length(tspan)
+    # CFI
+    I_tp = QuanEstimation.CFIM(rho[ti], drho[ti], M)
+    append!(Im, I_tp)
+end</code></pre><p>In Bloch representation, the SLD based QFI (QFIM) is calculated by</p><pre><code class="language-jl hljs">QFIM_Bloch(r, dr; eps=1e-8)</code></pre><p><code>r</code> and <code>dr</code> are the parameterized Bloch vector and its derivatives with respect to the  unknown parameters to be estimated.</p><p><strong>Example 3.5</strong>   The arbitrary single-qubit state can be written as </p><p class="math-container">\[\begin{align}
+|\psi\rangle=\cos\frac{\theta}{2}|0\rangle+e^{i\phi}\sin\frac{\theta}{2}|1\rangle
+\end{align}\]</p><p>with <span>$\theta$</span> and <span>$\phi$</span> the parameters to be estimated. The Bloch vector for this state is <span>$r=(\sin\theta\cos\phi, \sin\theta\sin\phi, \cos\theta)^{\mathrm{T}}$</span> and the derivatives  with respect to <span>$\theta$</span> and <span>$\phi$</span> are  <span>$\partial_\theta r=(\cos\theta\cos\phi, \cos\theta\sin\phi, -\sin\theta)^{\mathrm{T}}$</span> and  <span>$\partial_\phi r=(-\sin\theta\sin\phi, \sin\theta\cos\phi, 0)^{\mathrm{T}}$</span></p><pre><code class="language-jl hljs">using QuanEstimation
+using LinearAlgebra
+
+theta, phi = 0.25*pi, 0.25*pi
+r = [sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta)]
+dr_theta = [cos(theta)*cos(phi), cos(theta)*sin(phi), -sin(theta)]
+dr_phi = [-sin(theta)*sin(phi), sin(theta)*cos(phi), 0.]
+dr = [dr_theta, dr_phi]
+F = QuanEstimation.QFIM_Bloch(r, dr)</code></pre><p>The package can also calculate the SLD based QFI (QFIM) with Gaussian states. </p><pre><code class="language-jl hljs">QFIM_Gauss(R, dR, D, dD)</code></pre><p>The variable <code>R</code> is the expected value <span>$\left(\langle[\textbf{R}]_i\rangle\right)$</span> of  <span>$\textbf{R}$</span> with respect to <span>$\rho$</span>, it is an array representing the first-order moment.  Here <span>$\textbf{R}=(q_1,p_1,q_2,p_2,\dots)^{\mathrm{T}}$</span> with <span>$q_i=\frac{1}{\sqrt{2}} (a_i+a^{\dagger}_i)$</span> and <span>$p_i=\frac{1}{i\sqrt{2}}(a_i-a^{\dagger}_i)$</span> represents a vector  of quadrature operators. <code>dR</code> is a vector of derivatives of <code>R</code> with respect to the unknown  parameters. The <span>$i$</span>th entry of <code>dR</code> is <span>$\partial_{\textbf{x}} \langle[\textbf{R}]_i\rangle$</span>.  <code>D</code> and <code>dD</code> represent the second-order moment matrix with the <span>$ij$</span>th entry <span>$D_{ij}=\langle  [\textbf{R}]_i [\textbf{R}]_j+[\textbf{R}]_j [\textbf{R}]_i\rangle/2$</span> and its derivatives with  respect to the unknown parameters.</p><p><strong>Example 3.6</strong>   The first and second moments <a href="#Safranek2019">[13]</a> are</p><p class="math-container">\[\begin{align*}
+\langle[\textbf{R}]_i\rangle = \left(\begin{array}{cc}
+0   \\
+0  
+\end{array}\right),
+D = \lambda\left(\begin{array}{cc}
+\cosh 2r &amp; -\sinh 2r \\
+-\sinh 2r &amp; -\sinh 2r
+\end{array}\right),
+\end{align*}\]</p><p>where <span>$\lambda=\coth\frac{\beta}{2}$</span>.  <span>$r$</span> and <span>$\beta$</span> are the parameters to be estimated.</p><pre><code class="language-jl hljs">using QuanEstimation
+
+dim = 2
+r, beta = 0.2, 1.0
+Lambda = coth(0.5*beta)
+# the first-order moment
+R = zeros(dim)
+dR = [zeros(dim), zeros(dim)]
+D = Lambda*[cosh(2*r) -sinh(2*r); -sinh(2*r) cosh(2*r)]
+dD_r = 2*Lambda*[sinh(2*r) -cosh(2*r); -cosh(2*r) sinh(2*r)]
+dD_Lambda = 0.5*(Lambda^2-1)*[-cosh(2*r) sinh(2*r); sinh(2*r) -cosh(2*r)]
+dD = [dD_r, dD_Lambda]
+F = QuanEstimation.QFIM_Gauss(R, dR, D, dD)</code></pre><hr/><h2 id="**Holevo-Cramér-Rao-bound**"><a class="docs-heading-anchor" href="#**Holevo-Cramér-Rao-bound**"><strong>Holevo Cramér-Rao bound</strong></a><a id="**Holevo-Cramér-Rao-bound**-1"></a><a class="docs-heading-anchor-permalink" href="#**Holevo-Cramér-Rao-bound**" title="Permalink"></a></h2><p>Holevo Cramér-Rao bound (HCRB) is of the form <a href="#Holevo1973">[4,5]</a></p><p class="math-container">\[\begin{align}
+\mathrm{Tr}(W\mathrm{cov}(\hat{\textbf{x}},\{\Pi_y\}))\geq \min_{\textbf{X},V} \mathrm{Tr}(WV),
+\end{align}\]</p><p>where <span>$W$</span> is the weight matrix and <span>$V\geq Z(\textbf{X})$</span> with <span>$[Z(\textbf{X})]_{ab}=\mathrm{Tr} (\rho X_a X_b)$</span>. <span>$\textbf{X}=[X_0,X_1,\cdots]$</span> with <span>$X_i:=\sum_y (\hat{x}_i(y)-x_i)\Pi_y$</span>.  The HCRB can be calculated via semidefinite programming as </p><p class="math-container">\[\begin{align*}
+&amp; \min_{\textbf{X},V}~\mathrm{Tr}(WV), \\
+&amp; \mathrm{subject}~\mathrm{to}
+\begin{cases}
+\left(\begin{array}{cc}
+V &amp; \Lambda^{\mathrm{T}}R^{\dagger} \\
+R\Lambda &amp; I\\
+\end{array}\right)\geq 0, \\
+\sum_i[\Lambda]_{ai}\mathrm{Tr}(\lambda_i\partial_b\rho)=\delta_{ab}.
+\end{cases}
+\end{align*}\]</p><p>Here <span>$X_i$</span> is expanded in a specific basis <span>$\{\lambda_i\}$</span> as <span>$X_i=\sum_j [\Lambda]_{ij}\lambda_j$</span>,  the Hermitian matrix <span>$Z(\textbf{X})$</span> satisfies <span>$Z(\textbf{X})=\Lambda^{\mathrm{T}}R^{\dagger} R\Lambda$</span>. In QuanEstimation, the HCRB can be solved by</p><pre><code class="language-jl hljs">HCRB(rho, drho, W; eps=1e-8) </code></pre><p>where <code>rho</code> and <code>drho</code> are the density matrix of the state and its derivatives with respect to the unknown parameters to be estimated, respectively. <code>W</code> represents the weight matrix defaults  to identity matrix and <code>eps</code> is the machine epsilon with default value <span>$10^{-8}$</span>.</p><h2 id="**Nagaoka-Hayashi-bound**"><a class="docs-heading-anchor" href="#**Nagaoka-Hayashi-bound**"><strong>Nagaoka-Hayashi bound</strong></a><a id="**Nagaoka-Hayashi-bound**-1"></a><a class="docs-heading-anchor-permalink" href="#**Nagaoka-Hayashi-bound**" title="Permalink"></a></h2><p>Nagaoka-Hayashi bound (NHB) is another available bound in quantum parameter estimation and  it is tighter than HCRB in general. The NHB can be expressed as <a href="#Conlon2021">[6-8]</a></p><p class="math-container">\[\begin{equation}
+\mathrm{Tr}(W\mathrm{cov}(\hat{\textbf{x}},\{\Pi_y\}))\geq \min_{\textbf{X},\mathcal{Q}} \mathrm{Tr}\left((W\otimes\rho)\mathcal{Q}\right)
+\end{equation}\]</p><p>with <span>$W$</span> the weight matrix and <span>$\mathcal{Q}$</span> a matrix satisfying <span>$\mathcal{Q}\geq\textbf{X}^{\mathrm{T}}\textbf{X}$</span>.  The NHB can be solved by the semidefinite programming as</p><p class="math-container">\[\begin{align*}
+&amp; \min_{\textbf{X},\mathcal{Q}}~\mathrm{Tr}\left((W\otimes\rho)\mathcal{Q}\right), \\
+&amp; \mathrm{subject}~\mathrm{to}~
+\begin{cases}
+\left(\begin{array}{cc}
+\mathcal{Q} &amp; \textbf{X}^{\mathrm{T}} \\
+\textbf{X} &amp; I\\
+\end{array}\right)\geq 0, \\
+\mathrm{Tr}(\rho X_a)=0,\,\forall a, \\
+\mathrm{Tr}(X_a\partial_b\rho)=\delta_{ab},\,\forall a, b.\\
+\end{cases}
+\end{align*}\]</p><p>In QuanEstimation, the NHB can be solved by</p><pre><code class="language-jl hljs">NHB(rho, drho, W) </code></pre><hr/><p><strong>Example 3.7</strong>   &lt;a id=&quot;example3_7&quot;&gt;&lt;/a&gt; The Hamiltonian of a two-qubit system with <span>$XX$</span> coupling is </p><p class="math-container">\[\begin{align}
+H=\omega_1\sigma_3^{(1)}+\omega_2\sigma_3^{(2)}+g\sigma_1^{(1)}\sigma_1^{(2)},
+\end{align}\]</p><p>where <span>$\omega_1$</span>, <span>$\omega_2$</span> are the frequencies of the first and second qubit, <span>$\sigma_i^{(1)} =\sigma_i\otimes I$</span> and <span>$\sigma_i^{(2)}=I\otimes\sigma_i$</span> for <span>$i=1,2,3$</span>. <span>$\sigma_1$</span>,  <span>$\sigma_2$</span>, <span>$\sigma_3$</span> are Pauli matrices and <span>$I$</span> denotes the identity matrix. The dynamics  is described by the master equation </p><p class="math-container">\[\begin{align}
+\partial_t\rho=-i[H, \rho]+\sum_{i=1,2}\gamma_i\left(\sigma_3^{(i)}\rho\sigma_3^{(i)}-\rho\right)
+\end{align}\]</p><p>with <span>$\gamma_i$</span> the decay rate for the <span>$i$</span>th qubit.</p><p>The probe state is taken as <span>$\frac{1}{\sqrt{2}}(|00\rangle+|11\rangle)$</span> and the weight matrix  is set to be identity. The measurement for <span>$\mathrm{Tr}(W\mathcal{I^{-1}})$</span> is <span>$\{\Pi_1$</span>,  <span>$\Pi_2$</span>, <span>$I-\Pi_1-\Pi_2\}$</span> with <span>$\Pi_1=0.85|00\rangle\langle 00|$</span> and <span>$\Pi_2=0.4|\!+ \!+\rangle\langle+\!+\!|$</span>. Here <span>$|\pm\rangle:=\frac{1}{\sqrt{2}}(|0\rangle\pm|1\rangle)$</span> with  <span>$|0\rangle$</span> <span>$(|1\rangle)$</span> the eigenstate of <span>$\sigma_3$</span> with respect to the eigenvalue <span>$1$</span> (<span>$-1$</span>).</p><pre><code class="language-jl hljs">using QuanEstimation
+using LinearAlgebra
+
+# initial state
+psi0 = [1., 0., 0., 1.]/sqrt(2)
+rho0 = psi0*psi0&#39;
+# free Hamiltonian
+omega1, omega2, g = 1.0, 1.0, 0.1
+sx = [0. 1.; 1. 0.0im]
+sy = [0. -im; im 0.]
+sz = [1. 0.0im; 0. -1.]
+H0 = omega1*kron(sz, I(2)) + omega2*kron(I(2), sz) + g*kron(sx, sx)
+# derivatives of the free Hamiltonian with respect to omega2 and g
+dH = [kron(I(2), sz), kron(sx, sx)]
+# dissipation
+decay = [[kron(sz, I(2)), 0.05], [kron(I(2), sz), 0.05]]
+# measurement
+m1 = [1., 0., 0., 0.]
+M1 = 0.85*m1*m1&#39;
+M2 = 0.1*ones(4, 4)
+M = [M1, M2, I(4)-M1-M2]
+# time length for the evolution
+tspan = range(0., 5., length=200)
+# dynamics
+rho, drho = QuanEstimation.expm(tspan, rho0, H0, dH, decay)
+# weight matrix
+W = one(zeros(2, 2))
+# calculation of the HCRB and NHB
+f_HCRB, f_NHB = [], []
+for ti in 2:length(tspan)
+    # HCRB
+    f_tp1 = QuanEstimation.HCRB(rho[ti], drho[ti], W)
+    append!(f_HCRB, f_tp1)
+    # NHB
+    f_tp2 = QuanEstimation.NHB(rho[ti], drho[ti], W)
+    append!(f_NHB, f_tp2)
+end</code></pre><hr/><h2 id="**Bayesian-Cramér-Rao-bounds**"><a class="docs-heading-anchor" href="#**Bayesian-Cramér-Rao-bounds**"><strong>Bayesian Cramér-Rao bounds</strong></a><a id="**Bayesian-Cramér-Rao-bounds**-1"></a><a class="docs-heading-anchor-permalink" href="#**Bayesian-Cramér-Rao-bounds**" title="Permalink"></a></h2><p>The Bayesian version of the classical Fisher information (matrix) and quantum Fisher information  (matrix) can be calculated by </p><p>$</p><p>\mathcal{I}_{\mathrm{Bayes}}=\int p(\textbf{x})\mathcal{I}\mathrm{d}\textbf{x} $</p><p>and </p><p>$</p><p>\mathcal{F}_{\mathrm{Bayes}}=\int p(\textbf{x})\mathcal{F}\mathrm{d}\textbf{x}, $</p><p>where <span>$p(\textbf{x})$</span> is the prior distribution, <span>$\mathcal{I}$</span> and <span>$\mathcal{F}$</span> are CFI (CFIM)  and QFI (QFIM) of all types, respectively.</p><p>In QuanEstimation, BCFI (BCFIM) and BQFI (BQFIM) can be solved via</p><pre><code class="language-jl hljs">BCFIM(x, p, rho, drho; M=missing, eps=1e-8)</code></pre><pre><code class="language-jl hljs">BQFIM(x, p, rho, drho; LDtype=:SLD, eps=1e-8)</code></pre><p>where <code>x</code> represents the regimes of the parameters for the integral, it should be input as a  vector of arrays. <code>p</code> is an array representing the prior distribution. The input variables <code>rho</code>  and <code>drho</code> are two multidimensional arrays with the dimensions as <code>x</code>. For example, for three  parameter (<span>$x_0, x_1, x_2$</span>) estimation, the <span>$ijk$</span>th entry of <code>rho</code> and <code>drho</code> are <span>$\rho$</span> and  <span>$[\partial_0\rho, \partial_1\rho, \partial_2\rho]$</span> with respect to the values <span>$[x_0]_i$</span>,  <span>$[x_1]_j$</span> and <span>$[x_2]_k$</span>, respectively. <code>LDtype</code> represents the types of QFI (QFIM) can be set, options are <code>LDtype=:SLD</code> (default), <code>LDtype=:RLD</code> and <code>LDtype=:LLD</code>. <code>M</code> represents a set of  positive operator-valued measure (POVM) with default value <code>missing</code>. In QuanEstimation, a set of  rank-one symmetric informationally complete POVM (SIC-POVM) is loaded when <code>M=missing</code>. SIC-POVM is  calculated by the Weyl-Heisenberg covariant SIC-POVM fiducial state which can be downloaded  from <a href="http://www.physics.umb.edu/Research/QBism/solutions.html">here</a>.</p><p>In the Bayesian scenarios, the covariance matrix with a prior distribution <span>$p(\textbf{x})$</span> is  defined as</p><p class="math-container">\[\begin{align}
+\mathrm{cov}(\hat{\textbf{x}},\{\Pi_y\})=\int p(\textbf{x})\sum_y\mathrm{Tr}(\rho\Pi_y)
+(\hat{\textbf{x}}-\textbf{x})(\hat{\textbf{x}}-\textbf{x})^{\mathrm{T}}\mathrm{d}\textbf{x},
+\end{align}\]</p><p>where <span>$\textbf{x}=(x_0,x_1,\dots)^{\mathrm{T}}$</span> are the unknown parameters to be estimated and  the integral <span>$\int\mathrm{d}\textbf{x}:=\int\mathrm{d}x_0\int\mathrm{d}x_1\cdots$</span>. <span>$\{\Pi_y\}$</span> is  a set of POVM and <span>$\rho$</span> represents the parameterized density matrix. Two types of Bayesian  Cramér-Rao bound (BCRB) are calculated in this package, the first one is </p><p class="math-container">\[\begin{align}
+\mathrm{cov}(\hat{\textbf{x}},\{\Pi_y\})\geq \int p(\textbf{x})\left(B\mathcal{I}^{-1}B
++\textbf{b}\textbf{b}^{\mathrm{T}}\right)\mathrm{d}\textbf{x},
+\end{align}\]</p><p>where <span>$\textbf{b}$</span> and <span>$\textbf{b}&#39;$</span> are the vectors of bias and its derivatives with respect to  <span>$\textbf{x}$</span>. <span>$B$</span> is a diagonal matrix with the <span>$i$</span>th entry <span>$B_{ii}=1+[\textbf{b}&#39;]_{i}$</span> and  <span>$\mathcal{I}$</span> is the CFIM. The second one is</p><p class="math-container">\[\begin{align}
+\mathrm{cov}(\hat{\textbf{x}},\{\Pi_y\})\geq \mathcal{B}\,\mathcal{I}_{\mathrm{Bayes}}^{-1}\,
+\mathcal{B}+\int p(\textbf{x})\textbf{b}\textbf{b}^{\mathrm{T}}\mathrm{d}\textbf{x},
+\end{align}\]</p><p>where <span>$\mathcal{B}=\int p(\textbf{x})B\mathrm{d}\textbf{x}$</span> is the average of <span>$B$</span> and  <span>$\mathcal{I}_{\mathrm{Bayes}}$</span> is the average of the CFIM.</p><p>The third one is </p><p class="math-container">\[\begin{align}
+\mathrm{cov}(\hat{\textbf{x}},\{\Pi_y\})\geq \int p(\textbf{x})
+\mathcal{G}\left(\mathcal{I}_p+\mathcal{I}\right)^{-1}\mathcal{G}^{\mathrm{T}}\mathrm{d}\textbf{x}
+\end{align}\]</p><p>with <span>$[\mathcal{I}_{p}]_{ab}:=[\partial_a \ln p(\textbf{x})][\partial_b \ln p(\textbf{x})]$</span> and <span>$\mathcal{G}_{ab}:=[\partial_b\ln p(\textbf{x})][\textbf{b}]_a+B_{aa}\delta_{ab}$</span>.</p><p>Three types of Bayesian Quantum Cramér-Rao bound (BQCRB) are calculated, the first one is </p><p class="math-container">\[\begin{align}
+\mathrm{cov}(\hat{\textbf{x}},\{\Pi_y\})\geq\int p(\textbf{x})\left(B\mathcal{F}^{-1}B
++\textbf{b}\textbf{b}^{\mathrm{T}}\right)\mathrm{d}\textbf{x}
+\end{align}\]</p><p>with <span>$\mathcal{F}$</span> the QFIM for all types. The second one is</p><p class="math-container">\[\begin{align}
+\mathrm{cov}(\hat{\textbf{x}},\{\Pi_y\})\geq \mathcal{B}\,\mathcal{F}_{\mathrm{Bayes}}^{-1}\,
+\mathcal{B}+\int p(\textbf{x})\textbf{b}\textbf{b}^{\mathrm{T}}\mathrm{d}\textbf{x}
+\end{align}\]</p><p>with <span>$\mathcal{F}_{\mathrm{Bayes}}$</span> the average of the QFIM.</p><p>The third one is </p><p class="math-container">\[\begin{align}
+\mathrm{cov}(\hat{\textbf{x}},\{\Pi_y\})\geq \int p(\textbf{x})
+\mathcal{G}\left(\mathcal{I}_p+\mathcal{F}\right)^{-1}\mathcal{G}^{\mathrm{T}}\mathrm{d}\textbf{x}.
+\end{align}\]</p><p>In QuanEstimation, the BCRB and BQCRB are calculated via</p><pre><code class="language-jl hljs">BCRB(x, p, dp, rho, drho; M=missing, b=missing, db=missing, 
+     btype=1, eps=1e-8)</code></pre><pre><code class="language-jl hljs">BQCRB(x, p, dp, rho, drho; b=missing, db=missing, btype=1, 
+      LDtype=:SLD, eps=1e-8)</code></pre><p>where <code>b</code> and <code>db</code> are the vectors of biases and its derivatives on the unknown parameters.  For unbiased estimates, <code>b=missing</code> and <code>db=missing</code>. In QuanEstimation, the users can set  the types of BCRB and BQCRB via the variable <code>btype</code>. </p><p>For single parameter estimation, Ref <a href="#Liu2016">[9]</a> calculates the optimal biased bound based  on the first type of the BQCRB, it can be realized numerically via</p><pre><code class="language-jl hljs">OBB(x, p, dp, rho, drho, d2rho; LDtype=:SLD, eps=1e-8)</code></pre><p><code>d2rho</code> is a vector representing the second order derivatives of <code>rho</code> on <code>x</code>.</p><p>Van Trees in 1968 <a href="#vanTrees1968">[10]</a> provides a well used Bayesian version of Cramér-Rao  bound known as Van Trees bound (VTB).  $ \mathrm{cov}(\hat{\textbf{x}},{\Pi<em>y})\geq \left(\mathcal{I}</em>{\mathrm{prior}} +\mathcal{I}_{\mathrm{Bayes}}\right)^{-1}, $  </p><p>where <span>$\mathcal{I}_{\mathrm{prior}}=\int p(\textbf{x})\mathcal{I}_{p}\mathrm{d}\textbf{x}$</span>  is the CFIM for <span>$p(\textbf{x})$</span> and <span>$\mathcal{I}_{\mathrm{Bayes}}$</span> is the average of the CFIM.</p><p>The quantum version (QVTB) provided by Tsang, Wiseman  and Caves <a href="#Tsang2011">[12]</a>.  $ \mathrm{cov}(\hat{\textbf{x}},{\Pi<em>y})\geq \left(\mathcal{I}</em>{\mathrm{prior}} +\mathcal{F}_{\mathrm{Bayes}}\right)^{-1}, $  </p><p>with <span>$\mathcal{F}_{\mathrm{Bayes}}$</span> the average of the QFIM of all types.</p><p>The functions to calculate the VTB and QVTB are</p><pre><code class="language-jl hljs">VTB(x, p, dp, rho, drho; M=missing, eps=1e-8)</code></pre><pre><code class="language-jl hljs">QVTB(x, p, dp, rho, drho; LDtype=:SLD, eps=1e-8)</code></pre><p>Here the variables in the codes are the same with <code>BCRB</code> and <code>BQCRB</code>.</p><h2 id="**Quantum-Ziv-Zakai-bound**"><a class="docs-heading-anchor" href="#**Quantum-Ziv-Zakai-bound**"><strong>Quantum Ziv-Zakai bound</strong></a><a id="**Quantum-Ziv-Zakai-bound**-1"></a><a class="docs-heading-anchor-permalink" href="#**Quantum-Ziv-Zakai-bound**" title="Permalink"></a></h2><p>The expression of Quantum Ziv-Zakai bound (QZZB) with a prior distribution <span>$p(x)$</span> in a finite  regime <span>$[\alpha,\beta]$</span> is</p><p class="math-container">\[\begin{align*}
+\mathrm{var}(\hat{x},\{\Pi_y\}) &amp;\geq &amp; \frac{1}{2}\int_0^\infty \mathrm{d}\tau\tau
+\mathcal{V}\int_{-\infty}^{\infty} \mathrm{d}x\min\!\left\{p(x), p(x+\tau)\right\} \\
+&amp; &amp; \times\left(1-\frac{1}{2}||\rho(x)-\rho(x+\tau)||\right),
+\end{align*}\]</p><p>where <span>$||\cdot||$</span> represents the trace norm and <span>$\mathcal{V}$</span> is the &quot;valley-filling&quot;  operator satisfying <span>$\mathcal{V}f(\tau)=\max_{h\geq 0}f(\tau+h)$</span>. <span>$\rho(x)$</span> is the  parameterized density matrix. </p><p>In QuanEstimation, the QZZB can be calculated via the function:</p><pre><code class="language-jl hljs">QZZB(x, p, rho; eps=1e-8)</code></pre><p>where <code>x</code> is a vector of arrays representing the regime of the parameter for the integral, <code>p</code> is  an array representing the prior distribution and <code>rho</code> is a multidimensional array representing  the density matrix. <code>eps</code> is the machine epsilon with default value <span>$10^{-8}$</span>.</p><hr/><p><strong>Example 3.8</strong>   &lt;a id=&quot;example3_8&quot;&gt;&lt;/a&gt; The Hamiltonian of a qubit system under a magnetic field <span>$B$</span> in the XZ plane is</p><p class="math-container">\[\begin{align}
+H=\frac{B\omega_0}{2}(\sigma_1\cos{x}+\sigma_3\sin{x})
+\end{align}\]</p><p>with <span>$x$</span> the unknown parameter and <span>$\sigma_{1}$</span>, <span>$\sigma_{3}$</span> Pauli matrices. The probe state  is taken as <span>$\frac{1}{\sqrt{2}}(|0\rangle+|1\rangle)$</span> with <span>$|0\rangle$</span> (<span>$|1\rangle$</span>) the  eigenstates of <span>$\sigma_3$</span> with respect to the eigenvalues <span>$1$</span> (<span>$-1$</span>). The measurement  for classical bounds is a set of rank-one symmetric informationally complete positive  operator-valued measure (SIC-POVM).</p><p>Take the Gaussian prior distribution <span>$p(x)=\frac{1}{c\eta\sqrt{2\pi}}\exp\left({-\frac{(x-\mu)^2} {2\eta^2}}\right)$</span> on <span>$[-\pi/2, \pi/2]$</span> with <span>$\mu$</span> and <span>$\eta$</span> the expectation and standard  deviation, respectively. Here <span>$c=\frac{1}{2}\big[\mathrm{erf}(\frac{\pi-2\mu}{2\sqrt{2}\eta}) +\mathrm{erf}(\frac{\pi+2\mu}{2\sqrt{2}\eta})\big]$</span> is the normalized coefficient with  <span>$\mathrm{erf}(x):=\frac{2}{\sqrt{\pi}}\int^x_0 e^{-t^2}\mathrm{d}t$</span> the error function.</p><pre><code class="language-jl hljs">using QuanEstimation
+using Trapz
+
+# free Hamiltonian
+function H0_func(x)
+    return 0.5*B*omega0*(sx*cos(x)+sz*sin(x))
+end
+# derivative of the free Hamiltonian on x
+function dH_func(x)
+    return [0.5*B*omega0*(-sx*sin(x)+sz*cos(x))]
+end
+# prior distribution
+function p_func(x, mu, eta)
+    return exp(-(x-mu)^2/(2*eta^2))/(eta*sqrt(2*pi))
+end
+function dp_func(x, mu, eta)
+    return -(x-mu)*exp(-(x-mu)^2/(2*eta^2))/(eta^3*sqrt(2*pi))
+end
+
+B, omega0 = 0.5*pi, 1.0
+sx = [0. 1.; 1. 0.0im]
+sy = [0. -im; im 0.]
+sz = [1. 0.0im; 0. -1.]
+# initial state
+rho0 = 0.5*ones(2, 2)
+# prior distribution
+x = range(-0.5*pi, stop=0.5*pi, length=100) |&gt;Vector
+mu, eta = 0.0, 0.2
+p_tp = [p_func(x[i], mu, eta) for i in 1:length(x)]
+dp_tp = [dp_func(x[i], mu, eta) for i in 1:length(x)]
+# normalization of the distribution
+c = trapz(x, p_tp)
+p = p_tp/c
+dp = dp_tp/c
+# time length for the evolution
+tspan = range(0., stop=1., length=1000)
+# dynamics
+rho = Vector{Matrix{ComplexF64}}(undef, length(x))
+drho = Vector{Vector{Matrix{ComplexF64}}}(undef, length(x))
+for i = 1:length(x) 
+    H0_tp = H0_func(x[i])
+    dH_tp = dH_func(x[i])
+    rho_tp, drho_tp = QuanEstimation.expm(tspan, rho0, H0_tp, dH_tp)
+    rho[i], drho[i] = rho_tp[end], drho_tp[end]
+end</code></pre><pre><code class="language-jl hljs"># Classical Bayesian bounds
+f_BCRB1 = QuanEstimation.BCRB([x], p, dp, rho, drho; btype=1)
+f_BCRB2 = QuanEstimation.BCRB([x], p, dp, rho, drho; btype=2)
+f_BCRB3 = QuanEstimation.BCRB([x], p, dp, rho, drho; btype=3)
+f_VTB = QuanEstimation.VTB([x], p, dp, rho, drho)</code></pre><pre><code class="language-jl hljs"># Quantum Bayesian bounds
+f_BQCRB1 = QuanEstimation.BQCRB([x], p, dp, rho, drho; btype=1)
+f_BQCRB2 = QuanEstimation.BQCRB([x], p, dp, rho, drho; btype=2)
+f_BQCRB3 = QuanEstimation.BQCRB([x], p, dp, rho, drho; btype=3)
+f_QVTB = QuanEstimation.QVTB([x], p, dp, rho, drho)
+f_QZZB = QuanEstimation.QZZB([x], p, rho)</code></pre><hr/><h2 id="**Bayesian-estimation**"><a class="docs-heading-anchor" href="#**Bayesian-estimation**"><strong>Bayesian estimation</strong></a><a id="**Bayesian-estimation**-1"></a><a class="docs-heading-anchor-permalink" href="#**Bayesian-estimation**" title="Permalink"></a></h2><p>In QuanEstimation, two types of Bayesian estimation are considered including maximum a  posteriori estimation (MAP) and maximum likelihood estimation (MLE). In Bayesian estimation,  the prior distribution  is updated as</p><p class="math-container">\[\begin{align}
+p(\textbf{x}|y)=\frac{p(y|\textbf{x})p(\textbf{x})}{\int p(y|\textbf{x})p(\textbf{x})
+\mathrm{d}\textbf{x}}
+\end{align}\]</p><p>with <span>$p(\textbf{x})$</span> the current prior distribution and <span>$y$</span> the outcome of the experiment.  In practice, the prior distribution is replaced with <span>$p(\textbf{x}|y)$</span> and the estimated  value of <span>$\textbf{x}$</span> can be evaluated by</p><pre><code class="language-jl hljs">Bayes(x, p, rho, y; M=missing, estimator=&quot;mean&quot;, savefile=false)</code></pre><pre><code class="language-jl hljs">MLE(x, rho, y; M=missing, savefile=false)</code></pre><p>where <code>x</code> is a vector of arrays representing the regimes of the parameters for the integral and  <code>p</code> is an array representing the prior distribution. For multiparameter estimation, <code>p</code> is  multidimensional. The input variable <code>rho</code> is a multidimensional array with the dimensions as <code>x</code>  representing the parameterized density matrix. <code>M</code> contains a set of positive operator-valued  measure (POVM). In QuanEstimation, a set of rank-one symmetric informationally complete POVM  (SIC-POVM) is used when <code>M=missing</code>. SIC-POVM is calculated by the Weyl-Heisenberg covariant SIC-POVM  fiducial state which can be downloaded from <a href="http://www.physics.umb.edu/Research/QBism/solutions.html">here</a>.  <code>estimator</code> in <code>Bayes()</code> represents the estimator which defaults to the mean value of the  parameters. Also, it can be set as <code>&quot;MAP&quot;</code>. The posterior distributions (likelihood function) in the  final iteration and the estimated values in all iterations will be saved in &quot;pout.csv&quot; (&quot;Lout.csv&quot;)  and &quot;xout.csv&quot; if <code>savefile=false</code>. However, if the users want to save all the posterior  distributions (likelihood function) and the estimated values in all iterations, the variable  <code>savefile</code> needs to be set to <code>true</code>.</p><p><strong>Example 3.9</strong>   &lt;a id=&quot;example3_9&quot;&gt;&lt;/a&gt; The Hamiltonian of a qubit system is </p><p class="math-container">\[\begin{align}
+H=\frac{B\omega_0}{2}(\sigma_1\cos{x}+\sigma_3\sin{x}),
+\end{align}\]</p><p>where <span>$B$</span> is the magnetic field in the XZ plane, <span>$x$</span> is the unknown parameter and <span>$\sigma_{1}$</span>,  <span>$\sigma_{3}$</span> are the Pauli matrices. The probe state is taken as <span>$|\pm\rangle$</span>. The measurement  is <span>$\{|\!+\rangle\langle+\!|,|\!-\rangle\langle-\!|\}$</span>. Here <span>$|\pm\rangle:=\frac{1}{\sqrt{2}} (|0\rangle\pm|1\rangle)$</span> with <span>$|0\rangle$</span> <span>$(|1\rangle)$</span> the eigenstate of <span>$\sigma_3$</span> with respect  to the eigenvalue <span>$1$</span> <span>$(-1)$</span>. In this example, the prior distribution <span>$p(x)$</span> is uniform on  <span>$[0, \pi/2]$</span>.</p><pre><code class="language-jl hljs">using QuanEstimation
+using Random
+using StatsBase
+
+# free Hamiltonian
+function H0_func(x)
+    return 0.5*B*omega0*(sx*cos(x)+sz*sin(x))
+end
+# derivative of the free Hamiltonian on x
+function dH_func(x)
+    return [0.5*B*omega0*(-sx*sin(x)+sz*cos(x))]
+end
+
+B, omega0 = pi/2.0, 1.0
+sx = [0. 1.; 1. 0.0im]
+sy = [0. -im; im 0.]
+sz = [1. 0.0im; 0. -1.]
+# initial state
+rho0 = 0.5*ones(2, 2)
+# measurement 
+M1 = 0.5*[1.0+0.0im  1.; 1.  1.]
+M2 = 0.5*[1.0+0.0im -1.; -1.  1.]
+M = [M1, M2]
+# prior distribution
+x = range(0., stop=0.5*pi, length=100) |&gt;Vector
+p = (1.0/(x[end]-x[1]))*ones(length(x))
+# time length for the evolution
+tspan = range(0., stop=1., length=1000)
+# dynamics
+rho = Vector{Matrix{ComplexF64}}(undef, length(x))
+for i = 1:length(x) 
+    H0_tp = H0_func(x[i])
+    dH_tp = dH_func(x[i])
+    rho_tp, drho_tp = QuanEstimation.expm(tspan, rho0, H0_tp, dH_tp)
+    rho[i] = rho_tp[end]
+end</code></pre><pre><code class="language-jl hljs"># Generation of the experimental results
+Random.seed!(1234)
+y = [0 for i in 1:500]
+res_rand = sample(1:length(y), 125, replace=false)
+for i in 1:length(res_rand)
+    y[res_rand[i]] = 1
+end</code></pre><pre><code class="language-jl hljs"># Maximum a posteriori estimation
+pout, xout = QuanEstimation.Bayes([x], p, rho, y; M=M, estimator=&quot;MAP&quot;,
+                                  savefile=false)</code></pre><pre><code class="language-jl hljs"># Maximum likelihood estimation
+Lout, xout = QuanEstimation.MLE([x], rho, y; M=M, savefile=false)</code></pre><p>The average Bayesian cost <a href="#Robert2007">[14]</a> for a quadratic cost function can be  calculated via</p><p class="math-container">\[\begin{equation}
+\bar{C}:=\int p(\textbf{x})\sum_y p(y|\textbf{x})(\textbf{x}-\hat{\textbf{x}})^{\mathrm{T}}
+W(\textbf{x}-\hat{\textbf{x}})\,\mathrm{d}\textbf{x}
+\end{equation}\]</p><p>In QuanEstimation, this can be realized by calling</p><pre><code class="language-jl hljs">BayesCost(x, p, xest, rho, y, M; W=missing, eps=1e-8)</code></pre><p><code>xest</code> represents the estimators for the parameters.</p><p>Besides, the average Bayesian cost bounded by <a href="#Rafal2020">[5]</a> </p><p class="math-container">\[\begin{equation}
+\bar{C}\geq\int p(\textbf{x})\left(\textbf{x}^{\mathrm{T}}W\textbf{x}\right)\mathrm{d}\textbf{x}
+-\sum_{ab}W_{ab}\mathrm{Tr}\left(\bar{\rho}\bar{L}_a \bar{L}_b\right),  
+\label{eq:BCB}
+\end{equation}\]</p><p>and for single-parameter scenario, this inequality reduces to</p><p class="math-container">\[\begin{equation}
+\bar{C}\geq \int p(x) x^2\,\mathrm{d}x-\mathrm{Tr}(\bar{\rho}\bar{L}^2). 
+\end{equation}\]</p><p>The function for calculating the Bayesian cost bound (BCB) is</p><pre><code class="language-jl hljs">BCB(x, p, rho; W=missing, eps=1e-8)</code></pre><p><strong>Example 3.10</strong>   &lt;a id=&quot;example3_10&quot;&gt;&lt;/a&gt; The Hamiltonian of a qubit system is </p><p class="math-container">\[\begin{align}
+H=\frac{B\omega_0}{2}(\sigma_1\cos{x}+\sigma_3\sin{x}),
+\end{align}\]</p><p>where <span>$B$</span> is the magnetic field in the XZ plane, <span>$x$</span> is the unknown parameter and <span>$\sigma_{1}$</span>,  <span>$\sigma_{3}$</span> are the Pauli matrices. The probe state is taken as <span>$|\pm\rangle$</span>. The measurement  is <span>$\{|\!+\rangle\langle+\!|,|\!-\rangle\langle-\!|\}$</span>. Here <span>$|\pm\rangle:=\frac{1}{\sqrt{2}} (|0\rangle\pm|1\rangle)$</span> with <span>$|0\rangle$</span> <span>$(|1\rangle)$</span> the eigenstate of <span>$\sigma_3$</span> with respect  to the eigenvalue <span>$1$</span> <span>$(-1)$</span>. In this example, the prior distribution <span>$p(x)$</span> is uniform on  <span>$[0, \pi/2]$</span>.</p><pre><code class="language-jl hljs">using QuanEstimation
+using Random
+using StatsBase
+
+# free Hamiltonian
+function H0_func(x)
+    return 0.5*B*omega0*(sx*cos(x)+sz*sin(x))
+end
+# derivative of the free Hamiltonian on x
+function dH_func(x)
+    return [0.5*B*omega0*(-sx*sin(x)+sz*cos(x))]
+end
+
+B, omega0 = pi/2.0, 1.0
+sx = [0. 1.; 1. 0.0im]
+sy = [0. -im; im 0.]
+sz = [1. 0.0im; 0. -1.]
+# initial state
+rho0 = 0.5*ones(2, 2)
+# measurement 
+M1 = 0.5*[1.0+0.0im  1.; 1.  1.]
+M2 = 0.5*[1.0+0.0im -1.; -1.  1.]
+M = [M1, M2]
+# prior distribution
+x = range(0., stop=0.5*pi, length=100) |&gt;Vector
+p = (1.0/(x[end]-x[1]))*ones(length(x))
+# time length for the evolution
+tspan = range(0., stop=1., length=1000)
+# dynamics
+rho = Vector{Matrix{ComplexF64}}(undef, length(x))
+for i = 1:length(x) 
+    H0_tp = H0_func(x[i])
+    dH_tp = dH_func(x[i])
+    rho_tp, drho_tp = QuanEstimation.expm(tspan, rho0, H0_tp, dH_tp)
+    rho[i] = rho_tp[end]
+end</code></pre><pre><code class="language-jl hljs"># average Bayesian cost
+M = QuanEstimation.SIC(2)
+xest = [[0.8], [0.9], [1.0], [1.2]]
+C = QuanEstimation.BayesCost([x], p, xest, rho, M; eps=1e-8)</code></pre><pre><code class="language-jl hljs"># Bayesian cost Bound
+C = QuanEstimation.BCB([x], p, rho; eps=1e-8)</code></pre><hr/><h2 id="**Bibliography**"><a class="docs-heading-anchor" href="#**Bibliography**"><strong>Bibliography</strong></a><a id="**Bibliography**-1"></a><a class="docs-heading-anchor-permalink" href="#**Bibliography**" title="Permalink"></a></h2><p><strong>[1]</strong> C. W. Helstrom,  <em>Quantum Detection and Estimation Theory</em> (New York: Academic, 1976).</p><p><strong>[2]</strong>  A. S. Holevo,  <em>Probabilistic and Statistical Aspects of Quantum Theory</em> (Amsterdam: North-Holland, 1982).</p><p><strong>[3]</strong>  J. Liu, H. Yuan, X.-M. Lu, and X. Wang, Quantum Fisher information matrix and multiparameter estimation, <a href="https://doi.org/10.1088/1751-8121/ab5d4d">J. Phys. A: Math. Theor. <strong>53</strong>, 023001 (2020).</a></p><p><strong>[4]</strong>  A. S Holevo, Statistical decision theory for quantum systems, <a href="https://doi.org/10.1016/0047-259X(73)90028-6">J. Multivariate Anal. <strong>3</strong>, 337-394 (1973).</a></p><p><strong>[5]</strong>  R. Demkowicz-Dobrzański, W. Górecki, and M. Guţă, Multi-parameter estimation beyond Quantum Fisher Information, <a href="https://doi.org/10.1088/1751-8121/ab8ef3">J. Phys. A: Math. Theor. <strong>53</strong>, 363001 (2020).</a></p><p><strong>[6]</strong>  H. Nagaoka, A New Approach to Cra ´ mer–Rao Bounds for Quantum State Estimation, Tech. Rep. IT89-42, 9 (1989).</p><p><strong>[7]</strong>  M. Hayashi, On simultaneous measurement of noncommutative observables. In Development of  Infinite-Dimensional Non-Commutative Analysis, 96–188 (Kyoto Univ., 1999).</p><p><strong>[8]</strong>  L. O. Conlon, J. Suzuki, P. K. Lam, and S. M. Assad, Efficient computation of the Nagaoka–Hayashi bound for multiparameter estimation with separable measurements, <a href="https://doi.org/10.1038/s41534-021-00414-1">npj Quantum Inf.  <strong>7</strong>, 110 (2021).</a></p><p><strong>[9]</strong> J. Liu and H. Yuan,  Valid lower bound for all estimators in quantum parameter estimation,  <a href="https://doi.org/10.1088/1367-2630/18/9/093009">New J. Phys. <strong>18</strong>, 093009 (2016).</a></p><p><strong>[10]</strong>  H. L. Van Trees,  <em>Detection, estimation, and modulation theory: Part I</em> (Wiley, New York, 1968).</p><p><strong>[11]</strong>  W. Zhong, Z. Sun, J. Ma, X. Wang, and F. Nori, Fisher information under decoherence in Bloch representation,  <a href="https://doi.org/10.1103/PhysRevA.87.022337">Phys. Rev. A <strong>87</strong>, 022337 (2013).</a></p><p><strong>[12]</strong>  M. Tsang, H. M. Wiseman, and C. M. Caves,  Fundamental quantum limit to waveform estimation,  <a href="https://doi.org/10.1103/PhysRevLett.106.090401">Phys. Rev. Lett. <strong>106</strong>, 090401 (2011).</a></p><p><strong>[13]</strong>  D. Šafránek, Estimation of Gaussian quantum states, <a href="https://doi.org/10.1088/1751-8121/aaf068">J. Phys. A: Math. Theor. <strong>52</strong>, 035304 (2019).</a></p><p><strong>[14]</strong>  C. P. Robert, <em>The Bayesian Choice</em> (Berlin: Springer, 2007).</p><p><strong>See also</strong>: <a href="../guide_Copt/">Control optimization</a>, <a href="../guide_Sopt/">State optimization</a>, <a href="../guide_Mopt/">Measurement optimization</a>, <a href="../guide_Compopt/">Comprehensive optimization</a> — use the bounds as objective functions to search for optimal quantum metrological schemes.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../guide_dynamics/">« Parameterization</a><a class="docs-footer-nextpage" href="../guide_Copt/">Control Optimization »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 6 July 2026 14:31">Monday 6 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
