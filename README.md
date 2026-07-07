@@ -13,9 +13,7 @@
 
 
 QuanEstimation.jl is an open-source toolkit for quantum parameter estimation, which can be used to perform general evaluations of many metrological 
-tools and scheme designs in quantum parameter estimation. 
-
-This package is also the Julia implementation of [QuanEstimation](https://github.com/QuanEstimation/QuanEstimation).
+tools and scheme designs in quantum parameter estimation. This package is is also the computional core of [QuanEstimation](https://github.com/QuanEstimation/QuanEstimation).
 
 ## Installation
 
