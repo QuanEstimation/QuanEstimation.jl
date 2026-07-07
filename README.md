@@ -4,7 +4,7 @@
 [![][action-img]][action-url]
 [![][codecov-img]][codecov-url]
 [![Downloads](https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Ftotal_downloads%2FQuanEstimation&query=total_requests&label=Downloads)](https://juliapkgstats.com/pkg/QuanEstimation)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16730594.svg)](https://doi.org/10.5281/zenodo.16730594)(https://doi.org/10.5281/zenodo.21219448)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.16730594.svg)](https://doi.org/10.5281/zenodo.16730594)
 
 [action-img]: https://github.com/QuanEstimation/QuanEstimation.jl/actions/workflows/CI_QuanEstimation.yml/badge.svg
 [action-url]: https://github.com/QuanEstimation/QuanEstimation.jl/actions
