@@ -361,7 +361,13 @@ function Holevo_bound(
         end
     end
     problem = minimize(tr(W * V), constraints)
-    Convex.solve!(problem, SCS.Optimizer(), silent_solver = true)
+    # The SCS defaults can return a visibly suboptimal bound on some BLAS builds.
+    # Tighten the primal-dual residual target and allow enough iterations to converge.
+    optimizer = SCS.Optimizer()
+    Convex.MOI.set(optimizer, Convex.MOI.RawOptimizerAttribute("eps_abs"), 1e-6)
+    Convex.MOI.set(optimizer, Convex.MOI.RawOptimizerAttribute("eps_rel"), 1e-6)
+    Convex.MOI.set(optimizer, Convex.MOI.RawOptimizerAttribute("max_iters"), 100000)
+    Convex.solve!(problem, optimizer, silent_solver = true)
     return evaluate(tr(W * V))
 end
 
