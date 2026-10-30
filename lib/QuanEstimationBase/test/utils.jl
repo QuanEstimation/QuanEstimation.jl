@@ -162,7 +162,7 @@ function generate_LMG2_dynamics()
     Jx = 0.5 * (Jp + Jm)
     Jy = -0.5im * (Jp - Jm)
     Jz = spdiagm(j:-1:-j)
-    H0 = -lambda * (Jx * Jx + g * Jy * Jy) / N + g * Jy^2 / N - h * Jz
+    H0 = -lambda * (Jx * Jx + g * Jy * Jy) / N - h * Jz
     dH = [-lambda * Jy * Jy / N, -Jz]
     decay = [[Jz, 0.1]]
     tspan = range(0.0, 10.0, length = 50)

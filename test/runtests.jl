@@ -38,4 +38,6 @@ using Test
         include("api_compat/run_compat.jl")
     end
 
+    include("docs_regressions.jl")
+
 end

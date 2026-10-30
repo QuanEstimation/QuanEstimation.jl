@@ -44,23 +44,26 @@ function adapt_scheme!(
     W,
     eps,
 ) where {ST,PT,MT}
+    e = isnothing(eps) ? GLOBAL_EPS : eps
     ρ_all, F_all = Matrix{ComplexF64}[], Float64[]
     for x in x_list
         adapt_param!(scheme, x)
         ρ, dρ = evolve(scheme)
         F_tp = CFIM(ρ, dρ, M; eps = eps)
-        push!(F_all, abs(det(F_tp)) < eps ? eps : 1.0 / real(tr(W * pinv(F_tp))))
+        push!(F_all, abs(det(F_tp)) < e ? e : 1.0 / real(tr(W * pinv(F_tp))))
         push!(ρ_all, ρ)
     end
     return ρ_all, F_all
 end
 
 @doc raw"""
-    adapt!(scheme::Scheme; method="FOP", savefile=false, max_episode=1000, W=nothing, res=nothing, eps=GLOBAL_EPS)
+    adapt!(scheme::Scheme; method="FOP", savefile=false, max_episode=1000, W=nothing, res=nothing, eps=nothing)
 
 Run adaptive estimation on the scheme. The `method` can be:
 - `"FOP"`: fixed optimal point — tunes toward the parameter that maximizes the objective.
 - `"MI"`: mutual information — chooses tunable parameters to maximize mutual information.
+
+`eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
 """
 function adapt!(
     scheme::Scheme{ST,PT,MT,AdaptiveStrategy};
@@ -69,7 +72,7 @@ function adapt!(
     max_episode::Int = 1000,
     W = nothing,
     res = nothing,
-    eps = GLOBAL_EPS,
+    eps = nothing,
 ) where {ST,PT,MT}
     (; x, p) = strat_data(scheme)
 

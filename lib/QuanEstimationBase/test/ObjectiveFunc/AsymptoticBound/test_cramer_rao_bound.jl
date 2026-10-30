@@ -214,8 +214,8 @@ function test_cramer_rao()
         @test norm(L * rho_full - drho_full) < 1e-10
         rho_sing = ComplexF64[1.0 0.0; 0.0 0.0]
         drho_cross = ComplexF64[0.0 0.5; 0.5 0.0]
-        @test_throws ErrorException RLD(rho_sing, drho_cross)
-        @test_throws ErrorException LLD(rho_sing, drho_cross)
+        @test_throws ArgumentError RLD(rho_sing, drho_cross)
+        @test_throws ArgumentError LLD(rho_sing, drho_cross)
     end
 
     # pinv bypass: QFIM_RLD/LLD calls operator functions

@@ -1,13 +1,12 @@
 """
-
     error_evaluation(scheme::Scheme; verbose=true, objective=:QFIM, input_error_scaling=1e-8, SLD_eps=1e-6, abstol=1e-6, reltol=1e-3)
 
-Evaluate the total error scaling for a scheme, combining both parameterization error and SLD eigenvalue threshold error.
+Evaluate the total error scaling for a scheme, combining both parameterization error and SLD truncation-bias error.
 raw"""
 function error_evaluation(
     scheme::Scheme;
     verbose::Bool = true,
-    objective=:QFIM,
+    objective = :QFIM,
     input_error_scaling = 1e-8,
     SLD_eps = 1e-6,
     abstol = 1e-6,
@@ -27,7 +26,6 @@ function error_evaluation(
 end
 
 raw"""
-
     param_error_evaluation(scheme::Scheme, input_error_scaling; verbose=true, objective=:QFIM, abstol=1e-6, reltol=1e-3)
 
 Estimate the QFIM error ``\delta F`` due to finite-precision input data (controls, state) via gradient-based propagation. For ODE-based dynamics, returns ``\mathrm{abstol} + \mathrm{reltol} \cdot \mathrm{input\_error\_scaling}``.
@@ -36,7 +34,7 @@ function param_error_evaluation(
     scheme::Scheme{S,LindbladDynamics{HT,DT,CT,Expm,P},M,E},
     input_error_scaling;
     verbose::Bool = true,
-    objective=:QFIM,
+    objective = :QFIM,
     abstol = 1e-6,
     reltol = 1e-3,
 ) where {S,HT,DT,CT,P,M,E}
@@ -62,7 +60,7 @@ function param_error_evaluation(
     scheme::Scheme{S,LindbladDynamics{HT,DT,CT,Ode,P},M,E},
     input_error_scaling;
     verbose::Bool = true,
-    objective=:QFIM,
+    objective = :QFIM,
     abstol = 1e-6,
     reltol = 1e-3,
 ) where {S,HT,DT,CT,P,M,E}
@@ -78,217 +76,213 @@ function param_error_evaluation(
 end
 
 raw"""
-
     SLD_eps_error(scheme, eps)
 
-Compute the QFIM error ``\delta F`` induced by the SLD eigenvalue threshold `eps`.
-"""
+Deprecated.  Return the truncation-bias bound of the QFIM evaluation with the
+legacy relative spectral floor `eps`.  The bound is read from the
+[`NumericalDiagnostics`](@ref) record of `QFIM(scheme; eps=eps, diagnostics=true)`.
+raw"""
 function SLD_eps_error(scheme, eps)
+    Base.depwarn(
+        "`SLD_eps_error` is deprecated; use `QFIM(scheme; eps=..., diagnostics=true)` and " *
+        "inspect `diag.truncation_bias_bound` instead.",
+        :SLD_eps_error,
+    )
     println("\nError evaluation for SLD calculation")
     println("Source: eps = $(eps)")
-    _, δF = QFIM_with_error(scheme, eps = eps)
-    println("δF ≈ ", δF[1])
-    return δF[1]
-end  # function SLD_eps_error
+    _, diag = QFIM(scheme; eps = eps, diagnostics = true)
+    δF = diag.truncation_bias_bound
+    println("δF ≈ ", δF)
+    return δF
+end
+
+function _sld_with_error(ρ::Matrix{T}, dρ::Matrix{T}; spec::PrecisionSpec) where {T<:Complex}
+    sol = _sld_solve(ρ, dρ; spec = spec)
+    return sol.L, sol.L + sol.L_dropped
+end
 
 """
+    QFIM_with_error(scheme::Scheme; verbose=false, eps=nothing)
 
-    QFIM_with_error(scheme::Scheme; verbose=false, eps=GLOBAL_EPS)
-
-Compute the QFIM and its error due to SLD truncation.
+Deprecated shim around the guarded SLD solver.  Return `(F, δF)` where `F` is
+assembled from the minimum-norm SLD operators and `δF = F_all - F` is the
+change produced by adding the dropped sub-floor blocks back into the SLD
+operators.
 """
-function QFIM_with_error(scheme::Scheme; verbose::Bool = false, eps = GLOBAL_EPS)
+function QFIM_with_error(scheme::Scheme; verbose::Bool = false, eps = nothing)
+    Base.depwarn(
+        "`QFIM_with_error` is deprecated; use `QFIM` with the `guard`/`tol` keywords and " *
+        "`diagnostics=true` instead.",
+        :QFIM_with_error,
+    )
     rho, drho = evolve(scheme)
-
+    spec = precision_spec(eps)
     p_num = length(drho)
-    SLD_tp, SLD_tp_err = SLD_with_error(rho, drho; eps = eps)
-    F =
-        (
-            [0.5 * rho] .* (
-                kron(SLD_tp, reshape(SLD_tp, 1, p_num)) +
-                kron(reshape(SLD_tp, 1, p_num), SLD_tp)
-            )
-        ) .|>
-        tr .|>
-        real
-    δF =
-        real.(
-            tr.(
-                [0.5 * rho] .* (
-                    kron(SLD_tp_err, reshape(SLD_tp_err, 1, p_num)) +
-                    kron(reshape(SLD_tp_err, 1, p_num), SLD_tp_err)
-                )
-            )
-        ) - F
+    sols = [_sld_solve(rho, x; spec = spec) for x in drho]
+    Ls = [s.L for s in sols]
+    Ls_all = [s.L + s.L_dropped for s in sols]
+    F = [
+        real(tr(0.5 * rho * (Ls[i] * Ls[j] + Ls[j] * Ls[i]))) for i = 1:p_num, j = 1:p_num
+    ]
+    F_all = [
+        real(tr(0.5 * rho * (Ls_all[i] * Ls_all[j] + Ls_all[j] * Ls_all[i]))) for
+        i = 1:p_num, j = 1:p_num
+    ]
+    δF = F_all - F
+    if verbose
+        println("\nError evaluation for SLD calculation")
+        println("Source: eps = $(eps)")
+        println("δF ≈ ", δF[1])
+    end
     return F, δF
 end
 
 """
+    SLD_with_error(ρ, dρ::Matrix; eps=nothing)
 
-    SLD_with_error(ρ, dρ; eps=GLOBAL_EPS)
-
-Compute the symmetric logarithmic derivative (SLD) together with its error contribution from eigenvalues below the threshold `eps`.
+Deprecated shim for the symmetric logarithmic derivative.  Return the tuple
+`(L, L_all)` where `L` is the guarded (minimum-norm) SLD and `L_all` adds back
+the contribution of the eigenblocks removed by the relative spectral floor.
 """
-function SLD_with_error(ρ::Matrix{T}, dρ::Matrix{T}; eps = GLOBAL_EPS) where {T<:Complex}
-
-    dim = size(ρ)[1]
-
-    ρ_h = (ρ + ρ') / 2
-    val, vec = eigen(ρ_h)
-    val = val |> real
-    SLD_eig = zeros(T, dim, dim)
-    SLD_eig_err = zeros(T, dim, dim)
-    for fi = 1:dim
-        for fj = 1:dim
-            if val[fi] + val[fj] > eps
-                SLD_eig[fi, fj] = 2 * (vec[:, fi]' * dρ * vec[:, fj]) / (val[fi] + val[fj])
-            else
-                SLD_eig_err[fi, fj] =
-                    2 * (vec[:, fi]' * dρ * vec[:, fj]) / (val[fi] + val[fj])
-            end
-        end
-    end
-    SLD_eig[findall(SLD_eig == Inf)] .= 0.0
-    SLD_eig[findall(abs.(SLD_eig) .> 1e10)] .= 0.0
-
-    return vec * (SLD_eig * vec'), vec * ((SLD_eig + SLD_eig_err) * vec')
+function SLD_with_error(ρ::Matrix{T}, dρ::Matrix{T}; eps = nothing) where {T<:Complex}
+    Base.depwarn(
+        "`SLD_with_error` is deprecated; use `SLD(ρ, dρ; guard=..., tol=..., " *
+        "diagnostics=true)` instead.",
+        :SLD_with_error,
+    )
+    spec = precision_spec(eps)
+    return _sld_with_error(ρ, dρ; spec = spec)
 end
 
-function SLD_with_error(
-    ρ::Matrix{T},
-    dρ::Vector{Matrix{T}};
-    eps = GLOBAL_EPS,
-) where {T<:Complex}
-    temp = [SLD_with_error(ρ, x; eps = eps) for x in dρ]
-    return [t[1] for t in temp], [t[2] for t in temp]
-end
-
-
-
-"""
-
-    QFIM_SLD_with_error(ρ, dρ; eps=GLOBAL_EPS)
-
-Compute the QFIM element via the SLD approach, with error estimation.
-"""
-function QFIM_SLD_with_error(
-    ρ::Matrix{T},
-    dρ::Matrix{T};
-    eps = GLOBAL_EPS,
-) where {T<:Complex}
-    SLD_tp = SLD(ρ, dρ; eps = eps)
-    SLD2_tp = SLD_tp * SLD_tp
-    F = tr(ρ * SLD2_tp)
-    F |> real
+function SLD_with_error(ρ::Matrix{T}, dρ::Vector{Matrix{T}}; eps = nothing) where {T<:Complex}
+    Base.depwarn(
+        "`SLD_with_error` is deprecated; use `SLD(ρ, dρ; guard=..., tol=..., " *
+        "diagnostics=true)` instead.",
+        :SLD_with_error,
+    )
+    spec = precision_spec(eps)
+    results = [_sld_with_error(ρ, x; spec = spec) for x in dρ]
+    return [r[1] for r in results], [r[2] for r in results]
 end
 
 """
+    QFIM_SLD_with_error(ρ, dρ::Matrix; eps=nothing)
 
-    QFIM_RLD_with_error(ρ, dρ; eps=GLOBAL_EPS)
-
-Compute the QFIM element via the right logarithmic derivative (RLD), with error estimation.
+Deprecated.  Forward to [`QFIM_SLD`](@ref).
 """
-function QFIM_RLD_with_error(
-    ρ::Matrix{T},
-    dρ::Matrix{T};
-    eps = GLOBAL_EPS,
-) where {T<:Complex}
-    R = RLD(ρ, dρ; eps = eps)
-    F = tr(ρ * R * R')
-    F |> real
+function QFIM_SLD_with_error(ρ::Matrix{T}, dρ::Matrix{T}; eps = nothing) where {T<:Complex}
+    Base.depwarn(
+        "`QFIM_SLD_with_error` is deprecated; use `QFIM_SLD(ρ, dρ; guard=..., tol=...)` " *
+        "instead.",
+        :QFIM_SLD_with_error,
+    )
+    return QuanEstimationBase.QFIM_SLD(ρ, dρ; eps = eps)
 end
 
 """
+    QFIM_RLD_with_error(ρ, dρ::Matrix; eps=nothing)
 
-    QFIM_LLD_with_error(ρ, dρ; eps=GLOBAL_EPS)
+Deprecated.  Forward to [`QFIM_RLD`](@ref).
+"""
+function QFIM_RLD_with_error(ρ::Matrix{T}, dρ::Matrix{T}; eps = nothing) where {T<:Complex}
+    Base.depwarn(
+        "`QFIM_RLD_with_error` is deprecated; use `QFIM_RLD(ρ, dρ; guard=..., tol=...)` " *
+        "instead.",
+        :QFIM_RLD_with_error,
+    )
+    return QuanEstimationBase.QFIM_RLD(ρ, dρ; eps = eps)
+end
 
-Compute the QFIM element via the left logarithmic derivative (LLD), with error estimation.
-raw"""
-function QFIM_LLD_with_error(
-    ρ::Matrix{T},
-    dρ::Matrix{T};
-    eps = GLOBAL_EPS,
-) where {T<:Complex}
-    L = LLD(ρ, dρ; eps = eps)
-    F = tr(ρ * L' * L)
-    F |> real
+"""
+    QFIM_LLD_with_error(ρ, dρ::Matrix; eps=nothing)
+
+Deprecated.  Forward to [`QFIM_LLD`](@ref).
+"""
+function QFIM_LLD_with_error(ρ::Matrix{T}, dρ::Matrix{T}; eps = nothing) where {T<:Complex}
+    Base.depwarn(
+        "`QFIM_LLD_with_error` is deprecated; use `QFIM_LLD(ρ, dρ; guard=..., tol=...)` " *
+        "instead.",
+        :QFIM_LLD_with_error,
+    )
+    return QuanEstimationBase.QFIM_LLD(ρ, dρ; eps = eps)
 end
 
 raw"""
-
     QFIM_pure_with_error(ρ, ∂ρ_∂x)
 
-Compute the QFIM element for a pure state ``\rho = |\psi\rangle\langle\psi|``. For pure states, ``L = 2\partial\rho/\partial x``.
+Deprecated.  Forward to [`QFIM_pure`](@ref).
 """
 function QFIM_pure_with_error(ρ::Matrix{T}, ∂ρ_∂x::Matrix{T}) where {T<:Complex}
-    SLD = 2 * ∂ρ_∂x
-    SLD2_tp = SLD * SLD
-    F = tr(ρ * SLD2_tp)
-    F |> real
+    Base.depwarn(
+        "`QFIM_pure_with_error` is deprecated; use `QFIM_pure(ρ, ∂ρ_∂x)` instead.",
+        :QFIM_pure_with_error,
+    )
+    return QuanEstimationBase.QFIM_pure(ρ, ∂ρ_∂x)
 end
 
-#==========================================================#
-####################### calculate QFIM #####################
 """
-    QFIM_SLD_with_error(ρ, dρ::Vector{Matrix}; eps=GLOBAL_EPS)
+    QFIM_SLD_with_error(ρ, dρ::Vector{Matrix}; eps=nothing)
 
-Multi-parameter QFIM via SLD with error estimation.
-
-See also: [`QFIM_SLD_with_error(ρ, dρ::Matrix; eps)`](@ref) for the single-parameter version.
+Deprecated.  Forward to [`QFIM_SLD`](@ref).
 """
 function QFIM_SLD_with_error(
     ρ::Matrix{T},
     dρ::Vector{Matrix{T}};
-    eps = GLOBAL_EPS,
+    eps = nothing,
 ) where {T<:Complex}
-    p_num = length(dρ)
-    LD_tp = (x -> SLD(ρ, x; eps = eps)).(dρ)
-    return [real(tr(0.5 * ρ * (LD_tp[i] * LD_tp[j] + LD_tp[j] * LD_tp[i]))) for i in 1:p_num, j in 1:p_num]
+    Base.depwarn(
+        "`QFIM_SLD_with_error` is deprecated; use `QFIM_SLD(ρ, dρ; guard=..., tol=...)` " *
+        "instead.",
+        :QFIM_SLD_with_error,
+    )
+    return QuanEstimationBase.QFIM_SLD(ρ, dρ; eps = eps)
 end
 
 """
-    QFIM_RLD_with_error(ρ, dρ::Vector{Matrix}; eps=GLOBAL_EPS)
+    QFIM_RLD_with_error(ρ, dρ::Vector{Matrix}; eps=nothing)
 
-Multi-parameter QFIM via RLD with error estimation.
-
-See also: [`QFIM_RLD_with_error(ρ, dρ::Matrix; eps)`](@ref) for the single-parameter version.
+Deprecated.  Forward to [`QFIM_RLD`](@ref).
 """
 function QFIM_RLD_with_error(
     ρ::Matrix{T},
     dρ::Vector{Matrix{T}};
-    eps = GLOBAL_EPS,
+    eps = nothing,
 ) where {T<:Complex}
-    p_num = length(dρ)
-    R = RLD(ρ, dρ; eps = eps)
-    return [tr(ρ * R[i] * R[j]') for i in 1:p_num, j in 1:p_num]
+    Base.depwarn(
+        "`QFIM_RLD_with_error` is deprecated; use `QFIM_RLD(ρ, dρ; guard=..., tol=...)` " *
+        "instead.",
+        :QFIM_RLD_with_error,
+    )
+    return QuanEstimationBase.QFIM_RLD(ρ, dρ; eps = eps)
 end
 
 """
-    QFIM_LLD_with_error(ρ, dρ::Vector{Matrix}; eps=GLOBAL_EPS)
+    QFIM_LLD_with_error(ρ, dρ::Vector{Matrix}; eps=nothing)
 
-Multi-parameter QFIM via LLD with error estimation.
-
-See also: [`QFIM_LLD_with_error(ρ, dρ::Matrix; eps)`](@ref) for the single-parameter version.
+Deprecated.  Forward to [`QFIM_LLD`](@ref).
 """
 function QFIM_LLD_with_error(
     ρ::Matrix{T},
     dρ::Vector{Matrix{T}};
-    eps = GLOBAL_EPS,
+    eps = nothing,
 ) where {T<:Complex}
-    p_num = length(dρ)
-    L = LLD(ρ, dρ; eps = eps)
-    return [tr(ρ * L[i]' * L[j]) for i in 1:p_num, j in 1:p_num]
+    Base.depwarn(
+        "`QFIM_LLD_with_error` is deprecated; use `QFIM_LLD(ρ, dρ; guard=..., tol=...)` " *
+        "instead.",
+        :QFIM_LLD_with_error,
+    )
+    return QuanEstimationBase.QFIM_LLD(ρ, dρ; eps = eps)
 end
 
 """
     QFIM_pure_with_error(ρ, ∂ρ_∂x::Vector{Matrix})
 
-Multi-parameter QFIM for pure states with error estimation.
-
-See also: [`QFIM_pure_with_error(ρ, ∂ρ_∂x::Matrix)`](@ref) for the single-parameter version.
+Deprecated.  Forward to [`QFIM_pure`](@ref).
 """
 function QFIM_pure_with_error(ρ::Matrix{T}, ∂ρ_∂x::Vector{Matrix{T}}) where {T<:Complex}
-    p_num = length(∂ρ_∂x)
-    sld = [2 * ∂ρ_∂x[i] for i = 1:p_num]
-    return [real(tr(0.5 * ρ * (sld[i] * sld[j] + sld[j] * sld[i]))) for i in 1:p_num, j in 1:p_num]
+    Base.depwarn(
+        "`QFIM_pure_with_error` is deprecated; use `QFIM_pure(ρ, ∂ρ_∂x)` instead.",
+        :QFIM_pure_with_error,
+    )
+    return QuanEstimationBase.QFIM_pure(ρ, ∂ρ_∂x)
 end

@@ -242,20 +242,20 @@ end
 ##========== offline ==========##
 @doc raw"""
 
-    offline(apt::Adapt_MZI, alg; target::Symbol=:sharpness, eps = GLOBAL_EPS, seed=1234)
+    offline(apt::Adapt_MZI, alg; target::Symbol=:sharpness, eps = nothing, seed=1234)
 
 Offline adaptive phase estimation in the MZI.
 - `apt`: Adaptive MZI struct which contains `x`, `p`, and `rho0`.
 - `alg`: The algorithms for searching the optimal tunable phase. Here, DE and PSO are available. 
 - `target`: Setting the target function for calculating the tunable phase. Options are: "sharpness" and "MI".
-- `eps`: Machine epsilon.
+- `eps`: Legacy relative floor factor; when `nothing`, the relative precision policy is used; when given, it is deprecated and interpreted by the core.
 - `seed`: Random seed.
 """
 function offline(
     apt::Adapt_MZI,
     alg;
     target::Symbol = :sharpness,
-    eps = GLOBAL_EPS,
+    eps = nothing,
     seed = 1234,
 )
     rng = MersenneTwister(seed)
@@ -642,15 +642,17 @@ end
 
 """
 
-    adapt!(scheme::Adapt_MZI, alg; target=:sharpness, eps=GLOBAL_EPS, seed=1234)
+    adapt!(scheme::Adapt_MZI, alg; target=:sharpness, eps=nothing, seed=1234)
 
 Run offline adaptive estimation with a given optimization algorithm (`DE` or `PSO`). Delegates to `offline`.
+
+`eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
 """
 function adapt!(
     scheme::Adapt_MZI,
     alg;
     target::Symbol = :sharpness,
-    eps = GLOBAL_EPS,
+    eps = nothing,
     seed = 1234,
 )
     return offline(scheme, alg, target = target, eps = eps, seed = seed)

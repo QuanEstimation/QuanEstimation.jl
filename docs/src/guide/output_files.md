@@ -3,7 +3,8 @@
 In QuanEstimation, the output data will be saved into files during or after the optimization
 process. There are two categories: the values of the objective function at each step, and the
 optimized variables from the corresponding scheme. This guide describes all output file types
-and how to load them.
+and how to load them. Install `JLD2` in the working environment before reading `.dat` files
+(`using Pkg; Pkg.add("JLD2")`); `DelimitedFiles` is a Julia standard library.
 
 ## **Objective function values**
 
@@ -115,11 +116,12 @@ See also: [Quantum metrological tools](guide_bounds.md)
 
 ## **Adaptive measurement schemes**
 
-Adaptive estimation via `adapt!()` produces `adaptive.dat` (JLD2 format), containing:
+Adaptive estimation via `adapt!()` and online MZI estimation via `online()` produce
+`adaptive.dat` (JLD2 format), containing:
 
 | Key | Contents |
 |-----|----------|
-| `"p"` | Posterior distributions at each adaptive step |
+| `"p"` | Posterior distributions; only the final one with `savefile=false`, or the full history with `savefile=true` |
 | `"x"` | Estimated values at each adaptive step |
 | `"y"` | Experimental outcomes at each step |
 
@@ -130,6 +132,15 @@ jldopen("adaptive.dat", "r") do f
     x = f["x"]
     y = f["y"]
 end
+```
+
+Offline MZI optimization via `offline()` instead writes the optimized phase differences to
+`deltaphi.csv` and the objective history to `f.csv`:
+
+```jl
+using DelimitedFiles
+deltaphi = readdlm("deltaphi.csv")
+f = readdlm("f.csv")
 ```
 
 See also: [Adaptive measurement schemes](guide_adaptive.md)

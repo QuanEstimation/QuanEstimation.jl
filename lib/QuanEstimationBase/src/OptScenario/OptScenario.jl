@@ -45,6 +45,14 @@ ControlOpt(; ctrl = nothing, ctrl_bound = [-Inf, Inf], seed = 1234) =
 
 Copt = ControlOpt
 
+@doc raw"""
+    Copt
+
+Compatibility alias for [`ControlOpt`](@ref); `Copt(...)` constructs the same
+control-optimization scenario. See [`ControlOpt`](@ref) for arguments and fields.
+"""
+Copt
+
 raw"""
 
     ControlOpt(ctrl::Matrix, ctrl_bound::AbstractVector)
@@ -80,6 +88,14 @@ State optimization.
 StateOpt(; psi = nothing, seed = 1234) = StateOpt(psi, MersenneTwister(seed))
 
 Sopt = StateOpt
+
+@doc raw"""
+    Sopt
+
+Compatibility alias for [`StateOpt`](@ref); `Sopt(...)` constructs the same
+state-optimization scenario. See [`StateOpt`](@ref) for arguments and fields.
+"""
+Sopt
 
 """
     AbstractMopt <: Opt
@@ -195,6 +211,15 @@ function MeasurementOpt(; mtype = :Projection, kwargs...)
 end
 
 Mopt = MeasurementOpt
+
+@doc raw"""
+    Mopt
+
+Compatibility alias for [`MeasurementOpt`](@ref); `Mopt(; mtype=:Projection, ...)`
+constructs the same measurement-optimization scenario. See
+[`MeasurementOpt`](@ref) for the supported `mtype` values and keyword arguments.
+"""
+Mopt
 
 """
     CompOpt <: Opt
@@ -509,18 +534,21 @@ function init_opt(opt::StateOpt, scheme)
 end
 
 """
-    init_opt(opt::Mopt_LinearComb, scheme; eps=GLOBAL_EPS)
+    init_opt(opt::Mopt_LinearComb, scheme; eps=nothing)
 
 Initialize the POVM basis and linear combination coefficients. If `POVM_basis` is `nothing`, defaults to a SIC-POVM. If `B` is `nothing`, random coefficients are generated. Validates that the given POVM basis elements are positive semidefinite and sum to the identity.
+
+`eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
 """
-function init_opt(opt::Mopt_LinearComb, scheme; eps = GLOBAL_EPS)
+function init_opt(opt::Mopt_LinearComb, scheme; eps = nothing)
+    e = isnothing(eps) ? GLOBAL_EPS : eps
     (; B, POVM_basis, M_num) = opt
     dim = get_dim(scheme)
     if isnothing(POVM_basis)
         opt.POVM_basis = SIC(dim)
     else
         for P in POVM_basis
-            if minimum(eigvals(P)) < (-eps)
+            if minimum(eigvals(P)) < (-e)
                 throw(ArgumentError("The given POVMs should be semidefinite!"))
             end
         end
@@ -558,11 +586,14 @@ function init_opt(opt::Mopt_Projection, scheme)
 end
 
 """
-    init_opt(opt::Mopt_Rotation, scheme; eps=GLOBAL_EPS)
+    init_opt(opt::Mopt_Rotation, scheme; eps=nothing)
 
 Initialize the rotation parameters for measurement optimization. Validates that the provided POVM basis is complete and positive semidefinite. If `s` is `nothing`, random rotation parameters are generated.
+
+`eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
 """
-function init_opt(opt::Mopt_Rotation, scheme; eps = GLOBAL_EPS)
+function init_opt(opt::Mopt_Rotation, scheme; eps = nothing)
+    e = isnothing(eps) ? GLOBAL_EPS : eps
     dim = get_dim(scheme)
 
     (; s, POVM_basis) = opt
@@ -570,7 +601,7 @@ function init_opt(opt::Mopt_Rotation, scheme; eps = GLOBAL_EPS)
         throw(ArgumentError("The initial POVM basis should not be empty!"))
     else
         for P in POVM_basis
-            if minimum(eigvals(P)) < -eps
+            if minimum(eigvals(P)) < -e
                 throw(ArgumentError("The given POVMs should be semidefinite!"))
             end
         end
@@ -586,11 +617,13 @@ function init_opt(opt::Mopt_Rotation, scheme; eps = GLOBAL_EPS)
 end
 
 """
-    init_opt(opt::StateControlOpt, scheme; eps=GLOBAL_EPS)
+    init_opt(opt::StateControlOpt, scheme; eps=nothing)
 
 Initialize both the probe state and control coefficients. If `psi` is `nothing`, a random pure state is generated. If `ctrl` is `nothing`, zero-initialized control sequences are created. Validates control coefficient count and adjusts time span as needed.
+
+`eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
 """
-function init_opt(opt::SCopt, scheme; eps = GLOBAL_EPS)
+function init_opt(opt::SCopt, scheme; eps = nothing)
     dim = get_dim(scheme)
     pdata = param_data(scheme)
     ctrl_num = get_ctrl_num(scheme)
@@ -634,11 +667,13 @@ function init_opt(opt::SCopt, scheme; eps = GLOBAL_EPS)
 end
 
 """
-    init_opt(opt::ControlMeasurementOpt, scheme; eps=GLOBAL_EPS)
+    init_opt(opt::ControlMeasurementOpt, scheme; eps=nothing)
 
 Initialize both control coefficients and projective measurement basis. If `ctrl` is `nothing`, zero-initialized sequences are created. If `M` is `nothing`, random orthonormal vectors are generated. Validates control coefficient count and adjusts time span as needed.
+
+`eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
 """
-function init_opt(opt::CMopt, scheme; eps = GLOBAL_EPS)
+function init_opt(opt::CMopt, scheme; eps = nothing)
     dim = get_dim(scheme)
     pdata = param_data(scheme)
     ctrl_num = get_ctrl_num(scheme)
@@ -685,11 +720,13 @@ function init_opt(opt::CMopt, scheme; eps = GLOBAL_EPS)
 end
 
 """
-    init_opt(opt::StateMeasurementOpt, scheme; eps=GLOBAL_EPS)
+    init_opt(opt::StateMeasurementOpt, scheme; eps=nothing)
 
 Initialize both the probe state and projective measurement basis. If `psi` is `nothing`, a random pure state is generated. If `M` is `nothing`, random orthonormal vectors are generated.
+
+`eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
 """
-function init_opt(opt::SMopt, scheme; eps = GLOBAL_EPS)
+function init_opt(opt::SMopt, scheme; eps = nothing)
     dim = get_dim(scheme)
 
     if isnothing(opt.psi)
@@ -714,11 +751,13 @@ function init_opt(opt::SMopt, scheme; eps = GLOBAL_EPS)
 end
 
 """
-    init_opt(opt::StateControlMeasurementOpt, scheme; eps=GLOBAL_EPS)
+    init_opt(opt::StateControlMeasurementOpt, scheme; eps=nothing)
 
 Initialize the probe state, control coefficients, and projective measurement basis. If `psi` is `nothing`, a random pure state is generated. If `ctrl` is `nothing`, zero-initialized sequences are created. If `M` is `nothing`, random orthonormal vectors are generated. Validates control coefficient count and adjusts time span as needed.
+
+`eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
 """
-function init_opt(opt::SCMopt, scheme; eps = GLOBAL_EPS)
+function init_opt(opt::SCMopt, scheme; eps = nothing)
     dim = get_dim(scheme)
     pdata = param_data(scheme)
     ctrl_num = get_ctrl_num(scheme)

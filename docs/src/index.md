@@ -9,9 +9,10 @@ as the computational core of the
 
 - Dynamics evolution (matrix exponential / ODE) with derivatives
 - Kraus operator parameterization
-- Quantum and classical Fisher information (QFI, QFIM, CFI, CFIM)
-- Asymptotic bounds: SLD, RLD, LLD, HCRB, NHB
-- Bayesian bounds: BCRB, BQCRB, VTB, QVTB, QZZB, OBB
+- Quantum and classical Fisher information (QFI/QFIM, CFI/CFIM)
+- Logarithmic derivatives (SLD, RLD, LLD) and asymptotic bounds (HCRB, NHB)
+- Bayesian bounds and Bayesian Fisher information: BCRB, BQCRB, VTB, QVTB,
+  QZZB, OBB, BCFIM, BQFIM
 - Bayesian estimation and cost bounds
 - Control, state, measurement, and comprehensive optimization
 - Adaptive measurement schemes
@@ -29,21 +30,9 @@ If you need to install via a Julia mirror, see the
 
 ### Requirements
 
-QuanEstimation.jl requires Julia >= 1.10. The following packages are
-automatically installed as dependencies:
-
-| Package | Version | Package | Version |
-|---------|---------|---------|---------|
-| LinearAlgebra | -- | BoundaryValueDiffEq | 2.7.2 |
-| Zygote | 0.6.37 | SCS | 0.8.1 |
-| Convex | 0.14.18 | Trapz | 2.0.3 |
-| ReinforcementLearning | 0.10.0 | Interpolations | 0.13.5 |
-| IntervalSets | 0.5.4 | SparseArrays | -- |
-| Flux | 0.12.4 | DelimitedFiles | -- |
-| StatsBase | 0.33.16 | Random | -- |
-| Printf | -- | StableRNGs | -- |
-| Distributions | -- | QuadGK | -- |
-| DifferentialEquations | -- | | |
+QuanEstimation.jl requires Julia >= 1.11. The complete dependency list and
+version bounds are declared in `Project.toml`; the package manager installs
+them automatically.
 
 ## Quick Start
 
@@ -85,7 +74,6 @@ F = QuanEstimation.QFIM(rho[end], drho[end])
 
 ## API Reference
 
-- [General API](api/GeneralAPI.md)
 - [Base API](api/BaseAPI.md)
 - [NV Magnetometer API](api/NVMagnetometerAPI.md)
 - [Examples](https://github.com/QuanEstimation/QuanEstimation.jl/tree/main/examples)

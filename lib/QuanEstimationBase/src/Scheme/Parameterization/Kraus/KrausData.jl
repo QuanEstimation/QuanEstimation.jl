@@ -97,7 +97,7 @@ get_dim(k::Kraus) = size(evaluate_kraus(k)[1], 1)
 
 Extract the number of parameters `NP` from the `Kraus` type.
 
-See also: [`get_param_num(::Scheme{...})`](@ref).
+See also: [`get_param_num`](@ref).
 """
 get_param_num(::Type{Kraus{KT,DKT,NK,NP}}) where {KT,DKT,NK,NP} = NP
 """

@@ -104,12 +104,12 @@ function test_nv_magnetometer()
 
     @testset "error_evaluation" begin
         Random.seed!(1234)
-        @test_nowarn error_evaluation(scheme)
+        @test_deprecated error_evaluation(scheme)
     end
 
     @testset "error_control" begin
         Random.seed!(1234)
-        @test_nowarn error_control(scheme)
+        @test_deprecated error_control(scheme)
     end
 
     isfile("f.csv") && rm("f.csv")

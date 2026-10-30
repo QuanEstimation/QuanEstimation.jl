@@ -39,10 +39,13 @@ function liouvillian(H::Matrix{T}, decay_opt::AbstractVector, γ, t = 1) where {
     -1.0im * freepart + dissp
 end
 
-raw"""
+@doc raw"""
     Htot(H0::T, Hc::V, ctrl) where {T<:Matrix{ComplexF64},V<:AbstractVector}
 
-Total Hamiltonian with time-dependent control: ``H_0 + \sum_i c_i(t) H_{c,i}``.
+Return the total Hamiltonian at each time step,
+``H_0 + \sum_i c_i(t) H_{c,i}``, as a `Vector{Matrix{ComplexF64}}` with one
+entry per time index in `ctrl[1]`. The control coefficients are indexed as
+`ctrl[i][t]` for control Hamiltonian `i` and time step `t`.
 """
 function Htot(H0::T, Hc::V, ctrl) where {T<:Matrix{ComplexF64},V<:AbstractVector}
     [H0 + sum([ctrl[i][t] * Hc[i] for i in eachindex(Hc)]) for t in eachindex(ctrl[1])]

@@ -54,7 +54,7 @@ function update_ctrl!(alg::autoGRAPE_Adam, obj, scheme, δ)
                 epsilon,
                 beta1,
                 beta2,
-                obj.eps,
+                _legacy_eps(obj),
             )
         end
     end
@@ -108,7 +108,7 @@ function update_state!(alg::AD_Adam, obj, scheme, δ)
     mt, vt = 0.0, 0.0
     for ti in eachindex(δ)
         scheme.StatePreparation.data[ti], mt, vt =
-            Adam(δ[ti], ti, state_data(scheme)[ti], mt, vt, epsilon, beta1, beta2, obj.eps)
+            Adam(δ[ti], ti, state_data(scheme)[ti], mt, vt, epsilon, beta1, beta2, _legacy_eps(obj))
     end
 end
 
@@ -171,7 +171,7 @@ function update_M!(opt::Mopt_LinearComb, alg::AD_Adam, obj, δ)
         mt, vt = 0.0, 0.0
         for ti in eachindex(δ[1])
             opt.B[ci][ti], mt, vt =
-                Adam(δ[ci][ti], ti, opt.B[ci][ti], mt, vt, epsilon, beta1, beta2, obj.eps)
+                Adam(δ[ci][ti], ti, opt.B[ci][ti], mt, vt, epsilon, beta1, beta2, _legacy_eps(obj))
         end
     end
 end
@@ -240,7 +240,7 @@ function update_M!(opt::Mopt_Rotation, alg::AD_Adam, obj, δ)
     mt, vt = 0.0, 0.0
     for ti in eachindex(δ)
         opt.s[ti], mt, vt =
-            Adam(δ[ti], ti, opt.s[ti], mt, vt, epsilon, beta1, beta2, obj.eps)
+            Adam(δ[ti], ti, opt.s[ti], mt, vt, epsilon, beta1, beta2, _legacy_eps(obj))
     end
 end
 
@@ -311,7 +311,7 @@ function update_ctrl!(alg::AD_Adam, obj, scheme, δ)
                 epsilon,
                 beta1,
                 beta2,
-                obj.eps,
+                _legacy_eps(obj),
             )
         end
     end

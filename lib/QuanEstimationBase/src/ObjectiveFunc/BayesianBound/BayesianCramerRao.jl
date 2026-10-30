@@ -24,7 +24,7 @@ If ``n`` is even, a trapezoidal correction is applied to the last subinterval.
 
 # See Also
 
-- [`trapz`](@ref): Trapezoidal integration (used for multi-dimensional integrals).
+- `Trapz.trapz`: Trapezoidal integration (used for multi-dimensional integrals).
 raw"""
 function simpson(x::AbstractVector, y::AbstractVector)
     n = length(x)
@@ -44,20 +44,100 @@ function simpson(x::AbstractVector, y::AbstractVector)
     return h * s / 3
 end
 
+"""
+    _pinv_diagnostics(spec, n, nrank, smin, smax, null_projection)
+
+Diagnostics record for a guarded pseudo-inverse produced by
+[`guarded_pinv`](@ref): numerical rank, condition number and the
+rank/input-data flags.
+"""
+function _pinv_diagnostics(
+    spec::PrecisionSpec,
+    n::Integer,
+    nrank::Integer,
+    smin::Real,
+    smax::Real,
+    null_projection::Real,
+)
+    κ = smin > 0 ? smax / smin : Inf
+    flags = Symbol[]
+    nrank < n && push!(flags, :rank_change_suspected)
+    null_projection > 0 && push!(flags, :objective_nullspace)
+    return NumericalDiagnostics(
+        :objective;
+        precision_layer = spec.refine ? :compensated : :float64,
+        spectral_floor = spectral_floor(spec, smax),
+        numerical_rank = nrank,
+        condition_number = κ,
+        input_error_propagation = isfinite(κ) ? κ^2 * max(spec.input_error, spec.u) : Inf,
+        flags = flags,
+        bottleneck = :input_data,
+    )
+end
+
 @doc raw"""
 
-    BCFIM(x::AbstractVector, p, rho, drho; M=nothing, eps=GLOBAL_EPS)
+    BCFIM(x::AbstractVector, p, rho, drho; M=nothing, eps=nothing,
+        tol=1e-10, input_error=0.0, guard=nothing, refine=true,
+        diagnostics=false)
 
-Calculation of the Bayesian classical Fisher information (BCFI) and the Bayesian classical Fisher information matrix (BCFIM) of the form
-``\mathcal{I}_{\mathrm{Bayes}}=\int p(\textbf{x})\mathcal{I}\mathrm{d}\textbf{x}`` with ``\mathcal{I}`` the CFIM and ``p(\textbf{x})`` the prior distribution.
-- `x`: The regimes of the parameters for the integral.
-- `p`: The prior distribution.
-- `rho`: Parameterized density matrix.
-- `drho`: Derivatives of the parameterized density matrix (rho) with respect to the unknown parameters to be estimated.
-- `M`: A set of positive operator-valued measure (POVM). The default measurement is a set of rank-one symmetric informationally complete POVM (SIC-POVM).
-- `eps`: Machine epsilon.
-"""
-function BCFIM(x::AbstractVector, p, rho, drho; M = nothing, eps = GLOBAL_EPS)
+Calculate the Bayesian classical Fisher information (BCFI) or Bayesian
+classical Fisher information matrix (BCFIM)
+
+```math
+\mathcal{I}_{\mathrm{Bayes}}=\int p(\mathbf{x})\,\mathcal{I}\,\mathrm{d}\mathbf{x},
+```
+
+where ``\mathcal{I}`` is the CFIM and ``p(\mathbf{x})`` is the prior
+distribution. The integral is evaluated with Simpson's rule for one parameter
+and the trapezoidal rule for multiple parameters.
+
+# Arguments
+
+- `x`: The regimes of the parameters for the integral, given as a vector of
+  grid vectors (one per parameter). For a single parameter, pass a one-element
+  vector of grid vectors, e.g. `[xgrid]`.
+- `p`: The prior distribution sampled on the grid, with shape
+  `length.(x)`.
+- `rho`: Parameterized density matrices, with one entry per grid point.
+- `drho`: Derivatives of `rho` with respect to the unknown parameters, with
+  one entry per grid point. Each entry is a vector with one derivative matrix
+  per parameter.
+- `M`: A set of positive operator-valued measures (POVMs). The default
+  (`nothing`) uses a rank-one symmetric informationally complete POVM
+  (SIC-POVM).
+- `eps`: Legacy relative floor factor. When `nothing`, the relative precision
+  policy is used; when given, it is deprecated and interpreted by the core.
+- `tol`: Target relative accuracy of the inner CFIM evaluations.
+- `input_error`: Relative error of the input data.
+- `guard`: Relative spectral floor of the inner CFIM evaluations.
+- `refine`: Reserved for API uniformity; the inner CFIM evaluations do not use
+  residual refinement.
+- `diagnostics`: When `true`, also return diagnostics for all grid points.
+
+# Returns
+
+- For one parameter (`length(x) == 1`), a `Float64` containing the integrated
+  BCFI.
+- For multiple parameters, a `length(x) × length(x)` matrix containing the
+  integrated BCFIM.
+- If `diagnostics = true`, returns `(F, diag)`, where `diag` is the
+  [`NumericalDiagnostics`](@ref) record obtained by merging the diagnostics of
+  all grid points.
+raw"""
+function BCFIM(
+    x::AbstractVector,
+    p,
+    rho,
+    drho;
+    M = nothing,
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
+    refine = true,
+    diagnostics = false,
+)
     para_num = length(x)
     if para_num == 1
         #### singleparameter scenario ####
@@ -66,12 +146,36 @@ function BCFIM(x::AbstractVector, p, rho, drho; M = nothing, eps = GLOBAL_EPS)
             M = SIC(size(rho[1])[1])
         end
         F_tp = zeros(p_num)
+        diags = NumericalDiagnostics[]
         for i = 1:p_num
-            F_tp[i] = CFIM(rho[i], drho[i][1], M; eps = eps)
+            if diagnostics
+                F_tp[i], diag = CFIM(
+                    rho[i],
+                    drho[i][1],
+                    M;
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                    diagnostics = true,
+                )
+                push!(diags, diag)
+            else
+                F_tp[i] = CFIM(
+                    rho[i],
+                    drho[i][1],
+                    M;
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                )
+            end
         end
         F = 0.0
         arr = [p[i] * F_tp[i] for i = 1:p_num]
         F = simpson(x[1], arr)
+        return diagnostics ? (F, _merge_diagnostics(:BCFIM, diags)) : F
     else
         #### multiparameter scenario #### 
         if isnothing(M)
@@ -83,39 +187,141 @@ function BCFIM(x::AbstractVector, p, rho, drho; M = nothing, eps = GLOBAL_EPS)
             trapz(tuple(x...), I) for
             I in [reshape(hcat(integrands...)[i, :], length.(x)...) for i = 1:slice_dim]
         ]
-        Fs = [
-            p * CFIM(rho, drho, M; eps = eps) |> vec for (p, rho, drho) in zip(p, rho, drho)
-        ]
+        diags = NumericalDiagnostics[]
+        Fs = Vector{Vector{Float64}}()
+        for (pt, rho_tp, drho_tp) in zip(p, rho, drho)
+            if diagnostics
+                F_tp, diag = CFIM(
+                    rho_tp,
+                    drho_tp,
+                    M;
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                    diagnostics = true,
+                )
+                push!(Fs, pt * F_tp |> vec)
+                push!(diags, diag)
+            else
+                push!(
+                    Fs,
+                    pt * CFIM(
+                        rho_tp,
+                        drho_tp,
+                        M;
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                    ) |> vec,
+                )
+            end
+        end
         F = trapzm(x, Fs, xnum^2) |> I -> reshape(I, xnum, xnum)
+        return diagnostics ? (F, _merge_diagnostics(:BCFIM, diags)) : F
     end
 end
 
 ########## Bayesian version of QFIM ##########
 @doc raw"""
 
-    BQFIM(x::AbstractVector, p, rho, drho; LDtype=:SLD, eps=GLOBAL_EPS)
+    BQFIM(x::AbstractVector, p, rho, drho; LDtype=:SLD, eps=nothing,
+        tol=1e-10, input_error=0.0, guard=nothing, refine=true,
+        diagnostics=false)
 
-Calculation of the Bayesian quantum Fisher information (BQFI) and the Bayesian quantum Fisher information matrix (BQFIM) of the form
-``\mathcal{F}_{\mathrm{Bayes}}=\int p(\textbf{x})\mathcal{F}\mathrm{d}\textbf{x}`` with ``\mathcal{F}`` the QFIM of all types and ``p(\textbf{x})`` the prior distribution.
-- `x`: The regimes of the parameters for the integral.
-- `p`: The prior distribution.
-- `rho`: Parameterized density matrix.
-- `drho`: Derivatives of the parameterized density matrix (rho) with respect to the unknown parameters to be estimated.
-- `LDtype`: Types of QFI (QFIM) can be set as the objective function. Options are "SLD" (default), "RLD" and "LLD".
-- `eps`: Machine epsilon.
+Calculate the Bayesian quantum Fisher information (BQFI) or Bayesian quantum
+Fisher information matrix (BQFIM)
+
+```math
+\mathcal{F}_{\mathrm{Bayes}}=\int p(\mathbf{x})\,\mathcal{F}\,\mathrm{d}\mathbf{x},
+```
+
+where ``\mathcal{F}`` is the QFIM of the selected type and ``p(\mathbf{x})``
+is the prior distribution. The integral is evaluated with Simpson's rule for
+one parameter and the trapezoidal rule for multiple parameters.
+
+# Arguments
+
+- `x`: The regimes of the parameters for the integral, given as a vector of
+  grid vectors (one per parameter). For a single parameter, pass a one-element
+  vector of grid vectors, e.g. `[xgrid]`.
+- `p`: The prior distribution sampled on the grid, with shape
+  `length.(x)`.
+- `rho`: Parameterized density matrices, with one entry per grid point.
+- `drho`: Derivatives of `rho` with respect to the unknown parameters, with
+  one entry per grid point. Each entry is a vector with one derivative matrix
+  per parameter.
+- `LDtype`: Type of QFI (QFIM): `:SLD` (default), `:RLD`, or `:LLD`.
+- `eps`: Legacy relative floor factor. When `nothing`, the relative precision
+  policy is used; when given, it is deprecated and interpreted by the core.
+- `tol`: Target relative accuracy of the inner QFIM evaluations.
+- `input_error`: Relative error of the input data.
+- `guard`: Relative spectral floor of the inner QFIM evaluations.
+- `refine`: Whether one residual-refinement step is attempted in the inner
+  SLD solves.
+- `diagnostics`: When `true`, also return diagnostics for all grid points.
+
+# Returns
+
+- For one parameter (`length(x) == 1`), a `Float64` containing the integrated
+  BQFI.
+- For multiple parameters, a `length(x) × length(x)` matrix containing the
+  integrated BQFIM.
+- If `diagnostics = true`, returns `(F, diag)`, where `diag` is the
+  [`NumericalDiagnostics`](@ref) record obtained by merging the diagnostics of
+  all grid points.
 raw"""
-function BQFIM(x::AbstractVector, p, rho, drho; LDtype = :SLD, eps = GLOBAL_EPS)
+function BQFIM(
+    x::AbstractVector,
+    p,
+    rho,
+    drho;
+    LDtype = :SLD,
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
+    refine = true,
+    diagnostics = false,
+)
     para_num = length(x)
     if para_num == 1
         #### singleparameter scenario ####
         p_num = length(p)
         F_tp = zeros(p_num)
+        diags = NumericalDiagnostics[]
         for i = 1:p_num
-            F_tp[i] = QFIM(rho[i], drho[i][1]; LDtype = LDtype, eps = eps)
+            if diagnostics
+                F_tp[i], diag = QFIM(
+                    rho[i],
+                    drho[i][1];
+                    LDtype = LDtype,
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                    refine = refine,
+                    diagnostics = true,
+                )
+                push!(diags, diag)
+            else
+                F_tp[i] = QFIM(
+                    rho[i],
+                    drho[i][1];
+                    LDtype = LDtype,
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                    refine = refine,
+                )
+            end
         end
         F = 0.0
         arr = [p[i] * F_tp[i] for i = 1:p_num]
         F = simpson(x[1], arr)
+        return diagnostics ? (F, _merge_diagnostics(:BQFIM, diags)) : F
     else
         #### multiparameter scenario #### 
         xnum = length(x)
@@ -123,18 +329,50 @@ function BQFIM(x::AbstractVector, p, rho, drho; LDtype = :SLD, eps = GLOBAL_EPS)
             trapz(tuple(x...), I) for
             I in [reshape(hcat(integrands...)[i, :], length.(x)...) for i = 1:slice_dim]
         ]
-        Fs = [
-            p * QFIM(rho, drho; LDtype = LDtype, eps = eps) |> vec for
-            (p, rho, drho) in zip(p, rho, drho)
-        ]
+        diags = NumericalDiagnostics[]
+        Fs = Vector{Vector{ComplexF64}}()
+        for (pt, rho_tp, drho_tp) in zip(p, rho, drho)
+            if diagnostics
+                F_tp, diag = QFIM(
+                    rho_tp,
+                    drho_tp;
+                    LDtype = LDtype,
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                    refine = refine,
+                    diagnostics = true,
+                )
+                push!(Fs, pt * F_tp |> vec)
+                push!(diags, diag)
+            else
+                push!(
+                    Fs,
+                    pt * QFIM(
+                        rho_tp,
+                        drho_tp;
+                        LDtype = LDtype,
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                        refine = refine,
+                    ) |> vec,
+                )
+            end
+        end
         F = trapzm(x, Fs, xnum^2) |> I -> reshape(I, xnum, xnum)
+        return diagnostics ? (F, _merge_diagnostics(:BQFIM, diags)) : F
     end
 end
 
 ########## Bayesian quantum Cramer-Rao bound ##########
 @doc raw"""
 
-    BQCRB(x::AbstractVector, p, dp, rho, drho; b=nothing, db=nothing, LDtype=:SLD, btype=1, eps=GLOBAL_EPS)
+    BQCRB(x::AbstractVector, p, dp, rho, drho; b=nothing, db=nothing,
+        LDtype=:SLD, btype=1, eps=nothing, tol=1e-10, input_error=0.0,
+        guard=nothing, refine=true, diagnostics=false)
 
 Calculation of the Bayesian quantum Cramer-Rao bound (BQCRB).
 - `x`: The regimes of the parameters for the integral.
@@ -146,7 +384,14 @@ Calculation of the Bayesian quantum Cramer-Rao bound (BQCRB).
 - `db`: Derivatives of b on the unknown parameters to be estimated, It should be expressed as ``\textbf{b}'=(\partial_0 b(x_0),\partial_1 b(x_1),\dots)^{\mathrm{T}}``.
 - `LDtype`: Types of QFI (QFIM) can be set as the objective function. Options are "SLD" (default), "RLD" and "LLD".
 - `btype`: Types of the BCRB. Options are 1, 2 and 3.
-- `eps`: Machine epsilon.
+- `eps`: Legacy relative floor factor; when `nothing`, the relative precision policy is used; when given, it is deprecated and interpreted by the core.
+- `tol`: Target relative accuracy of the inner QFIM evaluations.
+- `input_error`: Relative error of the input data.
+- `guard`: Relative spectral floor of the inner QFIM evaluations.
+- `refine`: Whether one residual-refinement step is attempted in the inner SLD solves.
+- `diagnostics`: When `true`, return `(value, diag)` where `diag` merges the
+  diagnostics of the inner QFIM evaluations and the guarded pseudo-inverses
+  into one [`NumericalDiagnostics`](@ref) record.
 """
 function BQCRB(
     x::AbstractVector,
@@ -158,9 +403,20 @@ function BQCRB(
     db = nothing,
     LDtype = :SLD,
     btype = 1,
-    eps = GLOBAL_EPS,
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
+    refine = true,
+    diagnostics = false,
 )
-
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        refine = refine,
+    )
 
     if isnothing(b)
         b = [zero(x) for x in x]
@@ -188,9 +444,35 @@ function BQCRB(
             db = db[1]
         end
         F_tp = zeros(p_num)
+        diags = NumericalDiagnostics[]
         for i = 1:p_num
-            f = QFIM(rho[i], drho[i]; LDtype = LDtype, eps = eps)
-            F_tp[i] = f
+            if diagnostics
+                f, diag = QFIM(
+                    rho[i],
+                    drho[i];
+                    LDtype = LDtype,
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                    refine = refine,
+                    diagnostics = true,
+                )
+                F_tp[i] = f
+                push!(diags, diag)
+            else
+                f = QFIM(
+                    rho[i],
+                    drho[i];
+                    LDtype = LDtype,
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                    refine = refine,
+                )
+                F_tp[i] = f
+            end
         end
         F = 0.0
         if btype == 1
@@ -214,7 +496,7 @@ function BQCRB(
         else
             println("NameError: btype should be choosen in {1, 2, 3}.")
         end
-        return F
+        return diagnostics ? (F, _merge_diagnostics(:BQCRB, diags)) : F
     else
         #### multiparameter scenario ####
         xnum = length(x)
@@ -224,70 +506,198 @@ function BQCRB(
             trapz(tuple(x...), I) for
             I in [reshape(hcat(integrands...)[i, :], length.(x)...) for i = 1:slice_dim]
         ]
+        diags = NumericalDiagnostics[]
 
         if btype == 1
-            integrand1(p, rho, drho, b, db) =
-                p *
-                diagm(1 .+ db) *
-                pinv(QFIM(rho, drho; LDtype = LDtype, eps = eps)) *
-                diagm(1 .+ db) + b * b'
-            integrands = [
-                integrand1(p, rho, drho, [b...], [db...]) |> vec for
-                (p, rho, drho, b, db) in zip(p, rho, drho, bs, dbs)
-            ]
+            integrands = Vector{Vector{ComplexF64}}()
+            for (pt, rho_tp, drho_tp, b_tp, db_tp) in zip(p, rho, drho, bs, dbs)
+                bv = [b_tp...]
+                dbv = [db_tp...]
+                if diagnostics
+                    Fq, dq = QFIM(
+                        rho_tp,
+                        drho_tp;
+                        LDtype = LDtype,
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                        refine = refine,
+                        diagnostics = true,
+                    )
+                    push!(diags, dq)
+                    Fpinv, nrank, smin, smax, nullp =
+                        guarded_pinv(Fq; spec = spec, label = "QFIM")
+                    push!(
+                        diags,
+                        _pinv_diagnostics(spec, size(Fq, 1), nrank, smin, smax, nullp),
+                    )
+                else
+                    Fq = QFIM(
+                        rho_tp,
+                        drho_tp;
+                        LDtype = LDtype,
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                        refine = refine,
+                    )
+                    Fpinv = guarded_pinv(Fq; spec = spec, label = "QFIM")[1]
+                end
+                push!(
+                    integrands,
+                    (pt * diagm(1 .+ dbv) * Fpinv * diagm(1 .+ dbv) + bv * bv') |> vec,
+                )
+            end
             I = trapzm(x, integrands, xnum^2) |> I -> reshape(I, xnum, xnum)
         elseif btype == 2
             Bs = [p * (1 .+ [db...]) for (p, db) in zip(p, dbs)]
             B = trapzm(x, Bs, xnum) |> diagm
-            Fs = [
-                p * QFIM(rho, drho; LDtype = LDtype, eps = eps) |> vec for
-                (p, rho, drho) in zip(p, rho, drho)
-            ]
+            Fs = Vector{Vector{ComplexF64}}()
+            for (pt, rho_tp, drho_tp) in zip(p, rho, drho)
+                if diagnostics
+                    Fq, dq = QFIM(
+                        rho_tp,
+                        drho_tp;
+                        LDtype = LDtype,
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                        refine = refine,
+                        diagnostics = true,
+                    )
+                    push!(Fs, pt * Fq |> vec)
+                    push!(diags, dq)
+                else
+                    push!(
+                        Fs,
+                        pt * QFIM(
+                            rho_tp,
+                            drho_tp;
+                            LDtype = LDtype,
+                            eps = eps,
+                            tol = tol,
+                            input_error = input_error,
+                            guard = guard,
+                            refine = refine,
+                        ) |> vec,
+                    )
+                end
+            end
             F = trapzm(x, Fs, xnum^2) |> I -> reshape(I, xnum, xnum)
             bbts = [p * [b...] * [b...]' |> vec for (p, b) in zip(p, bs)]
-            I = B * pinv(F) * B + (trapzm(x, bbts, xnum^2) |> I -> reshape(I, xnum, xnum))
+            if diagnostics
+                Fpinv, nrank, smin, smax, nullp = guarded_pinv(F; spec = spec, label = "F")
+                push!(diags, _pinv_diagnostics(spec, size(F, 1), nrank, smin, smax, nullp))
+            else
+                Fpinv = guarded_pinv(F; spec = spec, label = "F")[1]
+            end
+            I = B * Fpinv * B + (trapzm(x, bbts, xnum^2) |> I -> reshape(I, xnum, xnum))
         elseif btype == 3
             Ip(p, dp) = dp * dp' / p^2
             G = [G_mat(p, dp, [b...], [db...]) for (p, dp, b, db) in zip(p, dp, bs, dbs)]
-            integrand3(p, dp, rho, drho, G_tp) =
-                p *
-                G_tp *
-                pinv(Ip(p, dp) + QFIM(rho, drho; LDtype = LDtype, eps = eps)) *
-                G_tp'
-            integrands = [
-                integrand3(p, dp, rho, drho, G_tp) |> vec for
-                (p, dp, rho, drho, G_tp) in zip(p, dp, rho, drho, G)
-            ]
+            integrands = Vector{Vector{ComplexF64}}()
+            for (pt, dp_tp, rho_tp, drho_tp, G_tp) in zip(p, dp, rho, drho, G)
+                if diagnostics
+                    Fq, dq = QFIM(
+                        rho_tp,
+                        drho_tp;
+                        LDtype = LDtype,
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                        refine = refine,
+                        diagnostics = true,
+                    )
+                    push!(diags, dq)
+                    Msum = Ip(pt, dp_tp) + Fq
+                    Fpinv, nrank, smin, smax, nullp =
+                        guarded_pinv(Msum; spec = spec, label = "Ip + QFIM")
+                    push!(
+                        diags,
+                        _pinv_diagnostics(spec, size(Msum, 1), nrank, smin, smax, nullp),
+                    )
+                else
+                    Fq = QFIM(
+                        rho_tp,
+                        drho_tp;
+                        LDtype = LDtype,
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                        refine = refine,
+                    )
+                    Fpinv =
+                        guarded_pinv(Ip(pt, dp_tp) + Fq; spec = spec, label = "Ip + QFIM")[1]
+                end
+                push!(integrands, (pt * G_tp * Fpinv * G_tp') |> vec)
+            end
             I = trapzm(x, integrands, xnum^2) |> I -> reshape(I, xnum, xnum)
         else
             println("NameError: btype should be choosen in {1, 2, 3}.")
         end
-        return I
+        return diagnostics ? (I, _merge_diagnostics(:BQCRB, diags)) : I
     end
 end
 
 """
-    BQCRB(scheme::Scheme; b=nothing, db=nothing, btype=1, eps=GLOBAL_EPS)
+    BQCRB(scheme::Scheme; b=nothing, db=nothing, btype=1, eps=nothing,
+        tol=1e-10, input_error=0.0, guard=nothing, refine=true,
+        diagnostics=false)
 
 Compute the Bayesian quantum Cramér-Rao bound (BQCRB) from a Scheme.
 
 Evolves the state over the parameter region encoded in the scheme and calls
 [`BQCRB`](@ref) with the prior distribution and biases.
 
+`eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
+
 # See Also
 
 - [`BQCRB`](@ref): Direct BQCRB computation.
 raw"""
-function BQCRB(scheme::Scheme; b = nothing, db = nothing, btype = 1, eps = GLOBAL_EPS)
+function BQCRB(
+    scheme::Scheme;
+    b = nothing,
+    db = nothing,
+    btype = 1,
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
+    refine = true,
+    diagnostics = false,
+)
     rho, drho = evolve_parameter_region(scheme)
     (; x, p, dp) = getfield(scheme, :EstimationStrategy)
-    return BQCRB(x, p, dp, rho, drho; b = b, db = db, btype = btype, eps = eps)
+    return BQCRB(
+        x,
+        p,
+        dp,
+        rho,
+        drho;
+        b = b,
+        db = db,
+        btype = btype,
+        eps = eps,
+        tol = tol,
+        input_error = input_error,
+        guard = guard,
+        refine = refine,
+        diagnostics = diagnostics,
+    )
 end
 
 
 @doc raw"""
 
-    BCRB(x::AbstractVector, p, dp, rho, drho; M=nothing, b=nothing, db=nothing, btype=1, eps=GLOBAL_EPS)
+    BCRB(x::AbstractVector, p, dp, rho, drho; M=nothing, b=nothing,
+        db=nothing, btype=1, eps=nothing, tol=1e-10, input_error=0.0,
+        guard=nothing, refine=true, diagnostics=false)
 
 Calculation of the Bayesian Cramer-Rao bound (BCRB).
 - `x`: The regimes of the parameters for the integral.
@@ -299,7 +709,15 @@ Calculation of the Bayesian Cramer-Rao bound (BCRB).
 - `b`: Vector of biases of the form ``\textbf{b}=(b(x_0),b(x_1),\dots)^{\mathrm{T}}``.
 - `db`: Derivatives of b on the unknown parameters to be estimated, It should be expressed as ``\textbf{b}'=(\partial_0 b(x_0),\partial_1 b(x_1),\dots)^{\mathrm{T}}``.
 - `btype`: Types of the BCRB. Options are 1, 2 and 3.
-- `eps`: Machine epsilon.
+- `eps`: Legacy relative floor factor; when `nothing`, the relative precision policy is used; when given, it is deprecated and interpreted by the core.
+- `tol`: Target relative accuracy of the inner CFIM evaluations.
+- `input_error`: Relative error of the input data.
+- `guard`: Relative spectral floor of the inner CFIM evaluations.
+- `refine`: Reserved for API uniformity; the inner CFIM evaluations do not use
+  residual refinement.
+- `diagnostics`: When `true`, return `(value, diag)` where `diag` merges the
+  diagnostics of the inner CFIM evaluations and the guarded pseudo-inverses
+  into one [`NumericalDiagnostics`](@ref) record.
 """
 function BCRB(
     x::AbstractVector,
@@ -311,8 +729,20 @@ function BCRB(
     b = nothing,
     db = nothing,
     btype = 1,
-    eps = GLOBAL_EPS,
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
+    refine = true,
+    diagnostics = false,
 )
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        refine = refine,
+    )
     if isnothing(b)
         b = [zero(x) for x in x]
         db = [zero(x) for x in x]
@@ -340,10 +770,34 @@ function BCRB(
             db = db[1]
         end
         F_tp = zeros(p_num)
+        diags = NumericalDiagnostics[]
 
         for i = 1:p_num
-            f = CFIM(rho[i], drho[i]; M = M, eps = eps)
-            F_tp[i] = f
+            if diagnostics
+                f, diag = CFIM(
+                    rho[i],
+                    drho[i];
+                    M = M,
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                    diagnostics = true,
+                )
+                F_tp[i] = f
+                push!(diags, diag)
+            else
+                f = CFIM(
+                    rho[i],
+                    drho[i];
+                    M = M,
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                )
+                F_tp[i] = f
+            end
         end
         F = 0.0
         if btype == 1
@@ -367,7 +821,7 @@ function BCRB(
         else
             println("NameError: btype should be choosen in {1, 2, 3}")
         end
-        return F
+        return diagnostics ? (F, _merge_diagnostics(:BCRB, diags)) : F
     else
         #### multiparameter scenario #### 
         if isnothing(M)
@@ -381,56 +835,166 @@ function BCRB(
             trapz(tuple(x...), I) for
             I in [reshape(hcat(integrands...)[i, :], length.(x)...) for i = 1:slice_dim]
         ]
+        diags = NumericalDiagnostics[]
 
         if btype == 1
-            integrand1(p, rho, drho, b, db) =
-                p * diagm(1 .+ db) * pinv(CFIM(rho, drho, M; eps = eps)) * diagm(1 .+ db) +
-                b * b'
-            integrands = [
-                integrand1(p, rho, drho, [b...], [db...]) |> vec for
-                (p, rho, drho, b, db) in zip(p, rho, drho, bs, dbs)
-            ]
+            integrands = Vector{Vector{ComplexF64}}()
+            for (pt, rho_tp, drho_tp, b_tp, db_tp) in zip(p, rho, drho, bs, dbs)
+                bv = [b_tp...]
+                dbv = [db_tp...]
+                if diagnostics
+                    Fq, dq = CFIM(
+                        rho_tp,
+                        drho_tp,
+                        M;
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                        diagnostics = true,
+                    )
+                    push!(diags, dq)
+                    Fpinv, nrank, smin, smax, nullp =
+                        guarded_pinv(Fq; spec = spec, label = "CFIM")
+                    push!(
+                        diags,
+                        _pinv_diagnostics(spec, size(Fq, 1), nrank, smin, smax, nullp),
+                    )
+                else
+                    Fq = CFIM(
+                        rho_tp,
+                        drho_tp,
+                        M;
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                    )
+                    Fpinv = guarded_pinv(Fq; spec = spec, label = "CFIM")[1]
+                end
+                push!(
+                    integrands,
+                    (pt * diagm(1 .+ dbv) * Fpinv * diagm(1 .+ dbv) + bv * bv') |> vec,
+                )
+            end
             I = trapzm(x, integrands, xnum^2) |> I -> reshape(I, xnum, xnum)
         elseif btype == 2
             Bs = [p * (1 .+ [db...]) for (p, db) in zip(p, dbs)]
             B = trapzm(x, Bs, xnum) |> diagm
-            Fs = [
-                p * CFIM(rho, drho, M; eps = eps) |> vec for
-                (p, rho, drho) in zip(p, rho, drho)
-            ]
+            Fs = Vector{Vector{Float64}}()
+            for (pt, rho_tp, drho_tp) in zip(p, rho, drho)
+                if diagnostics
+                    Fq, dq = CFIM(
+                        rho_tp,
+                        drho_tp,
+                        M;
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                        diagnostics = true,
+                    )
+                    push!(Fs, pt * Fq |> vec)
+                    push!(diags, dq)
+                else
+                    push!(
+                        Fs,
+                        pt * CFIM(
+                            rho_tp,
+                            drho_tp,
+                            M;
+                            eps = eps,
+                            tol = tol,
+                            input_error = input_error,
+                            guard = guard,
+                        ) |> vec,
+                    )
+                end
+            end
             F = trapzm(x, Fs, xnum^2) |> I -> reshape(I, xnum, xnum)
             bbts = [p * [b...] * [b...]' |> vec for (p, b) in zip(p, bs)]
-            I = B * pinv(F) * B + (trapzm(x, bbts, xnum^2) |> I -> reshape(I, xnum, xnum))
+            if diagnostics
+                Fpinv, nrank, smin, smax, nullp = guarded_pinv(F; spec = spec, label = "F")
+                push!(diags, _pinv_diagnostics(spec, size(F, 1), nrank, smin, smax, nullp))
+            else
+                Fpinv = guarded_pinv(F; spec = spec, label = "F")[1]
+            end
+            I = B * Fpinv * B + (trapzm(x, bbts, xnum^2) |> I -> reshape(I, xnum, xnum))
         elseif btype == 3
             Ip(p, dp) = dp * dp' / p^2
             G = [G_mat(p, dp, [b...], [db...]) for (p, dp, b, db) in zip(p, dp, bs, dbs)]
-            integrand3(p, dp, rho, drho, G_tp) =
-                p * G_tp * pinv(Ip(p, dp) + CFIM(rho, drho, M; eps = eps)) * G_tp'
-            integrands = [
-                integrand3(p, dp, rho, drho, G_tp) |> vec for
-                (p, dp, rho, drho, G_tp) in zip(p, dp, rho, drho, G)
-            ]
+            integrands = Vector{Vector{ComplexF64}}()
+            for (pt, dp_tp, rho_tp, drho_tp, G_tp) in zip(p, dp, rho, drho, G)
+                if diagnostics
+                    Fq, dq = CFIM(
+                        rho_tp,
+                        drho_tp,
+                        M;
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                        diagnostics = true,
+                    )
+                    push!(diags, dq)
+                    Msum = Ip(pt, dp_tp) + Fq
+                    Fpinv, nrank, smin, smax, nullp =
+                        guarded_pinv(Msum; spec = spec, label = "Ip + CFIM")
+                    push!(
+                        diags,
+                        _pinv_diagnostics(spec, size(Msum, 1), nrank, smin, smax, nullp),
+                    )
+                else
+                    Fq = CFIM(
+                        rho_tp,
+                        drho_tp,
+                        M;
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                    )
+                    Fpinv =
+                        guarded_pinv(Ip(pt, dp_tp) + Fq; spec = spec, label = "Ip + CFIM")[1]
+                end
+                push!(integrands, (pt * G_tp * Fpinv * G_tp') |> vec)
+            end
             I = trapzm(x, integrands, xnum^2) |> I -> reshape(I, xnum, xnum)
         else
             println("NameError: btype should be choosen in {1, 2, 3}.")
         end
-        return I
+        return diagnostics ? (I, _merge_diagnostics(:BCRB, diags)) : I
     end
 end
 
 raw"""
-    BCRB(scheme::Scheme; b=nothing, db=nothing, btype=1, eps=GLOBAL_EPS)
+    BCRB(scheme::Scheme; b=nothing, db=nothing, btype=1, eps=nothing,
+        tol=1e-10, input_error=0.0, guard=nothing, refine=true,
+        diagnostics=false)
 
 Compute the Bayesian Cramér-Rao bound (BCRB) from a Scheme.
 
 Evolves the state over the parameter region and calls [`BCRB`](@ref) with
 the measurement from the scheme.
 
+`eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
+
 # See Also
 
 - [`BCRB`](@ref): Direct BCRB computation.
 raw"""
-function BCRB(scheme::Scheme; b = nothing, db = nothing, btype = 1, eps = GLOBAL_EPS)
+function BCRB(
+    scheme::Scheme;
+    b = nothing,
+    db = nothing,
+    btype = 1,
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
+    refine = true,
+    diagnostics = false,
+)
     rho, drho = evolve_parameter_region(scheme)
     (; x, p, dp) = getfield(scheme, :EstimationStrategy)
     return BCRB(
@@ -444,6 +1008,11 @@ function BCRB(scheme::Scheme; b = nothing, db = nothing, btype = 1, eps = GLOBAL
         db = db,
         btype = btype,
         eps = eps,
+        tol = tol,
+        input_error = input_error,
+        guard = guard,
+        refine = refine,
+        diagnostics = diagnostics,
     )
 end
 
@@ -492,7 +1061,9 @@ end
 
 """
 
-    QVTB(x::AbstractVector, p, dp, rho, drho; LDtype=:SLD, eps=GLOBAL_EPS)
+    QVTB(x::AbstractVector, p, dp, rho, drho; LDtype=:SLD, eps=nothing,
+        tol=1e-10, input_error=0.0, guard=nothing, refine=true,
+        diagnostics=false)
 
 Calculation of the Bayesian version of Cramer-Rao bound in troduced by Van Trees (VTB).
 - `x`: The regimes of the parameters for the integral.
@@ -501,9 +1072,36 @@ Calculation of the Bayesian version of Cramer-Rao bound in troduced by Van Trees
 - `rho`: Parameterized density matrix.
 - `drho`: Derivatives of the parameterized density matrix (rho) with respect to the unknown parameters to be estimated.
 - `LDtype`: Types of QFI (QFIM) can be set as the objective function. Options are "SLD" (default), "RLD" and "LLD".
-- `eps`: Machine epsilon.
+- `eps`: Legacy relative floor factor; when `nothing`, the relative precision policy is used; when given, it is deprecated and interpreted by the core.
+- `tol`: Target relative accuracy of the inner QFIM evaluations.
+- `input_error`: Relative error of the input data.
+- `guard`: Relative spectral floor of the inner QFIM evaluations.
+- `refine`: Whether one residual-refinement step is attempted in the inner SLD solves.
+- `diagnostics`: When `true`, return `(value, diag)` where `diag` merges the
+  diagnostics of the inner QFIM evaluations and of the guarded inversion of
+  ``I_{\\mathrm{prior}} + F`` into one [`NumericalDiagnostics`](@ref) record.
 """
-function QVTB(x::AbstractVector, p, dp, rho, drho; LDtype = :SLD, eps = GLOBAL_EPS)
+function QVTB(
+    x::AbstractVector,
+    p,
+    dp,
+    rho,
+    drho;
+    LDtype = :SLD,
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
+    refine = true,
+    diagnostics = false,
+)
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        refine = refine,
+    )
     if x isa Vector{<:Number} || length(x) == 1
         if length(x) == 1
             x = x[1]
@@ -517,8 +1115,33 @@ function QVTB(x::AbstractVector, p, dp, rho, drho; LDtype = :SLD, eps = GLOBAL_E
             dp = [dp[i][1] for i = 1:p_num]
         end
         F_tp = zeros(p_num)
+        diags = NumericalDiagnostics[]
         for m = 1:p_num
-            F_tp[m] = QFIM(rho[m], drho[m]; LDtype = LDtype, eps = eps)
+            if diagnostics
+                F_tp[m], diag = QFIM(
+                    rho[m],
+                    drho[m];
+                    LDtype = LDtype,
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                    refine = refine,
+                    diagnostics = true,
+                )
+                push!(diags, diag)
+            else
+                F_tp[m] = QFIM(
+                    rho[m],
+                    drho[m];
+                    LDtype = LDtype,
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                    refine = refine,
+                )
+            end
         end
 
         arr1 = [real(dp[i] * dp[i] / p[i]) for i = 1:p_num]
@@ -526,7 +1149,7 @@ function QVTB(x::AbstractVector, p, dp, rho, drho; LDtype = :SLD, eps = GLOBAL_E
         arr2 = [real(F_tp[j] * p[j]) for j = 1:p_num]
         F = simpson(x, arr2)
         I = 1.0 / (I + F)
-        return I
+        return diagnostics ? (I, _merge_diagnostics(:QVTB, diags)) : I
     else
         #### multiparameter scenario ####
         xnum = length(x)
@@ -538,34 +1161,102 @@ function QVTB(x::AbstractVector, p, dp, rho, drho; LDtype = :SLD, eps = GLOBAL_E
 
         Iprs = [p * Ip(p, dp) |> vec for (p, dp) in zip(p, dp)]
         Ipr = trapzm(x, Iprs, xnum^2) |> I -> reshape(I, xnum, xnum)
-        Fs = [p * QFIM(rho, drho; eps = eps) |> vec for (p, rho, drho) in zip(p, rho, drho)]
+        diags = NumericalDiagnostics[]
+        Fs = Vector{Vector{ComplexF64}}()
+        for (pt, rho_tp, drho_tp) in zip(p, rho, drho)
+            if diagnostics
+                F_tp, diag = QFIM(
+                    rho_tp,
+                    drho_tp;
+                    LDtype = LDtype,
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                    refine = refine,
+                    diagnostics = true,
+                )
+                push!(Fs, pt * F_tp |> vec)
+                push!(diags, diag)
+            else
+                push!(
+                    Fs,
+                    pt * QFIM(
+                        rho_tp,
+                        drho_tp;
+                        LDtype = LDtype,
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                        refine = refine,
+                    ) |> vec,
+                )
+            end
+        end
         F = trapzm(x, Fs, xnum^2) |> I -> reshape(I, xnum, xnum)
-        I = pinv(Ipr + F)
+        if diagnostics
+            I, nrank, smin, smax, nullp =
+                guarded_pinv(Ipr + F; spec = spec, label = "Ipr + F")
+            push!(
+                diags,
+                _pinv_diagnostics(spec, size(Ipr + F, 1), nrank, smin, smax, nullp),
+            )
+            return I, _merge_diagnostics(:QVTB, diags)
+        end
+        I = guarded_pinv(Ipr + F; spec = spec, label = "Ipr + F")[1]
         return I
     end
 end
 
 """
-    QVTB(scheme::Scheme; LDtype=:SLD, eps=GLOBAL_EPS)
+    QVTB(scheme::Scheme; LDtype=:SLD, eps=nothing, tol=1e-10,
+        input_error=0.0, guard=nothing, refine=true, diagnostics=false)
 
 Compute the quantum Van Trees bound from a Scheme.
 
 Evolves the state over the parameter region and calls [`QVTB`](@ref).
 
+`eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
+
 # See Also
 
 - [`QVTB`](@ref): Direct quantum Van Trees bound.
 """
-function QVTB(scheme::Scheme; LDtype = :SLD, eps = GLOBAL_EPS)
+function QVTB(
+    scheme::Scheme;
+    LDtype = :SLD,
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
+    refine = true,
+    diagnostics = false,
+)
     rho, drho = evolve_parameter_region(scheme)
     (; x, p, dp) = getfield(scheme, :EstimationStrategy)
-    return QVTB(x, p, dp, rho, drho; LDtype = LDtype, eps = eps)
+    return QVTB(
+        x,
+        p,
+        dp,
+        rho,
+        drho;
+        LDtype = LDtype,
+        eps = eps,
+        tol = tol,
+        input_error = input_error,
+        guard = guard,
+        refine = refine,
+        diagnostics = diagnostics,
+    )
 end
 
 
 """
 
-    VTB(x::AbstractVector, p, dp, rho, drho; M=nothing, eps=GLOBAL_EPS)
+    VTB(x::AbstractVector, p, dp, rho, drho; M=nothing, eps=nothing,
+        tol=1e-10, input_error=0.0, guard=nothing, refine=true,
+        diagnostics=false)
 
 Calculation of the Bayesian version of Cramer-Rao bound introduced by Van Trees (VTB).
 - `x`: The regimes of the parameters for the integral.
@@ -574,9 +1265,37 @@ Calculation of the Bayesian version of Cramer-Rao bound introduced by Van Trees 
 - `rho`: Parameterized density matrix.
 - `drho`: Derivatives of the parameterized density matrix (rho) with respect to the unknown parameters to be estimated.
 - `M`: A set of positive operator-valued measure (POVM). The default measurement is a set of rank-one symmetric informationally complete POVM (SIC-POVM).
-- `eps`: Machine epsilon.
+- `eps`: Legacy relative floor factor; when `nothing`, the relative precision policy is used; when given, it is deprecated and interpreted by the core.
+- `tol`: Target relative accuracy of the inner CFIM evaluations.
+- `input_error`: Relative error of the input data.
+- `guard`: Relative spectral floor of the inner CFIM evaluations.
+- `refine`: Reserved for API uniformity; the inner CFIM evaluations do not use
+  residual refinement.
+- `diagnostics`: When `true`, return `(value, diag)` where `diag` merges the
+  diagnostics of the inner CFIM evaluations and of the guarded inversion of
+  ``I_{\\mathrm{prior}} + I`` into one [`NumericalDiagnostics`](@ref) record.
 """
-function VTB(x::AbstractVector, p, dp, rho, drho; M = nothing, eps = GLOBAL_EPS)
+function VTB(
+    x::AbstractVector,
+    p,
+    dp,
+    rho,
+    drho;
+    M = nothing,
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
+    refine = true,
+    diagnostics = false,
+)
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        refine = refine,
+    )
     if x isa Vector{<:Number} || length(x) == 1
         if length(x) == 1
             x = x[1]
@@ -593,8 +1312,31 @@ function VTB(x::AbstractVector, p, dp, rho, drho; M = nothing, eps = GLOBAL_EPS)
             dp = [dp[i][1] for i = 1:p_num]
         end
         F_tp = zeros(p_num)
+        diags = NumericalDiagnostics[]
         for m = 1:p_num
-            F_tp[m] = CFIM(rho[m], drho[m], M; eps = eps)
+            if diagnostics
+                F_tp[m], diag = CFIM(
+                    rho[m],
+                    drho[m],
+                    M;
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                    diagnostics = true,
+                )
+                push!(diags, diag)
+            else
+                F_tp[m] = CFIM(
+                    rho[m],
+                    drho[m],
+                    M;
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                )
+            end
         end
 
         arr1 = [real(dp[i] * dp[i] / p[i]) for i = 1:p_num]
@@ -602,7 +1344,7 @@ function VTB(x::AbstractVector, p, dp, rho, drho; M = nothing, eps = GLOBAL_EPS)
         arr2 = [real(F_tp[j] * p[j]) for j = 1:p_num]
         F = simpson(x, arr2)
         res = 1.0 / (I + F)
-        return res
+        return diagnostics ? (res, _merge_diagnostics(:VTB, diags)) : res
     else
         #### multiparameter scenario #### 
         if isnothing(M)
@@ -617,31 +1359,92 @@ function VTB(x::AbstractVector, p, dp, rho, drho; M = nothing, eps = GLOBAL_EPS)
 
         Iprs = [p * Ip(p, dp) |> vec for (p, dp) in zip(p, dp)]
         Ipr = trapzm(x, Iprs, xnum^2) |> I -> reshape(I, xnum, xnum)
-        Fs = [
-            p * CFIM(rho, drho, M; eps = eps) |> vec for (p, rho, drho) in zip(p, rho, drho)
-        ]
+        diags = NumericalDiagnostics[]
+        Fs = Vector{Vector{Float64}}()
+        for (pt, rho_tp, drho_tp) in zip(p, rho, drho)
+            if diagnostics
+                F_tp, diag = CFIM(
+                    rho_tp,
+                    drho_tp,
+                    M;
+                    eps = eps,
+                    tol = tol,
+                    input_error = input_error,
+                    guard = guard,
+                    diagnostics = true,
+                )
+                push!(Fs, pt * F_tp |> vec)
+                push!(diags, diag)
+            else
+                push!(
+                    Fs,
+                    pt * CFIM(
+                        rho_tp,
+                        drho_tp,
+                        M;
+                        eps = eps,
+                        tol = tol,
+                        input_error = input_error,
+                        guard = guard,
+                    ) |> vec,
+                )
+            end
+        end
         F = trapzm(x, Fs, xnum^2) |> I -> reshape(I, xnum, xnum)
-        I = pinv(Ipr + F)
+        if diagnostics
+            I, nrank, smin, smax, nullp =
+                guarded_pinv(Ipr + F; spec = spec, label = "Ipr + F")
+            push!(
+                diags,
+                _pinv_diagnostics(spec, size(Ipr + F, 1), nrank, smin, smax, nullp),
+            )
+            return I, _merge_diagnostics(:VTB, diags)
+        end
+        I = guarded_pinv(Ipr + F; spec = spec, label = "Ipr + F")[1]
         return I
     end
 end
 
 """
-    VTB(scheme::Scheme; eps=GLOBAL_EPS)
+    VTB(scheme::Scheme; eps=nothing, tol=1e-10, input_error=0.0,
+        guard=nothing, refine=true, diagnostics=false)
 
 Compute the classical Van Trees bound from a Scheme.
 
 Evolves the state over the parameter region and calls [`VTB`](@ref) with
 the measurement from the scheme.
 
+`eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
+
 # See Also
 
 - [`VTB`](@ref): Direct Van Trees bound.
 raw"""
-function VTB(scheme::Scheme; eps = GLOBAL_EPS)
+function VTB(
+    scheme::Scheme;
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
+    refine = true,
+    diagnostics = false,
+)
     rho, drho = evolve_parameter_region(scheme)
     (; x, p, dp) = getfield(scheme, :EstimationStrategy)
-    return VTB(x, p, dp, rho, drho; M = meas_data(scheme), eps = eps)
+    return VTB(
+        x,
+        p,
+        dp,
+        rho,
+        drho;
+        M = meas_data(scheme),
+        eps = eps,
+        tol = tol,
+        input_error = input_error,
+        guard = guard,
+        refine = refine,
+        diagnostics = diagnostics,
+    )
 end
 
 ########## optimal biased bound ##########
@@ -737,21 +1540,62 @@ function interp1(xspan, yspan, x)
     return y
 end
 
-"""
+@doc raw"""
 
-    OBB(x::AbstractVector, p, dp, rho, drho, d2rho; LDtype=:SLD, eps=GLOBAL_EPS)
+    OBB(x::AbstractVector, p, dp, rho, drho, d2rho; LDtype=:SLD,
+        eps=nothing, tol=1e-10, input_error=0.0, guard=nothing,
+        refine=true, diagnostics=false)
 
-Calculation of the Bayesian version of Cramer-Rao bound introduced by Van Trees (VTB).
-- `x`: The regimes of the parameters for the integral.
-- `p`: The prior distribution.
-- `dp`: Derivatives of the prior distribution with respect to the unknown parameters to be estimated. For example, dp[0] is the derivative vector on the first parameter.
-- `rho`: Parameterized density matrix.
-- `drho`: Derivatives of the parameterized density matrix (rho) with respect to the unknown parameters to be estimated.
-- `d2rho`: Second order Derivatives of the parameterized density matrix (rho) with respect to the unknown parameters to be estimated.
-- `LDtype`: Types of QFI (QFIM) can be set as the objective function. Options are "SLD" (default), "RLD" and "LLD".
-- `eps`: Machine epsilon.
-"""
-function OBB(x::AbstractVector, p, dp, rho, drho, d2rho; LDtype = :SLD, eps = GLOBAL_EPS)
+Calculate the optimal biased bound (OBB) for single-parameter Bayesian
+estimation. The bound follows from the first type of the Bayesian quantum
+Cramér-Rao bound and is obtained by solving the associated Euler-Lagrange
+boundary-value problem for the optimal bias function.
+
+# Arguments
+
+- `x`: The regimes of the parameter for the integral, normally given as a
+  one-element vector of grid vectors, e.g. `[xgrid]`. A bare grid vector is
+  also accepted.
+- `p`: The prior distribution sampled on the grid.
+- `dp`: Derivatives of the prior distribution with respect to the unknown
+  parameter, sampled on the grid.
+- `rho`: Parameterized density matrices, with one entry per grid point.
+- `drho`: First derivatives of `rho` with respect to the unknown parameter,
+  with one entry per grid point.
+- `d2rho`: Second derivatives of `rho` with respect to the unknown parameter,
+  with one entry per grid point.
+- `LDtype`: Type of QFI (QFIM): `:SLD` (default), `:RLD`, or `:LLD`.
+- `eps`: Legacy relative floor factor. When `nothing`, the relative precision
+  policy is used; when given, it is deprecated and interpreted by the core.
+- `tol`: Target relative accuracy of the inner QFIM evaluations.
+- `input_error`: Relative error of the input data.
+- `guard`: Relative spectral floor of the inner QFIM evaluations.
+- `refine`: Whether one residual-refinement step is attempted in the inner
+  SLD solves.
+- `diagnostics`: When `true`, also return diagnostics for all grid points.
+
+# Returns
+
+- A real-valued `Float64` containing the integrated optimal biased bound.
+- If `diagnostics = true`, returns `(value, diag)`, where `diag` is the
+  [`NumericalDiagnostics`](@ref) record obtained by merging the diagnostics of
+  all grid points.
+raw"""
+function OBB(
+    x::AbstractVector,
+    p,
+    dp,
+    rho,
+    drho,
+    d2rho;
+    LDtype = :SLD,
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
+    refine = true,
+    diagnostics = false,
+)
     p_num = length(p)
 
     if typeof(drho[1]) == Vector{Matrix{ComplexF64}}
@@ -769,8 +1613,35 @@ function OBB(x::AbstractVector, p, dp, rho, drho, d2rho; LDtype = :SLD, eps = GL
 
     delta = x[2] - x[1]
     F, J = zeros(p_num), zeros(p_num)
+    diags = NumericalDiagnostics[]
     for m = 1:p_num
-        f, LD = QFIM(rho[m], drho[m], LDtype = LDtype, exportLD = true)
+        if diagnostics
+            f, LD, diag = QFIM(
+                rho[m],
+                drho[m];
+                LDtype = LDtype,
+                exportLD = true,
+                eps = eps,
+                tol = tol,
+                input_error = input_error,
+                guard = guard,
+                refine = refine,
+                diagnostics = true,
+            )
+            push!(diags, diag)
+        else
+            f, LD = QFIM(
+                rho[m],
+                drho[m];
+                LDtype = LDtype,
+                exportLD = true,
+                eps = eps,
+                tol = tol,
+                input_error = input_error,
+                guard = guard,
+                refine = refine,
+            )
+        end
         dF = real(tr(2 * d2rho[m] * LD - LD * LD * drho[m]))
         J[m] = dp[m] / p[m] - dF / f
         F[m] = f
@@ -783,5 +1654,6 @@ function OBB(x::AbstractVector, p, dp, rho, drho, d2rho; LDtype = :SLD, eps = GL
     dbias = [sol.u[i][2] for i = 1:p_num]
 
     value = [p[i] * ((1 + dbias[i])^2 / F[i] + bias[i]^2) for i = 1:p_num]
-    return simpson(x, value)
+    result = simpson(x, value)
+    return diagnostics ? (result, _merge_diagnostics(:OBB, diags)) : result
 end

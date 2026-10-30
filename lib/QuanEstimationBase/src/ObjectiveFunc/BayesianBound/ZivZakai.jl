@@ -149,7 +149,6 @@ P_{\mathrm{err}}^{(\nu)} \ge \frac{1}{2}\bigl(1 - \sqrt{1-\mathcal{F}(|\psi\rang
 - [`fidelity`](@ref): Fidelity used in the pure-state formulation.
 - [`QZZB`](@ref): Quantum Ziv-Zakai bound using the Helstrom bound.
 """
-# Helstorm bound of error probability for the hypothesis testing problem 
 function helstrom_bound(
     ρ::AbstractMatrix{<:Number},
     σ::AbstractMatrix{<:Number},
@@ -159,7 +158,7 @@ function helstrom_bound(
     return (1 - trace_norm(P0 * ρ - (1 - P0) * σ)) / 2 |> real
 end
 
-raw"""
+@doc raw"""
     helstrom_bound(ψ::AbstractVector{<:Number}, ϕ::AbstractVector{<:Number}, ν=1)
 
 Pure-state version of the Helstrom bound. See the density-matrix
@@ -195,19 +194,19 @@ prior_uniform(W = 1.0, μ = 0.0) = x -> abs(x - μ) > abs(W / 2) ? 0 : 1 / W
 
 """
 
-    QZZB(x::AbstractVector, p::AbstractVector, rho::AbstractVecOrMat; eps=GLOBAL_EPS)
+    QZZB(x::AbstractVector, p::AbstractVector, rho::AbstractVecOrMat; eps=nothing)
 
 Calculation of the quantum Ziv-Zakai bound (QZZB).
 - `x`: The regimes of the parameters for the integral.
 - `p`: The prior distribution.
 - `rho`: Parameterized density matrix.
-- `eps`: Machine epsilon.
+- `eps`: Legacy relative floor factor; when `nothing`, the relative precision policy is used; when given, it is deprecated and interpreted by the core.
 """
 function QZZB(
     x::AbstractVector,
     p::AbstractVector,
     rho::AbstractVecOrMat;
-    eps = GLOBAL_EPS,
+    eps = nothing,
     ν::Number = 1,
 )
     if typeof(x[1]) == Vector{Float64} || typeof(x[1]) == Vector{Int64}

@@ -58,7 +58,7 @@ is the QFIM (or QFI for single-parameter) and ``W`` is the weight matrix.
 # Fields
 
 - `W::Union{AbstractMatrix,UniformScaling}`: Weight matrix (defaults to ``\mathbb{I}``).
-- `eps::Number`: Numerical epsilon threshold.
+- `eps::Union{Number,Nothing}`: Numerical epsilon threshold.
 
 # See Also
 
@@ -68,7 +68,7 @@ is the QFIM (or QFI for single-parameter) and ``W`` is the weight matrix.
 raw"""
 struct QFIM_obj{P,D} <: AbstractObj
     W::Union{AbstractMatrix,UniformScaling}
-    eps::Number
+    eps::Union{Number,Nothing}
 end
 
 @doc raw"""
@@ -87,7 +87,7 @@ is the CFIM (or CFI for single-parameter).
 
 - `M::Union{AbstractVecOrMat,Nothing}`: POVM elements (defaults to SIC-POVM if `nothing`).
 - `W::Union{AbstractMatrix,UniformScaling}`: Weight matrix (defaults to ``\mathbb{I}``).
-- `eps::Number`: Numerical epsilon threshold.
+- `eps::Union{Number,Nothing}`: Numerical epsilon threshold.
 
 # See Also
 
@@ -97,7 +97,7 @@ raw"""
 struct CFIM_obj{P} <: AbstractObj
     M::Union{AbstractVecOrMat,Nothing}
     W::Union{AbstractMatrix,UniformScaling}
-    eps::Number
+    eps::Union{Number,Nothing}
 end
 
 @doc raw"""
@@ -115,7 +115,7 @@ objective.
 # Fields
 
 - `W::Union{AbstractMatrix,UniformScaling}`: Weight matrix (defaults to ``\mathbb{I}``).
-- `eps::Number`: Numerical epsilon threshold.
+- `eps::Union{Number,Nothing}`: Numerical epsilon threshold.
 
 # See Also
 
@@ -124,46 +124,46 @@ objective.
 raw"""
 struct HCRB_obj{P} <: AbstractObj
     W::Union{AbstractMatrix,UniformScaling}
-    eps::Number
+    eps::Union{Number,Nothing}
 end
 
 @doc raw"""
 
-    QFIM_obj(;W=nothing, eps=GLOBAL_EPS, LDtype::Symbol=:SLD)
+    QFIM_obj(;W=nothing, eps=nothing, LDtype::Symbol=:SLD)
 
 Choose QFI [``\mathrm{Tr}(WF^{-1})``] as the objective function with ``W`` the weight matrix and ``F`` the QFIM.
 - `W`: Weight matrix.
-- `eps`: Machine epsilon.
+- `eps`: Legacy relative floor factor; when `nothing`, the relative precision policy is used; when given, it is deprecated and interpreted by the core.
 - `LDtype`: Types of QFI (QFIM) can be set as the objective function. Options are `:SLD` (default), `:RLD` and `:LLD`.
 raw"""
 QFIM_obj(;
     W = nothing,
-    eps = GLOBAL_EPS,
+    eps = nothing,
     para_type::Symbol = :single_para,
     LDtype::Symbol = :SLD,
 ) = QFIM_obj{PARA_TYPE_MAP[para_type], LD_TYPE_MAP[LDtype]}(isnothing(W) ? I : W, eps)
 
 @doc raw"""
 
-    CFIM_obj(;M=nothing, W=nothing, eps=GLOBAL_EPS)
+    CFIM_obj(;M=nothing, W=nothing, eps=nothing)
 
 Choose CFI [``\mathrm{Tr}(WI^{-1})``] as the objective function with ``W`` the weight matrix and ``I`` the CFIM.
 - `M`: A set of positive operator-valued measure (POVM). The default measurement is a set of rank-one symmetric informationally complete POVM (SIC-POVM).
 - `W`: Weight matrix.
-- `eps`: Machine epsilon.
+- `eps`: Legacy relative floor factor; when `nothing`, the relative precision policy is used; when given, it is deprecated and interpreted by the core.
 """
-CFIM_obj(; M = nothing, W = nothing, eps = GLOBAL_EPS, para_type::Symbol = :single_para) =
+CFIM_obj(; M = nothing, W = nothing, eps = nothing, para_type::Symbol = :single_para) =
     CFIM_obj{PARA_TYPE_MAP[para_type]}(M, isnothing(W) ? I : W, eps)
 
 @doc raw"""
 
-    HCRB_obj(;W=nothing, eps=GLOBAL_EPS)
+    HCRB_obj(;W=nothing, eps=nothing)
 
 Choose HCRB as the objective function. 
 - `W`: Weight matrix.
-- `eps`: Machine epsilon.
+- `eps`: Legacy relative floor factor; when `nothing`, the relative precision policy is used; when given, it is deprecated and interpreted by the core.
 """
-HCRB_obj(; W = nothing, eps = GLOBAL_EPS, para_type::Symbol = :single_para) =
+HCRB_obj(; W = nothing, eps = nothing, para_type::Symbol = :single_para) =
     HCRB_obj{PARA_TYPE_MAP[para_type]}(isnothing(W) ? I : W, eps)
 
 """
@@ -194,7 +194,7 @@ HCRB_obj(W, eps, para_type::Symbol) = HCRB_obj{PARA_TYPE_MAP[para_type]}(W, eps)
 String-input convenience constructor for [`QFIM_obj`](@ref).
 Converts string arguments to symbols.
 """
-QFIM_obj(W::AbstractMatrix, eps::Number, para_type::String, LDtype::String) =
+QFIM_obj(W::AbstractMatrix, eps::Union{Number,Nothing}, para_type::String, LDtype::String) =
     QFIM_obj(W, eps, Symbol.([para_type, LDtype])...)
 
 """
@@ -202,7 +202,7 @@ QFIM_obj(W::AbstractMatrix, eps::Number, para_type::String, LDtype::String) =
 
 String-input convenience constructor for [`CFIM_obj`](@ref).
 """
-CFIM_obj(M::AbstractVecOrMat, W::AbstractMatrix, eps::Number, para_type::String) =
+CFIM_obj(M::AbstractVecOrMat, W::AbstractMatrix, eps::Union{Number,Nothing}, para_type::String) =
     CFIM_obj(M, W, eps, Symbol(para_type))
 
 """
@@ -210,7 +210,7 @@ CFIM_obj(M::AbstractVecOrMat, W::AbstractMatrix, eps::Number, para_type::String)
 
 String-input convenience constructor for [`HCRB_obj`](@ref).
 """
-HCRB_obj(W::AbstractMatrix, eps::Number, para_type::String) =
+HCRB_obj(W::AbstractMatrix, eps::Union{Number,Nothing}, para_type::String) =
     HCRB_obj(W, eps, Symbol(para_type))
 
 """
@@ -286,7 +286,9 @@ Evaluate the multi-parameter SLD-based QFIM objective ``\mathrm{Tr}(W F^{-1})``.
 function objective(obj::QFIM_obj{multi_para,SLD}, scheme)
     (; W, eps) = obj
     ρ, dρ = evolve(scheme)
-    f = tr(W * pinv(QFIM_SLD(ρ, dρ; eps = eps)))
+    F = QFIM_SLD(ρ, dρ; eps = eps)
+    Wm = W isa UniformScaling ? Matrix(W, size(F, 1), size(F, 2)) : W
+    f, _ = guarded_objective(F, Wm; spec = precision_spec(eps))
     return f, 1.0 / f
 end
 
@@ -310,7 +312,9 @@ Evaluate the multi-parameter RLD-based QFIM objective ``\mathrm{Tr}(W F_{\mathrm
 function objective(obj::QFIM_obj{multi_para,RLD}, scheme)
     (; W, eps) = obj
     ρ, dρ = evolve(scheme)
-    f = tr(W * pinv(QFIM_RLD(ρ, dρ; eps = eps)))
+    F = QFIM_RLD(ρ, dρ; eps = eps)
+    Wm = W isa UniformScaling ? Matrix(W, size(F, 1), size(F, 2)) : W
+    f, _ = guarded_objective(F, Wm; spec = precision_spec(eps))
     return f, 1.0 / f
 end
 
@@ -334,7 +338,9 @@ Evaluate the multi-parameter LLD-based QFIM objective ``\mathrm{Tr}(W F_{\mathrm
 function objective(obj::QFIM_obj{multi_para,LLD}, scheme)
     (; W, eps) = obj
     ρ, dρ = evolve(scheme)
-    f = tr(W * pinv(QFIM_LLD(ρ, dρ; eps = eps)))
+    F = QFIM_LLD(ρ, dρ; eps = eps)
+    Wm = W isa UniformScaling ? Matrix(W, size(F, 1), size(F, 2)) : W
+    f, _ = guarded_objective(F, Wm; spec = precision_spec(eps))
     return f, 1.0 / f
 end
 
@@ -358,7 +364,9 @@ Evaluate the multi-parameter CFIM objective ``\mathrm{Tr}(W I^{-1})``.
 function objective(obj::CFIM_obj{multi_para}, scheme)
     (; M, W, eps) = obj
     ρ, dρ = evolve(scheme)
-    f = tr(W * pinv(CFIM(ρ, dρ, M; eps = eps)))
+    F = CFIM(ρ, dρ, M; eps = eps)
+    Wm = W isa UniformScaling ? Matrix(W, size(F, 1), size(F, 2)) : W
+    f, _ = guarded_objective(F, Wm; spec = precision_spec(eps))
     return f, 1.0 / f
 end
 
@@ -370,7 +378,8 @@ Evaluate the HCRB objective from a scheme via SDP (see [`Holevo_bound`](@ref)).
 function objective(obj::HCRB_obj{multi_para}, scheme)
     (; W, eps) = obj
     ρ, dρ = evolve(scheme)
-    f = Holevo_bound_obj(ρ, dρ, W; eps = eps)
+    Wm = W isa UniformScaling ? Matrix(W, length(dρ), length(dρ)) : W
+    f = Holevo_bound_obj(ρ, dρ, Wm; eps = eps)
     return f, 1.0 / f
 end
 
@@ -405,7 +414,9 @@ function objective(opt::Mopt_LinearComb, obj::CFIM_obj{multi_para}, scheme)
         i = 1:opt.M_num
     ]
     ρ, dρ = evolve(scheme)
-    f = tr(W * pinv(CFIM(ρ, dρ, M; eps = eps)))
+    F = CFIM(ρ, dρ, M; eps = eps)
+    Wm = W isa UniformScaling ? Matrix(W, size(F, 1), size(F, 2)) : W
+    f, _ = guarded_objective(F, Wm; spec = precision_spec(eps))
     return f, 1.0 / f
 end
 
@@ -436,7 +447,9 @@ function objective(opt::Mopt_Rotation, obj::CFIM_obj{multi_para}, scheme)
     U = rotation_matrix(opt.s, opt.Lambda)
     M = [U * opt.POVM_basis[i] * U' for i in eachindex(opt.POVM_basis)]
     ρ, dρ = evolve(scheme)
-    f = tr(W * pinv(CFIM(ρ, dρ, M; eps = eps)))
+    F = CFIM(ρ, dρ, M; eps = eps)
+    Wm = W isa UniformScaling ? Matrix(W, size(F, 1), size(F, 2)) : W
+    f, _ = guarded_objective(F, Wm; spec = precision_spec(eps))
     return f, 1.0 / f
 end
 

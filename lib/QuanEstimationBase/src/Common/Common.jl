@@ -1,4 +1,16 @@
+include("Precision.jl")
 include("BayesEstimation.jl")
+
+"""
+    _legacy_eps(obj)
+
+Numeric fallback for the historical `obj.eps` keyword when it is `nothing`
+(the new relative precision policy).  Used only for algorithmic constants
+such as the Adam stability term and singular-matrix guards; precision
+thresholds must go through [`PrecisionSpec`](@ref).
+"""
+_legacy_eps(obj) = obj.eps === nothing ? GLOBAL_EPS : Float64(obj.eps)
+
 
 @doc raw"""
 
@@ -20,29 +32,47 @@ Return the standard basis vectors ``\{|e_i\rangle\}_{i=1}^{\mathrm{dim}}`` as a 
 """
 bases(dim; T = ComplexF64) = [e for e in I(dim) .|> T |> eachrow]
 
-raw"""
+@doc raw"""
+    σx()
 
-    σx = SigmaX
-
-Pauli-X matrix ``\sigma_x = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}``.
-raw"""
+Return the Pauli-X matrix ``\sigma_x = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}`` as a `Matrix{ComplexF64}`.
+"""
 σx = SigmaX = () -> complex([0.0 1; 1 0])
 
-raw"""
+@doc raw"""
+    SigmaX()
 
-    σy = SigmaY
+Alias of [`σx`](@ref); returns the Pauli-X matrix.
+"""
+SigmaX
 
-Pauli-Y matrix ``\sigma_y = \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix}``.
+@doc raw"""
+    σy()
+
+Return the Pauli-Y matrix ``\sigma_y = \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix}`` as a `Matrix{ComplexF64}`.
 """
 σy = SigmaY = () -> complex([0.0 -im; im 0])
 
-raw"""
+@doc raw"""
+    SigmaY()
 
-    σz = SigmaZ
+Alias of [`σy`](@ref); returns the Pauli-Y matrix.
+"""
+SigmaY
 
-Pauli-Z matrix ``\sigma_z = \begin{pmatrix} 1 & 0 \\ 0 & -1 \end{pmatrix}``.
-raw"""
+@doc raw"""
+    σz()
+
+Return the Pauli-Z matrix ``\sigma_z = \begin{pmatrix} 1 & 0 \\ 0 & -1 \end{pmatrix}`` as a `Matrix{ComplexF64}`.
+"""
 σz = SigmaZ = () -> complex([1.0 0; 0 -1])
+
+@doc raw"""
+    SigmaZ()
+
+Alias of [`σz`](@ref); returns the Pauli-Z matrix.
+"""
+SigmaZ
 
 raw"""
 
@@ -77,11 +107,12 @@ function filterZeros(x::AbstractVecOrMat{T}) where {T<:Number}
     [x + 1 ≈ 1 ? zero(T) : x for x in x]
 end
 
-raw"""
-    basis(dim, si, ::T) where {T<:Complex}
+@doc raw"""
+    basis(dim, index, ::T) where {T<:Complex}
 
-Return the standard basis matrix ``|e_{si}\rangle\langle e_{si}|`` as a complex-typed matrix of dimension `dim × dim`.
-raw"""
+Return the standard basis vector ``|e_{\mathrm{index}}\rangle`` as a length-`dim`
+vector of type `T`, with a `1` at `index` and zeros elsewhere.
+"""
 function basis(dim, si, ::T)::Array{T} where {T<:Complex}
     result = zeros(T, dim)
     result[si] = 1.0
@@ -155,7 +186,7 @@ function suN_generator(n::Int64)
     return result
 end
 
-raw"""
+@doc raw"""
     basis(dim, index)
 
 Return the standard basis vector ``|e_{\mathrm{index}}\rangle`` as a `Vector{Float64}` of length `dim` with a `1.0` at the given index.
@@ -222,31 +253,35 @@ function SIC(dim::Int64)
     M = sic_povm(fiducial)
 end
 
-raw"""
+@doc raw"""
+    PlusState()
 
-    PlusState
-
-The ``|+\rangle = (|0\rangle + |1\rangle)/\sqrt{2}`` state.
-raw"""
+Return the ``|+\rangle = (|0\rangle + |1\rangle)/\sqrt{2}`` state as a
+`Vector{ComplexF64}`.
+"""
 PlusState() = complex([1.0, 1.0] / sqrt(2))
 
-raw"""
+@doc raw"""
+    MinusState()
 
-    MinusState
-
-The ``|-\rangle = (|0\rangle - |1\rangle)/\sqrt{2}`` state.
-raw"""
+Return the ``|-\rangle = (|0\rangle - |1\rangle)/\sqrt{2}`` state as a
+`Vector{ComplexF64}`.
+"""
 MinusState() = complex([1.0, -1.0] / sqrt(2))
-raw"""
 
-    BellState(n::Int=1)
+@doc raw"""
+    BellState()
+    BellState(n::Int)
 
-Return the ``n``-th Bell state (``n = 1, 2, 3, 4``):
+Return the ``n``-th Bell state as a `Vector{ComplexF64}` of length four
+(``n = 1, 2, 3, 4``); `BellState()` is equivalent to `BellState(1)`:
 - ``n=1``: ``|\Phi^+\rangle = (|00\rangle + |11\rangle)/\sqrt{2}``
 - ``n=2``: ``|\Phi^-\rangle = (|00\rangle - |11\rangle)/\sqrt{2}``
 - ``n=3``: ``|\Psi^+\rangle = (|01\rangle + |10\rangle)/\sqrt{2}``
 - ``n=4``: ``|\Psi^-\rangle = (|01\rangle - |10\rangle)/\sqrt{2}``
-raw"""
+
+Throws `DomainError` when `n` is outside `1:4`.
+"""
 BellState() = complex([1.0, 0.0, 0.0, 1.0] / sqrt(2))
 
 function BellState(n::Int)
@@ -263,17 +298,30 @@ function BellState(n::Int)
     end
 end
 
-raw"""
+@doc raw"""
     BayesInput(x, func, dfunc; channel="dynamics")
 
-Compute ``\rho(\boldsymbol{x})`` and ``\partial\rho(\boldsymbol{x})`` for all parameter points
-in the Bayesian grid `x`.
+Evaluate the user-supplied model and derivative callables at every point of
+the Cartesian grid `x`. The returned collections are ordered consistently
+with `Iterators.product(x...)`.
 
 # Arguments
 - `x`: Vector of parameter grid axes (one per parameter).
-- `func`: Function that returns the density matrix (or Kraus operators) at a parameter point.
-- `dfunc`: Function that returns the derivatives at a parameter point.
-- `channel`: `"dynamics"` for Hamiltonian-based evolution, `"Kraus"` for Kraus operators.
+- `func`: Callable returning the Hamiltonian matrix for `channel="dynamics"`
+  or the Kraus operators for `channel="Kraus"` at a parameter point.
+- `dfunc`: Callable returning the corresponding derivatives at a parameter
+  point.
+- `channel`: `"dynamics"` (default) for Hamiltonian-based input or `"Kraus"`
+  for Kraus-operator input.
+
+# Returns
+- `channel="dynamics"`: `(H, dH)`, where `H[i] = func(x_i)` and
+  `dH[i] = dfunc(x_i)`.
+- `channel="Kraus"`: `(K, dK)`, where `K[i] = func(x_i)` and
+  `dK[i] = dfunc(x_i)`.
+
+# Throws
+- `ArgumentError`: If `channel` is neither `"dynamics"` nor `"Kraus"`.
 """
 function BayesInput(x, func, dfunc; channel = "dynamics")
     para_num = length(x)
@@ -355,7 +403,7 @@ function Adam(gt, t, para, mt, vt, epsilon, beta1, beta2, eps)
 end
 
 #### bound coefficients of linear combination in Mopt ####
-raw"""
+@doc raw"""
 
     bound_LC_coeff!(coefficients::Vector{Vector{Float64}}, rng)
 

@@ -15,7 +15,7 @@ lambda, g, h = 1.0, 0.5, 0.1
 Jx = 0.5 * (Jp + Jm)
 Jy = -0.5im * (Jp - Jm)
 Jz = spdiagm(j:-1:-j)
-H0 = -lambda * (Jx * Jx + g * Jy * Jy) / N + g * Jy^2 / N - h * Jz
+H0 = -lambda * (Jx * Jx + g * Jy * Jy) / N - h * Jz
 # derivative of the free Hamiltonian on g
 dH = [-lambda * Jy * Jy / N, -Jz]
 # dissipation

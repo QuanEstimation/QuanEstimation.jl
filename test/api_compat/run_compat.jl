@@ -28,9 +28,12 @@ using QuanEstimation
     @test isdefined(QuanEstimation, :QFIM_Bloch)
     @test isdefined(QuanEstimation, :QFIM_Gauss)
 
-    # Bayesian bounds (BCRB, BQCRB exported; BCFIM, BQFIM, OBB are internal)
+    # Bayesian bounds (BCRB, BQCRB, BCFIM, BQFIM, OBB exported)
     @test isdefined(QuanEstimation, :BCRB)
     @test isdefined(QuanEstimation, :BQCRB)
+    @test isdefined(QuanEstimation, :BCFIM)
+    @test isdefined(QuanEstimation, :BQFIM)
+    @test isdefined(QuanEstimation, :OBB)
     @test isdefined(QuanEstimation, :QZZB)
     @test isdefined(QuanEstimation, :VTB)
     @test isdefined(QuanEstimation, :QVTB)
@@ -38,6 +41,9 @@ using QuanEstimation
     # Bayesian estimation
     @test isdefined(QuanEstimation, :Bayes)
     @test isdefined(QuanEstimation, :MLE)
+    @test isdefined(QuanEstimation, :BayesCost)
+    @test isdefined(QuanEstimation, :BayesInput)
+    @test isdefined(QuanEstimation, :BCB)
 
     # Optimization scenarios (exported: ControlOpt, StateOpt, MeasurementOpt, Copt, Mopt, Sopt)
     @test isdefined(QuanEstimation, Symbol("optimize!"))
@@ -91,6 +97,15 @@ using QuanEstimation
     @test isdefined(QuanEstimation, :basis)
 end
 
+@testset "api_compat: documented Bayesian computations are exported" begin
+    # `names(QuanEstimation)` lists exported bindings; this is the property
+    # that makes `QuanEstimation.<name>` available to users.
+    for name in (:BCFIM, :BQFIM, :OBB, :BCB, :BayesCost, :BayesInput)
+        @test isdefined(QuanEstimation, name)
+        @test name in names(QuanEstimation)
+    end
+end
+
 @testset "api_compat: keyword argument acceptance" begin
     sp = ComplexF64[0 1; 0 0]
     sm = ComplexF64[0 0; 1 0]
@@ -108,12 +123,12 @@ end
     rho_T = rho[end]
     drho_T = drho[end]
 
-    # error_evaluation with keyword args 
-    @test_nowarn error_evaluation(scheme;
+    # error_evaluation with keyword args
+    @test_deprecated error_evaluation(scheme;
         objective=:QFIM, input_error_scaling=1e-8, SLD_eps=1e-6)
 
     # error_control with keyword args
-    @test_nowarn error_control(scheme;
+    @test_deprecated error_control(scheme;
         objective="QFIM", output_error_scaling=1e-6,
         input_error_scaling=1e-8, SLD_eps=1e-6, max_episode=1)
 
@@ -122,14 +137,15 @@ end
     @test_nowarn QFIM(rho_T, drho_T; LDtype=:RLD)
     @test_nowarn QFIM(rho_T, drho_T; LDtype=:LLD)
     @test_nowarn QFIM(rho_T, drho_T; LDtype=:SLD, exportLD=true)
-    @test_nowarn QFIM(rho_T, drho_T; eps=1e-8)
+    @test_nowarn QFIM(rho_T, drho_T)
+    @test_deprecated QFIM(rho_T, drho_T; eps=1e-8)
 
     # CFIM with keyword args
-    @test_nowarn CFIM(rho_T, drho_T, M; eps=1e-8)
     @test_nowarn CFIM(rho_T, drho_T, M)
+    @test_deprecated CFIM(rho_T, drho_T, M; eps=1e-8)
 
     # HCRB with keyword args (W must be a matrix)
-    @test_nowarn HCRB(rho_T, drho_T, [1.0;;]; eps=1e-8)
+    @test_deprecated HCRB(rho_T, drho_T, [1.0;;]; eps=1e-8)
 
     # NHB with keyword args (W must be a matrix)
     @test_nowarn NHB(rho_T, drho_T, [1.0;;])
@@ -139,11 +155,11 @@ end
     p_vals = [1/3, 1/3, 1/3]
     rho_list = [rho_T, rho_T, rho_T]
     drho_list = [drho_T, drho_T, drho_T]
-    @test_nowarn BQCRB(x_vals, p_vals, nothing, rho_list, drho_list;
+    @test_deprecated BQCRB(x_vals, p_vals, nothing, rho_list, drho_list;
         b=nothing, db=nothing, btype=1, LDtype=:SLD, eps=1e-8)
 
     # BCRB with keyword args
-    @test_nowarn BCRB(x_vals, p_vals, nothing, rho_list, drho_list;
+    @test_deprecated BCRB(x_vals, p_vals, nothing, rho_list, drho_list;
         M=nothing, b=nothing, db=nothing, btype=1, eps=1e-8)
 
     # Bayes & MLE: exist and accept keyword args syntactically

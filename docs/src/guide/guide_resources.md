@@ -1,17 +1,17 @@
 # **Metrological resources**
-The metrological resources that QuanEstimation can calculate are spin squeezing and the 
-minimum time to reach the given target. The spin squeezing can be calculated via the function: 
+The metrological resources that QuanEstimation can calculate are spin squeezing and the
+minimum time to reach the given target. The spin squeezing can be calculated via the function:
 ``` jl
 QuanEstimation.SpinSqueezing(rho; basis="Dicke", output="KU")
 ```
-`rho` represents the density matrix of the state. In this function, the basis of the state can 
-be Dicke basis or the original basis of each spin, which can be adjusted by setting 
-`basis="Dicke"` or `basis="Pauli"`. The variable `output` represents the type of spin squeezing 
-calculation. `output="KU"` represents the spin squeezing defined by Kitagawa and Ueda 
-[[1]](#Kitagawa1993) and `output="WBIMH"` calculates the spin squeezing defined by Wineland 
+`rho` represents the density matrix of the state. In this function, the basis of the state can
+be Dicke basis or the original basis of each spin, which can be adjusted by setting
+`basis="Dicke"` or `basis="Pauli"`. The variable `output` represents the type of spin squeezing
+calculation. `output="KU"` represents the spin squeezing defined by Kitagawa and Ueda
+[[1]](#Kitagawa1993) and `output="WBIMH"` calculates the spin squeezing defined by Wineland
 et al. [[2]](#Wineland1992).
 
-**Example 4.1**  
+**Example 4.1**
 In this example, a spin coherent state is generated.
 ``` jl
 using QuanEstimation
@@ -30,13 +30,17 @@ Calculation of the minimum time to reach a given precision limit with
 ``` jl
 QuanEstimation.TargetTime(f, tspan, func, args...; kwargs...)
 ```
-where `f` is the given value of the objective function and `tspan` is the time length for the 
-evolution. `func` represents the function for calculating the objective function, `args...` 
-and `kwargs...` are the corresponding input parameters and the keyword arguments.
+where `f` is the given value of the objective function and `tspan` is the time grid for the
+evolution. `TargetTime` evaluates `func(t, args...; kwargs...)` at the time points in
+`tspan` and returns the first crossing time, obtained by linear interpolation. The function
+`func` therefore has to take time as its first argument and return a scalar objective value;
+`args...` and `kwargs...` are passed through to it. If no crossing is found in `tspan`, the
+function prints a message and returns `nothing`. For an objective computed from a
+precomputed trajectory, use a time-first closure as in Example 4.2.
 
-**Example 4.2**  
+**Example 4.2**
 In this example, the free evolution Hamiltonian of a single qubit system is $H_0=\frac{1}{2}
-\omega \sigma_3$ with $\omega$ the frequency and $\sigma_3$ a Pauli matrix. 
+\omega \sigma_3$ with $\omega$ the frequency and $\sigma_3$ a Pauli matrix.
 The dynamics of the system is governed by
 ```math
 \begin{align}
@@ -44,8 +48,8 @@ The dynamics of the system is governed by
 \end{align}
 ```
 
-where $\rho$ is the parameterized density matrix. The probe state is taken as $|+\rangle\langle+|$ 
-with $|+\rangle=\frac{1}{\sqrt{2}}(|0\rangle+|1\rangle)$. Here $|0\rangle$ $(|1\rangle)$ is the 
+where $\rho$ is the parameterized density matrix. The probe state is taken as $|+\rangle\langle+|$
+with $|+\rangle=\frac{1}{\sqrt{2}}(|0\rangle+|1\rangle)$. Here $|0\rangle$ $(|1\rangle)$ is the
 eigenstate of $\sigma_3$ with respect to the eigenvalue $1$ $(-1)$.
 ``` jl
 using QuanEstimation
@@ -64,21 +68,35 @@ dH = [0.5*sz]
 tspan = range(0., 50., length=2000)
 # dynamics
 rho, drho = QuanEstimation.expm(tspan, rho0, H0, dH)
-drho = [drho[i][1] for i in 1:2000]
+drho = [d[1] for d in drho]
+# objective function of time; QFIM returns a 1x1 matrix for a single parameter
+function qfi(t)
+    i = argmin(abs.(tspan .- t))
+    return QuanEstimation.QFIM(rho[i], drho[i])[1, 1]
+end
 # the value of the objective function
 f = 20
-t = QuanEstimation.TargetTime(f, tspan, QuanEstimation.QFIM, rho, drho)
+t = QuanEstimation.TargetTime(f, tspan, qfi)
 ```
 
 ---
 ## **Bibliography**
-**[1]** 
-M. Kitagawa and M. Ueda, Squeezed spin states, 
+
+```@raw html
+<a id="Kitagawa1993"></a>
+```
+
+**[1]**
+M. Kitagawa and M. Ueda, Squeezed spin states,
 [Phys. Rev. A **47**, 5138 (1993).](https://doi.org/10.1103/PhysRevA.47.5138)
 
+```@raw html
+<a id="Wineland1992"></a>
+```
+
 **[2]**
-D. J. Wineland, J. J. Bollinger, W. M. Itano, F. L. Moore, and D. J. Heinzen, 
-Spin squeezing and reduced quantum noise in spectroscopy, 
+D. J. Wineland, J. J. Bollinger, W. M. Itano, F. L. Moore, and D. J. Heinzen,
+Spin squeezing and reduced quantum noise in spectroscopy,
 [Phys. Rev. A **46**, R6797(R) (1992).](https://doi.org/10.1103/PhysRevA.46.R6797)
 
 **[3]**

@@ -176,7 +176,7 @@ function gradient_QFIM_analy(alg::GRAPE_Adam, obj, scheme)
                     alg.epsilon,
                     alg.beta1,
                     alg.beta2,
-                    obj.eps,
+                    _legacy_eps(obj),
                 )
             end
         end
@@ -186,7 +186,7 @@ function gradient_QFIM_analy(alg::GRAPE_Adam, obj, scheme)
             obj.W[1, 1] * F_T[2, 2] + obj.W[2, 2] * F_T[1, 1] - obj.W[1, 2] * F_T[2, 1] -
             obj.W[2, 1] * F_T[1, 2]
         cost_function =
-            (abs(det(F_T)) < obj.eps ? (1.0 / obj.eps) : real(tr(obj.W * inv(F_T))))
+            (abs(det(F_T)) < _legacy_eps(obj) ? (1.0 / _legacy_eps(obj)) : real(tr(obj.W * inv(F_T))))
         for cm = 1:ctrl_num
             mt, vt = 0.0, 0.0
             for tm = 1:(tnum-1)
@@ -224,13 +224,13 @@ function gradient_QFIM_analy(alg::GRAPE_Adam, obj, scheme)
                     alg.epsilon,
                     alg.beta1,
                     alg.beta2,
-                    obj.eps,
+                    _legacy_eps(obj),
                 )
             end
         end
     else
         cost_function =
-            (abs(det(F_T)) < obj.eps ? (1.0 / obj.eps) : real(tr(obj.W * inv(F_T))))
+            (abs(det(F_T)) < _legacy_eps(obj) ? (1.0 / _legacy_eps(obj)) : real(tr(obj.W * inv(F_T))))
         coeff = [obj.W[para, para] / F_T[para, para] for para = 1:para_num] |> sum
         coeff = coeff^(-2)
         for cm = 1:ctrl_num
@@ -259,7 +259,7 @@ function gradient_QFIM_analy(alg::GRAPE_Adam, obj, scheme)
                     alg.epsilon,
                     alg.beta1,
                     alg.beta2,
-                    obj.eps,
+                    _legacy_eps(obj),
                 )
             end
         end
@@ -300,7 +300,7 @@ function gradient_QFIM_analy(alg::GRAPE, obj, scheme)
         end
     else
         cost_function =
-            (abs(det(F_T)) < obj.eps ? (1.0 / obj.eps) : real(tr(obj.W * inv(F_T))))
+            (abs(det(F_T)) < _legacy_eps(obj) ? (1.0 / _legacy_eps(obj)) : real(tr(obj.W * inv(F_T))))
         coeff = [obj.W[para, para] / F_T[para, para] for para = 1:para_num] |> sum
         coeff = coeff^(-2)
         for cm = 1:ctrl_num
@@ -347,11 +347,14 @@ function gradient_CFIM_analy(alg, obj, scheme)
         L1_tidle = zeros(ComplexF64, dim, dim)
         L2_tidle = zeros(ComplexF64, dim, dim)
 
+        _cfl_spec = precision_spec(obj.eps; work_type = eltype(real(ρt_T)))
+        _cfl_pmax = maximum(real(tr(ρt_T * Π)) for Π in obj.M)
+        _cfl_floor = probability_floor(_cfl_spec, _cfl_pmax)
         M_len = length(obj.M)
         for mi = 1:M_len
             p = (tr(ρt_T * obj.M[mi]) |> real)
             dp = (tr(∂ρt_T[1] * obj.M[mi]) |> real)
-            if p > obj.eps
+            if p > _cfl_floor
                 L1_tidle = L1_tidle + dp * obj.M[mi] / p
                 L2_tidle = L2_tidle + dp * dp * obj.M[mi] / p^2
             end
@@ -373,12 +376,15 @@ function gradient_CFIM_analy(alg, obj, scheme)
         L1_tidle = [zeros(ComplexF64, dim, dim) for i = 1:para_num]
         L2_tidle = [zeros(ComplexF64, dim, dim) for i = 1:para_num]
 
+        _cfl_spec = precision_spec(obj.eps; work_type = eltype(real(ρt_T)))
+        _cfl_pmax = maximum(real(tr(ρt_T * Π)) for Π in obj.M)
+        _cfl_floor = probability_floor(_cfl_spec, _cfl_pmax)
         M_len = length(obj.M)
         for para_i = 1:para_num
             for mi = 1:M_len
                 p = (tr(ρt_T * obj.M[mi]) |> real)
                 dp = (tr(∂ρt_T[para_i] * obj.M[mi]) |> real)
-                if p > obj.eps
+                if p > _cfl_floor
                     L1_tidle[para_i] = L1_tidle[para_i] + dp * obj.M[mi] / p
                     L2_tidle[para_i] = L2_tidle[para_i] + dp * dp * obj.M[mi] / p^2
                 end
@@ -386,7 +392,7 @@ function gradient_CFIM_analy(alg, obj, scheme)
         end
 
         cost_function =
-            (abs(det(F_T)) < obj.eps ? (1.0 / obj.eps) : real(tr(obj.W * inv(F_T))))
+            (abs(det(F_T)) < _legacy_eps(obj) ? (1.0 / _legacy_eps(obj)) : real(tr(obj.W * inv(F_T))))
         coeff = [obj.W[para, para] / F_T[para, para] for para = 1:para_num] |> sum
         coeff = coeff^(-2)
         for cm = 1:ctrl_num

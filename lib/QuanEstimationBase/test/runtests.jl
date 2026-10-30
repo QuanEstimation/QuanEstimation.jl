@@ -55,6 +55,10 @@ end
     include("Scheme/test_error_evaluation.jl")
 end
 
+@testset "Precision" begin
+    include("Scheme/test_precision.jl")
+end
+
 @testset "Algorithm" begin
     @testset "AD" begin
         include("Algorithm/test_AD.jl")

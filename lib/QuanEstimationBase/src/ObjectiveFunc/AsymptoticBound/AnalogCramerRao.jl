@@ -28,7 +28,8 @@ function decomposition(A)
 end
 
 @doc raw"""
-    HCRB(scheme::AbstractScheme; W=nothing, eps=GLOBAL_EPS)
+    HCRB(scheme::AbstractScheme; W=nothing, eps=nothing, tol=1e-10,
+        input_error=0.0, guard=nothing, refine=true, diagnostics=false)
 
 Compute the Holevo Cramér-Rao bound (HCRB) from a Scheme.
 
@@ -40,7 +41,12 @@ resulting density matrix and derivatives.
 - `scheme::AbstractScheme`: The estimation scheme.
 - `W::Union{AbstractMatrix,UniformScaling,Nothing}=nothing`: Weight matrix.
   Defaults to the identity ``\mathbb{I}``.
-- `eps::Float64=GLOBAL_EPS`: Epsilon threshold.
+- `eps=nothing`: Epsilon threshold; legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
+- `tol=1e-10`: Target relative accuracy of the fallback objective.
+- `input_error=0.0`: Relative error of the input data.
+- `guard=nothing`: Relative spectral floor.
+- `refine=true`: Whether one residual-refinement step is attempted in the SLD solves.
+- `diagnostics=false`: When `true`, return `(value, diag)` with a [`NumericalDiagnostics`](@ref) record.
 
 # Returns
 
@@ -51,12 +57,31 @@ resulting density matrix and derivatives.
 - [`HCRB`](@ref): Direct HCRB computation from density matrix.
 - [`NHB`](@ref): Nagaoka-Hayashi bound (alternative bound).
 """
-function HCRB(scheme::AbstractScheme; W = nothing, eps = GLOBAL_EPS)
+function HCRB(
+    scheme::AbstractScheme;
+    W = nothing,
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
+    refine = true,
+    diagnostics = false,
+)
     if isnothing(W)
         W = I(get_param_num(scheme))
     end
     rho, drho = evolve(scheme)
-    return HCRB(rho, drho, W; eps = eps)
+    return HCRB(
+        rho,
+        drho,
+        W;
+        eps = eps,
+        tol = tol,
+        input_error = input_error,
+        guard = guard,
+        refine = refine,
+        diagnostics = diagnostics,
+    )
 end
 
 @doc raw"""
@@ -92,34 +117,129 @@ end
 
 raw"""
 
-    HCRB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix; eps=GLOBAL_EPS)
+    HCRB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix; eps=nothing,
+        tol=1e-10, input_error=0.0, guard=nothing, refine=true,
+        diagnostics=false)
 
 Caltulate the Holevo Cramer-Rao bound (HCRB) via the semidefinite program (SDP).
 - `ρ`: Density matrix.
 - `dρ`: Derivatives of the density matrix on the unknown parameters to be estimated. For example, drho[0] is the derivative vector on the first parameter.
 - `W`: Weight matrix.
-- `eps`: Machine epsilon.
+- `eps`: Legacy relative floor factor; when `nothing`, the relative precision policy is used; when given, it is deprecated and interpreted by the core.
+- `tol`: Target relative accuracy of the ``\mathrm{Tr}(WF^{-1})`` fallback.
+- `input_error`: Relative error of the input data.
+- `guard`: Relative spectral floor.
+- `refine`: Whether one residual-refinement step is attempted in the SLD solves.
+- `diagnostics`: When `true`, return `(value, diag)` with a
+  [`NumericalDiagnostics`](@ref) record.
 raw"""
-function HCRB(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix; eps = GLOBAL_EPS)
+function HCRB(
+    ρ::AbstractMatrix,
+    dρ::AbstractVector,
+    W::AbstractMatrix;
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
+    refine = true,
+    diagnostics = false,
+)
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+        refine = refine,
+    )
     if length(dρ) == 1
         println(
             "In the single-parameter scenario, the HCRB is equivalent to the QFI. This function will return the value of the QFI.",
         )
-        f = QFIM_SLD(ρ, dρ[1]; eps = eps)
+        if diagnostics
+            f, diag = QFIM_SLD(
+                ρ,
+                dρ[1];
+                eps = eps,
+                tol = tol,
+                input_error = input_error,
+                guard = guard,
+                refine = refine,
+                diagnostics = true,
+            )
+            return f, diag
+        end
+        f = QFIM_SLD(
+            ρ,
+            dρ[1];
+            eps = eps,
+            tol = tol,
+            input_error = input_error,
+            guard = guard,
+            refine = refine,
+        )
         return f
     elseif rank(W) == 1
         println(
             "For rank-one wight matrix, the HCRB is equivalent to QFIM. This function will return the value of Tr(WF^{-1}).",
         )
-        F = QFIM_SLD(ρ, dρ; eps = eps)
-        return tr(W * pinv(F))
+        if diagnostics
+            F, diag = QFIM_SLD(
+                ρ,
+                dρ;
+                eps = eps,
+                tol = tol,
+                input_error = input_error,
+                guard = guard,
+                refine = refine,
+                diagnostics = true,
+            )
+            value, objdiag = guarded_objective(F, W; spec = spec)
+            return value, _merge_diagnostics(:HCRB, [diag, objdiag])
+        end
+        F = QFIM_SLD(
+            ρ,
+            dρ;
+            eps = eps,
+            tol = tol,
+            input_error = input_error,
+            guard = guard,
+            refine = refine,
+        )
+        value, _ = guarded_objective(F, W; spec = spec)
+        return value
     else
-        Holevo_bound(ρ, dρ, W; eps = eps)
+        if diagnostics
+            value = Holevo_bound(
+                ρ,
+                dρ,
+                W;
+                eps = eps,
+                tol = tol,
+                input_error = input_error,
+                guard = guard,
+            )
+            diag = NumericalDiagnostics(
+                :HCRB;
+                branch = :sdp,
+                spectral_floor = spectral_floor(spec, 1.0),
+            )
+            return value, diag
+        end
+        return Holevo_bound(
+            ρ,
+            dρ,
+            W;
+            eps = eps,
+            tol = tol,
+            input_error = input_error,
+            guard = guard,
+        )
     end
 end
 
 @doc raw"""
-    Holevo_bound(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix; eps=GLOBAL_EPS)
+    Holevo_bound(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix;
+        eps=nothing, tol=1e-10, input_error=0.0, guard=nothing)
 
 Compute the Holevo Cramér-Rao bound (HCRB) via semidefinite programming (SDP).
 
@@ -154,7 +274,16 @@ su(d) generators.
 - `dρ::AbstractVector`: Vector of derivatives ``\partial_a\rho``, one per parameter.
 - `W::AbstractMatrix`: Weight matrix (must satisfy ``\mathrm{rank}(W)>1`` for
   non-trivial SDP; otherwise falls back to QFIM).
-- `eps::Float64=GLOBAL_EPS`: Epsilon threshold for LDLᵀ rounding.
+- `eps=nothing`: Epsilon threshold for LDLᵀ rounding; legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
+- `tol=1e-10`: Target relative accuracy.
+- `input_error=0.0`: Relative error of the input data.
+- `guard=nothing`: Relative spectral floor.
+
+The LDLᵀ rounding tolerance is *relative*: the entries of the correlation
+matrix are rounded with a decimal precision derived from
+``\\max(\\mathrm{guard}, \\mathrm{input\\_error})\\,\\|S\\|_{\\max}``
+(default `guard` = [`default_guard(Float64)`](@ref)), so the cutoff scales
+with the matrix magnitude instead of an absolute constant.
 
 # Returns
 
@@ -175,9 +304,17 @@ function Holevo_bound(
     ρ::AbstractMatrix,
     dρ::AbstractVector,
     W::AbstractMatrix;
-    eps = GLOBAL_EPS,
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
 )
-
+    spec = precision_spec(
+        eps;
+        input_error = input_error,
+        tol = tol,
+        guard = guard,
+    )
     dim = size(ρ)[1]
     num = dim * dim
     para_num = length(dρ)
@@ -198,8 +335,16 @@ function Holevo_bound(
         end
     end
 
-    accu = length(string(Int(ceil(1 / eps)))) - 1
-    R = decomposition(round.(digits = accu, S))
+    # Relative LDLᵀ rounding: the decimal precision is derived from the
+    # relative floor tau = max(guard, input_error) * scale.  The explicit
+    # symmetrization restores the exact Hermiticity that the legacy coarse
+    # rounding used to provide.
+    scale = maximum(abs, S)
+    τ = max(spec.guard, spec.input_error) * max(scale, floatmin(Float64))
+    accu = τ > 0 ? max(0, ceil(Int, -log10(τ))) : 0
+    Sround = round.(digits = accu, S)
+    Sround = (Sround + Sround') / 2
+    R = decomposition(Sround)
 
     #=========optimization variables===========#
     V = Variable(para_num, para_num)
@@ -221,10 +366,13 @@ function Holevo_bound(
 end
 
 """
-    Holevo_bound_obj(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix; eps=GLOBAL_EPS)
+    Holevo_bound_obj(ρ::AbstractMatrix, dρ::AbstractVector, W::AbstractMatrix;
+        eps=nothing, tol=1e-10, input_error=0.0, guard=nothing)
 
 Wrapper around [`Holevo_bound`](@ref) that returns only the scalar objective
 value, extracting the first element from the Convex.jl result.
+
+`eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
 
 # Arguments
 
@@ -242,9 +390,20 @@ function Holevo_bound_obj(
     ρ::AbstractMatrix,
     dρ::AbstractVector,
     W::AbstractMatrix;
-    eps = GLOBAL_EPS,
+    eps = nothing,
+    tol = 1e-10,
+    input_error = 0.0,
+    guard = nothing,
 )
-    return Holevo_bound(ρ, dρ, W; eps = eps)[1]
+    return Holevo_bound(
+        ρ,
+        dρ,
+        W;
+        eps = eps,
+        tol = tol,
+        input_error = input_error,
+        guard = guard,
+    )[1]
 end
 
 """

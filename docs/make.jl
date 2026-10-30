@@ -4,6 +4,10 @@ using DocumenterCitations
 
 format = Documenter.HTML(
     size_threshold = nothing,  # BaseAPI.md generates >200 KiB
+    size_threshold_warn = 600 * 1024,
+    repolink = "https://github.com/QuanEstimation/QuanEstimation.jl",
+    edit_link = "main",
+    inventory_version = string(Base.pkgversion(QuanEstimation)),
 )
 
 bib = CitationBibliography("src/refs.bib")
@@ -16,7 +20,6 @@ makedocs(
     build = "build",
     clean = true,
     doctest = false,
-    warnonly = [:cross_references],
     modules = [QuanEstimation],
     authors = "QuanEstimation Group (Jing Liu et al.)",
     repo = "https://github.com/QuanEstimation/QuanEstimation.jl/blob/{commit}{path}#{line}",
