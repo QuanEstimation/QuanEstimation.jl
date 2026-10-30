@@ -58,12 +58,6 @@ jobs:
               push!(dev_pks, Pkg.PackageSpec(; path))
           end
           Pkg.develop(dev_pks)
-          Pkg.instantiate(; allow_autoprecomp = false)
-          # LinearSolve 3.28 can fail to resolve MKL_jll on EPYC runners.
-          # Enable it explicitly before any precompilation.
-          using UUIDs
-          const Preferences = Base.require(Base.PkgId(UUID("21216c6a-2e73-6563-6e65-726566657250"), "Preferences"))
-          Preferences.set_preferences!((UUID("7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"), "LinearSolve"), "LoadMKL_JLL" => true; force = true)
-          Pkg.precompile()
+          Pkg.instantiate()
           Pkg.test(; coverage="user")
         shell: julia --color=yes --code-coverage=user --depwarn=yes --project=lib/NVMagnetometer {0}
