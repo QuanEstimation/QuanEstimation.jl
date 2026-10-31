@@ -1,4 +1,0 @@
-# LinearSolve 3.28 does not precompile on Julia 1.13 when MKL_jll is
-# disabled (the default on AMD EPYC runners). Keep docs builds on the MKL path.
-[LinearSolve]
-LoadMKL_JLL = true
