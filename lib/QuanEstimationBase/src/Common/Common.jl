@@ -9,7 +9,7 @@ Numeric fallback for the historical `obj.eps` keyword when it is `nothing`
 such as the Adam stability term and singular-matrix guards; precision
 thresholds must go through [`PrecisionSpec`](@ref).
 """
-_legacy_eps(obj) = obj.eps === nothing ? GLOBAL_EPS : Float64(obj.eps)
+_legacy_eps(obj) = obj.eps === nothing ? _ALGO_EPS : Float64(obj.eps)
 
 
 @doc raw"""

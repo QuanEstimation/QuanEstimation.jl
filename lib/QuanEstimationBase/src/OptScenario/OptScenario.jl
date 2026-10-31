@@ -541,7 +541,7 @@ Initialize the POVM basis and linear combination coefficients. If `POVM_basis` i
 `eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
 """
 function init_opt(opt::Mopt_LinearComb, scheme; eps = nothing)
-    e = isnothing(eps) ? GLOBAL_EPS : eps
+    e = isnothing(eps) ? _ALGO_EPS : eps
     (; B, POVM_basis, M_num) = opt
     dim = get_dim(scheme)
     if isnothing(POVM_basis)
@@ -593,7 +593,7 @@ Initialize the rotation parameters for measurement optimization. Validates that 
 `eps` is a legacy keyword; when `nothing`, the new relative precision policy is used; when given, it is deprecated and interpreted by the core.
 """
 function init_opt(opt::Mopt_Rotation, scheme; eps = nothing)
-    e = isnothing(eps) ? GLOBAL_EPS : eps
+    e = isnothing(eps) ? _ALGO_EPS : eps
     dim = get_dim(scheme)
 
     (; s, POVM_basis) = opt

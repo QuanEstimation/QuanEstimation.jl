@@ -39,6 +39,107 @@ const MZI_TARGET_MAP = Dict{Symbol, Type{<:MIZtargetType}}(
     :MI        => MI,
 )
 
+# Loop-invariant MZI device data. The union sparsity template and source
+# maps let the hot kernels refill a_u without rebuilding two Kronecker
+# products or allocating a fresh sparse matrix for every grid point.
+struct _MZIExec{F<:AbstractFloat}
+    a::SparseMatrixCSC{Complex{F},Int}
+    a_in::SparseMatrixCSC{Complex{F},Int}
+    b_in::SparseMatrixCSC{Complex{F},Int}
+    u_colptr::Vector{Int}
+    u_rowval::Vector{Int}
+    u_ia::Vector{Int}
+    u_ib::Vector{Int}
+end
+
+function _mzi_embed_map(U::SparseMatrixCSC, S::SparseMatrixCSC)
+    out = zeros(Int, nnz(U))
+    for j in 1:size(U, 2)
+        ps, pe = S.colptr[j], S.colptr[j + 1] - 1
+        p = ps
+        for iu in U.colptr[j]:(U.colptr[j + 1] - 1)
+            r = U.rowval[iu]
+            while p <= pe && S.rowval[p] < r
+                p += 1
+            end
+            if p <= pe && S.rowval[p] == r
+                out[iu] = p
+            end
+        end
+    end
+    return out
+end
+
+function _mzi_exec_bake(a::SparseMatrixCSC{Complex{F},Int}) where {F}
+    N = size(a, 1) - 1
+    Id = spdiagm(0 => ones(Complex{F}, N + 1))
+    a_in = kron(a, Id)
+    b_in = kron(Id, a)
+    U = a_in + b_in
+    return _MZIExec{F}(
+        a,
+        a_in,
+        b_in,
+        U.colptr,
+        U.rowval,
+        _mzi_embed_map(U, a_in),
+        _mzi_embed_map(U, b_in),
+    )
+end
+_mzi_exec_bake(a::AbstractMatrix) = _mzi_exec_bake(sparse(a))
+
+function _mzi_au_buffer(ex::_MZIExec{F}) where {F}
+    T = promote_type(Complex{F}, Float64)
+    m = size(ex.a_in, 1)
+    return SparseMatrixCSC{T,Int}(
+        m,
+        m,
+        ex.u_colptr,
+        ex.u_rowval,
+        Vector{T}(undef, length(ex.u_ia)),
+    )
+end
+
+function _mzi_fill_a_u!(Au::SparseMatrixCSC, ex::_MZIExec, x::Real, phi::Real, u::Integer)
+    value = 0.5 * (x - phi) + 0.5 * pi * u
+    s, c = sin(value), cos(value)
+    zin = zero(eltype(ex.a_in))
+    @inbounds for i in eachindex(ex.u_ia)
+        ia, ib = ex.u_ia[i], ex.u_ib[i]
+        aval = ia == 0 ? zin : ex.a_in.nzval[ia]
+        bval = ib == 0 ? zin : ex.b_in.nzval[ib]
+        Au.nzval[i] = aval * s + bval * c
+    end
+    return Au
+end
+
+# Preserve the original left-associative (rho0 * A') * A evaluation.
+@inline function _mzi_pyx_likelihood(A, M, N, rho0)
+    mul!(M, rho0, A')
+    mul!(N, M, A)
+    return real(tr(N))
+end
+
+function _mzi_online_scratch(ex::_MZIExec{F}) where {F}
+    T = promote_type(Complex{F}, Float64)
+    dim = size(ex.a_in, 1)
+    Au = _mzi_au_buffer(ex)
+    A0 = Matrix{T}(undef, dim, dim)
+    A1 = Matrix{T}(undef, dim, dim)
+    M = Matrix{T}(undef, dim, dim)
+    Ns = Matrix{T}(undef, dim, dim)
+    return Au, A0, A1, M, Ns
+end
+
+function _mzi_accumulate!(a_res, ex::_MZIExec, x, phi, u, Au, Tacc)
+    for xi in eachindex(x)
+        _mzi_fill_a_u!(Au, ex, x[xi], phi, u)
+        mul!(Tacc, a_res[xi], Au)
+        copyto!(a_res[xi], Tacc)
+    end
+    return a_res
+end
+
 """
     calculate_online{P}
 
@@ -76,11 +177,17 @@ updates the feedback phase at each episode, and saves results.
 function adaptMZI_online(x, p, rho0, output, target; res=nothing)
     N = Int(sqrt(size(rho0, 1))) - 1
     a = destroy(N + 1) |> sparse
+    ex = _mzi_exec_bake(a)
+    Au = _mzi_au_buffer(ex)
+    dim = (N + 1)^2
+    Tacc = Matrix{ComplexF64}(undef, dim, dim)
+    M = Matrix{ComplexF64}(undef, dim, dim)
+    Ns = Matrix{ComplexF64}(undef, dim, dim)
     exp_ix = [exp(1.0im * xi) for xi in x]
     phi_span = range(-pi, stop = pi, length = length(x)) |> collect
 
     phi = 0.0
-    a_res = [Matrix{ComplexF64}(I, (N + 1)^2, (N + 1)^2) for i in eachindex(x)]
+    a_res = [Matrix{ComplexF64}(I, dim, dim) for i in eachindex(x)]
 
     xout, y = [], []
 
@@ -95,19 +202,18 @@ function adaptMZI_online(x, p, rho0, output, target; res=nothing)
                 u = Int64(res[ei])
             end
             pyx = zeros(length(x)) |> sparse
+            _mzi_accumulate!(a_res, ex, x, phi, u, Au, Tacc)
             for xi in eachindex(x)
-                a_res_tp = a_res[xi] * a_u(a, x[xi], phi, u)
                 pyx[xi] =
-                    real(tr(rho0 * a_res_tp' * a_res_tp)) *
+                    _mzi_pyx_likelihood(a_res[xi], M, Ns, rho0) *
                     (factorial(N - ei) / factorial(N))
-                a_res[xi] = a_res_tp
             end
             phi_update = calculate_online{MZI_TARGET_MAP[target]}(
                 x,
                 p,
                 pyx,
                 a_res,
-                a,
+                ex,
                 rho0,
                 N,
                 ei,
@@ -135,12 +241,11 @@ function adaptMZI_online(x, p, rho0, output, target; res=nothing)
             end
 
             pyx = zeros(length(x)) |> sparse
+            _mzi_accumulate!(a_res, ex, x, phi, u, Au, Tacc)
             for xi in eachindex(x)
-                a_res_tp = a_res[xi] * a_u(a, x[xi], phi, u)
                 pyx[xi] =
-                    real(tr(rho0 * a_res_tp' * a_res_tp)) *
+                    _mzi_pyx_likelihood(a_res[xi], M, Ns, rho0) *
                     (factorial(N - ei) / factorial(N))
-                a_res[xi] = a_res_tp
             end
 
             phi_update = calculate_online{MZI_TARGET_MAP[target]}(
@@ -148,7 +253,7 @@ function adaptMZI_online(x, p, rho0, output, target; res=nothing)
                 p,
                 pyx,
                 a_res,
-                a,
+                ex,
                 rho0,
                 N,
                 ei,
@@ -173,22 +278,24 @@ end
 
 Compute the optimal tunable phase online using the specified target function (`sharpness` or `MI`).
 """
-function calculate_online{sharpness}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix)
-
+function calculate_online{sharpness}(x, p, pyx, a_res, ex::_MZIExec, rho0, N, ei, phi_span, exp_ix)
+    M1_res = trapz(x, pyx .* p)
+    fac = factorial(N - (ei + 1)) / factorial(N)
     M_res = zeros(length(phi_span))
+    pyx0, pyx1 = zeros(length(x)), zeros(length(x))
+    Au, A0, A1, M, Ns = _mzi_online_scratch(ex)
     for mj in eachindex(phi_span)
-        M1_res = trapz(x, pyx .* p)
-        pyx0, pyx1 = zeros(length(x)), zeros(length(x))
-        M2_res = 0.0
         for xj in eachindex(x)
-            a_res0 = a_res[xj] * a_u(a, x[xj], phi_span[mj], 0)
-            a_res1 = a_res[xj] * a_u(a, x[xj], phi_span[mj], 1)
-            pyx0[xj] =
-                real(tr(rho0 * a_res0' * a_res0)) * (factorial(N - (ei + 1)) / factorial(N))
-            pyx1[xj] =
-                real(tr(rho0 * a_res1' * a_res1)) * (factorial(N - (ei + 1)) / factorial(N))
-            M2_res = abs(trapz(x, pyx0 .* p .* exp_ix)) + abs(trapz(x, pyx1 .* p .* exp_ix))
+            _mzi_fill_a_u!(Au, ex, x[xj], phi_span[mj], 0)
+            mul!(A0, a_res[xj], Au)
+            pyx0[xj] = _mzi_pyx_likelihood(A0, M, Ns, rho0) * fac
+            _mzi_fill_a_u!(Au, ex, x[xj], phi_span[mj], 1)
+            mul!(A1, a_res[xj], Au)
+            pyx1[xj] = _mzi_pyx_likelihood(A1, M, Ns, rho0) * fac
         end
+        # M1 and M2 are loop-invariant in the legacy formula; only the final
+        # xj value of M2 was used, so evaluating it here is the same result.
+        M2_res = abs(trapz(x, pyx0 .* p .* exp_ix)) + abs(trapz(x, pyx1 .* p .* exp_ix))
         M_res[mj] = M2_res / M1_res
     end
     indx_m = findmax(M_res)[2]
@@ -200,24 +307,24 @@ end
 
 Mutual-information variant: returns the tunable phase that maximizes the mutual information.
 """
-function calculate_online{MI}(x, p, pyx, a_res, a, rho0, N, ei, phi_span, exp_ix)
-
+function calculate_online{MI}(x, p, pyx, a_res, ex::_MZIExec, rho0, N, ei, phi_span, exp_ix)
+    M1_res = trapz(x, pyx .* p)
+    fac = factorial(N - (ei + 1)) / factorial(N)
     M_res = zeros(length(phi_span))
+    pyx0, pyx1 = zeros(length(x)), zeros(length(x))
+    Au, A0, A1, M, Ns = _mzi_online_scratch(ex)
     for mj in eachindex(phi_span)
-        M1_res = trapz(x, pyx .* p)
-        pyx0, pyx1 = zeros(length(x)), zeros(length(x))
-        M2_res = 0.0
         for xj in eachindex(x)
-            a_res0 = a_res[xj] * a_u(a, x[xj], phi_span[mj], 0)
-            a_res1 = a_res[xj] * a_u(a, x[xj], phi_span[mj], 1)
-            pyx0[xj] =
-                real(tr(rho0 * a_res0' * a_res0)) * (factorial(N - (ei + 1)) / factorial(N))
-            pyx1[xj] =
-                real(tr(rho0 * a_res1' * a_res1)) * (factorial(N - (ei + 1)) / factorial(N))
-            M2_res =
-                trapz(x, pyx0 .* p .* log.(2, pyx0 ./ trapz(x, pyx0 .* p))) +
-                trapz(x, pyx1 .* p .* log.(2, pyx1 ./ trapz(x, pyx1 .* p)))
+            _mzi_fill_a_u!(Au, ex, x[xj], phi_span[mj], 0)
+            mul!(A0, a_res[xj], Au)
+            pyx0[xj] = _mzi_pyx_likelihood(A0, M, Ns, rho0) * fac
+            _mzi_fill_a_u!(Au, ex, x[xj], phi_span[mj], 1)
+            mul!(A1, a_res[xj], Au)
+            pyx1[xj] = _mzi_pyx_likelihood(A1, M, Ns, rho0) * fac
         end
+        M2_res =
+            trapz(x, pyx0 .* p .* log.(2, pyx0 ./ trapz(x, pyx0 .* p))) +
+            trapz(x, pyx1 .* p .* log.(2, pyx1 ./ trapz(x, pyx1 .* p)))
         M_res[mj] = M2_res / M1_res
     end
     indx_m = findmax(M_res)[2]
@@ -331,6 +438,7 @@ function DE_deltaphiOpt(
 )
     N = Int(sqrt(size(rho0, 1))) - 1
     a = destroy(N + 1) |> sparse
+    ex = _mzi_exec_bake(a)
     deltaphi = [zeros(N) for i = 1:p_num]
     # initialize
     res = logarithmic(2.0 * pi, N)
@@ -346,7 +454,7 @@ function DE_deltaphiOpt(
 
     p_fit = [0.0 for i = 1:p_num]
     for pl = 1:N
-        p_fit[pl] = calculate_offline{MZI_TARGET_MAP[target]}(deltaphi[pl], x, p, rho0, a, comb, eps)
+        p_fit[pl] = calculate_offline{MZI_TARGET_MAP[target]}(deltaphi[pl], x, p, rho0, ex, comb, eps)
     end
 
     f_ini = maximum(p_fit)
@@ -379,7 +487,7 @@ function DE_deltaphiOpt(
                     (x -> x < 0.0 ? 0.0 : x > pi ? pi : x)(deltaphi_cross[cm])
             end
             f_cross =
-                calculate_offline{MZI_TARGET_MAP[target]}(deltaphi_cross, x, p, rho0, a, comb, eps)
+                calculate_offline{MZI_TARGET_MAP[target]}(deltaphi_cross, x, p, rho0, ex, comb, eps)
             if f_cross > p_fit[pm]
                 p_fit[pm] = f_cross
                 for ck = 1:N
@@ -416,6 +524,7 @@ function PSO_deltaphiOpt(
 )
     N = Int(sqrt(size(rho0, 1))) - 1
     a = destroy(N + 1) |> sparse
+    ex = _mzi_exec_bake(a)
     n = size(a)[1]
 
     if typeof(max_episode) == Int
@@ -446,7 +555,7 @@ function PSO_deltaphiOpt(
     f_list = []
     for ei = 1:(max_episode[1]-1)
         for pm = 1:p_num
-            f_now = calculate_offline{MZI_TARGET_MAP[target]}(deltaphi[pm], x, p, rho0, a, comb, eps)
+            f_now = calculate_offline{MZI_TARGET_MAP[target]}(deltaphi[pm], x, p, rho0, ex, comb, eps)
             if f_now > p_fit[pm]
                 p_fit[pm] = f_now
                 for ci = 1:N
@@ -493,30 +602,33 @@ end
 
 """
 
-    calculate_offline{target}(delta_phi, x, p, rho0, a, comb, eps)
+    calculate_offline{target}(delta_phi, x, p, rho0, ex, comb, eps)
 
 Compute the objective function value for offline optimization with given phase adjustments.
 """
-function calculate_offline{sharpness}(delta_phi, x, p, rho0, a, comb, eps)
-    N = size(a)[1] - 1
+function calculate_offline{sharpness}(delta_phi, x, p, rho0, ex::_MZIExec, comb, eps)
+    N = size(ex.a, 1) - 1
+    dim = (N + 1)^2
     exp_ix = [exp(1.0im * xi) for xi in x]
+    Au = _mzi_au_buffer(ex)
+    Tacc = Matrix{ComplexF64}(undef, dim, dim)
+    M = Matrix{ComplexF64}(undef, dim, dim)
+    Ns = Matrix{ComplexF64}(undef, dim, dim)
 
     M_res = zeros(length(comb))
     for ui in eachindex(comb)
         u = comb[ui]
         phi = 0.0
 
-        a_res = [Matrix{ComplexF64}(I, (N + 1)^2, (N + 1)^2) for i in eachindex(x)]
+        a_res = [Matrix{ComplexF64}(I, dim, dim) for i in eachindex(x)]
         for ei = 1:N-1
             phi = phi - (-1)^u[ei] * delta_phi[ei]
-            for xi in eachindex(x)
-                a_res[xi] = a_res[xi] * a_u(a, x[xi], phi, u[ei])
-            end
+            _mzi_accumulate!(a_res, ex, x, phi, u[ei], Au, Tacc)
         end
 
         pyx = zeros(length(x))
         for xj in eachindex(x)
-            pyx[xj] = real(tr(rho0 * a_res[xj]' * a_res[xj])) * (1 / factorial(N))
+            pyx[xj] = _mzi_pyx_likelihood(a_res[xj], M, Ns, rho0) * (1 / factorial(N))
         end
         M_res[ui] = abs(trapz(x, pyx .* p .* exp_ix))
     end
@@ -524,30 +636,33 @@ function calculate_offline{sharpness}(delta_phi, x, p, rho0, a, comb, eps)
 end
 
 """
-    calculate_offline{MI}(delta_phi, x, p, rho0, a, comb, eps)
+    calculate_offline{MI}(delta_phi, x, p, rho0, ex, comb, eps)
 
 Mutual-information variant of offline evaluation for given phase adjustments.
 """
-function calculate_offline{MI}(delta_phi, x, p, rho0, a, comb, eps)
-    N = size(a)[1] - 1
+function calculate_offline{MI}(delta_phi, x, p, rho0, ex::_MZIExec, comb, eps)
+    N = size(ex.a, 1) - 1
+    dim = (N + 1)^2
     exp_ix = [exp(1.0im * xi) for xi in x]
+    Au = _mzi_au_buffer(ex)
+    Tacc = Matrix{ComplexF64}(undef, dim, dim)
+    M = Matrix{ComplexF64}(undef, dim, dim)
+    Ns = Matrix{ComplexF64}(undef, dim, dim)
 
     M_res = zeros(length(comb))
     for ui in eachindex(comb)
         u = comb[ui]
         phi = 0.0
 
-        a_res = [Matrix{ComplexF64}(I, (N + 1)^2, (N + 1)^2) for i in eachindex(x)]
+        a_res = [Matrix{ComplexF64}(I, dim, dim) for i in eachindex(x)]
         for ei = 1:N-1
             phi = phi - (-1)^u[ei] * delta_phi[ei]
-            for xi in eachindex(x)
-                a_res[xi] = a_res[xi] * a_u(a, x[xi], phi, u[ei])
-            end
+            _mzi_accumulate!(a_res, ex, x, phi, u[ei], Au, Tacc)
         end
 
         pyx = zeros(length(x))
         for xj in eachindex(x)
-            pyx[xj] = real(tr(rho0 * a_res[xj]' * a_res[xj])) * (1 / factorial(N))
+            pyx[xj] = _mzi_pyx_likelihood(a_res[xj], M, Ns, rho0) * (1 / factorial(N))
         end
         M_res[ui] = trapz(x, pyx .* p .* log.(2, pyx ./ trapz(x, pyx .* p)))
     end

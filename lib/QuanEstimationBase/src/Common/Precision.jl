@@ -67,8 +67,16 @@ function PrecisionSpec(
 ) where {T}
     RT = T <: Complex ? real(T) : T
     u = Float64(eps(RT))
+    input64 = Float64(input_error)
+    tol64 = Float64(tol)
     g = guard === nothing ? Float64(default_guard(RT)) : Float64(guard)
-    return PrecisionSpec(u, Float64(input_error), Float64(tol), g, refine)
+    isfinite(tol64) && tol64 > 0 ||
+        throw(ArgumentError("tol must be finite and positive, got $tol64"))
+    isfinite(input64) && input64 >= 0 ||
+        throw(ArgumentError("input_error must be finite and non-negative, got $input64"))
+    isfinite(g) && g >= 0 ||
+        throw(ArgumentError("guard must be finite and non-negative, got $g"))
+    return PrecisionSpec(u, input64, tol64, g, refine)
 end
 
 """

@@ -202,11 +202,12 @@ function Hamiltonian(H0::T, dH::Vector{T}) where {T}
 end
 
 raw"""
-    Hamiltonian(H0::H, dH::D, params::NTuple{N,R}) where {H<:Function,D<:Function,N,R}
+    Hamiltonian(H0::H, dH::D, params::Tuple) where {H<:Function,D<:Function}
 
 Construct a Hamiltonian from function-typed ``H_0``, ``\partial H`` and a tuple of parameters.
 raw"""
-function Hamiltonian(H0::H, dH::D, params::NTuple{N,R}) where {H<:Function,D<:Function,N,R}
+function Hamiltonian(H0::H, dH::D, params::Tuple) where {H<:Function,D<:Function}
+    N = length(params)
     return Hamiltonian{typeof(H0),typeof(dH),N}(H0, dH, params)
 end
 
@@ -312,11 +313,11 @@ raw"""
 Construct Lindblad dynamics (NoDecay, NoControl) from raw ``H_0`` and ``\partial H``.
 """
 function Lindblad(
-    H0::T,
-    dH::D,
+    H0::Union{AbstractMatrix,Function},
+    dH::Union{AbstractVector,Function},
     tspan::AbstractVector;
     dyn_method::Union{Symbol,String} = :Ode,
-) where {T,D}
+)
     ham = Hamiltonian(H0, dH)
     return LindbladDynamics{typeof(ham),NonDecay,NonControl,DYN_METHOD_MAP[Symbol(dyn_method)],Nothing}(
         LindbladData(ham, tspan),
@@ -349,12 +350,12 @@ raw"""
 Construct Lindblad dynamics (Decay, NoControl) from raw ``H_0`` and ``\partial H`` with decay.
 raw"""
 function Lindblad(
-    H0::H,
-    dH::D,
+    H0::Union{AbstractMatrix,Function},
+    dH::Union{AbstractVector,Function},
     tspan::AbstractVector,
     decay::AbstractVector;
     dyn_method::Union{Symbol,String} = :Ode,
-) where {H,D}
+)
     ham = Hamiltonian(H0, dH)
     return LindbladDynamics{typeof(ham),Decay,NonControl,DYN_METHOD_MAP[Symbol(dyn_method)],Nothing}(
         LindbladData(ham, tspan; decay = decay),
@@ -369,13 +370,13 @@ raw"""
 Construct Lindblad dynamics (NoDecay, Control) from raw ``H_0`` and ``\partial H`` with control Hamiltonians.
 """
 function Lindblad(
-    H0::H,
-    dH::D,
+    H0::Union{AbstractMatrix,Function},
+    dH::Union{AbstractVector,Function},
     tspan::AbstractVector,
     Hc::Vector{M};
     ctrl = ZeroCTRL(),
     dyn_method::Union{Symbol,String} = :Ode,
-) where {H,D,M<:AbstractMatrix}
+) where {M<:AbstractMatrix}
     ham = Hamiltonian(H0, dH)
     return LindbladDynamics{typeof(ham),NonDecay,Control,DYN_METHOD_MAP[Symbol(dyn_method)],Nothing}(
         LindbladData(ham, tspan; Hc = complex.(Hc), ctrl = init_ctrl(Hc, tspan, ctrl)),
@@ -409,14 +410,14 @@ raw"""
 Construct Lindblad dynamics (Decay, Control) from raw ``H_0`` and ``\partial H`` with control and decay.
 """
 function Lindblad(
-    H0::H,
-    dH::D,
+    H0::Union{AbstractMatrix,Function},
+    dH::Union{AbstractVector,Function},
     tspan::AbstractVector,
     Hc::Vector{M},
     decay::AbstractVector;
     ctrl = ZeroCTRL(),
     dyn_method::Union{Symbol,String} = :Ode,
-) where {H,D,M<:AbstractMatrix}
+) where {M<:AbstractMatrix}
     ham = Hamiltonian(H0, dH)
     return LindbladDynamics{typeof(ham),Decay,Control,DYN_METHOD_MAP[Symbol(dyn_method)],Nothing}(
         LindbladData(

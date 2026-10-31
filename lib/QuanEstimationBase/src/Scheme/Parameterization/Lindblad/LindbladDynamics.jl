@@ -50,6 +50,17 @@ entry per time index in `ctrl[1]`. The control coefficients are indexed as
 function Htot(H0::T, Hc::V, ctrl) where {T<:Matrix{ComplexF64},V<:AbstractVector}
     [H0 + sum([ctrl[i][t] * Hc[i] for i in eachindex(Hc)]) for t in eachindex(ctrl[1])]
 end
+
+# Compute -im * (H * ρ - ρ * H) into call-local ODE scratch. The two matrix
+# products and their subtraction keep the same operand order as the original
+# out-of-place expression; callers allocate the returned RHS as required.
+function _ode_neg_im_comm!(left, right, H, ρ)
+    mul!(left, H, ρ)
+    mul!(right, ρ, H)
+    left .-= right
+    left .*= -im
+    return left
+end
 # end
 
 raw"""
@@ -337,27 +348,34 @@ function ode(
     ctrl_interval = (length(tspan) / length(ctrl0[1])) |> Int
     ctrl = [repeat(ctrl0[i], 1, ctrl_interval) |> transpose |> vec for i = 1:ctrl_num]
 
-    H(ctrl) = Htot(H0, Hc, ctrl)
+    H = Htot(H0, Hc, ctrl)
     dt = tspan[2] - tspan[1]
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func!(ρ, ctrl, t) =
-        -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + (
+    ρ_left, ρ_right = similar(ρ0), similar(ρ0)
+    function ρt_func!(ρ, ctrl, t)
+        comm = _ode_neg_im_comm!(ρ_left, ρ_right, H[t2Num(t)], ρ)
+        return comm + (
             [
                 γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i])) for
                 i in eachindex(Γ)
             ] |> sum
         )
+    end
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
     ρt = solve(prob_ρ, Tsit5(), saveat = dt; abstol = abstol, reltol = reltol).u
 
-    ∂ρt_func!(∂ρ, (pa, ctrl), t) =
-        -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -
-        im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + (
+    source_left, source_right = similar(ρ0), similar(ρ0)
+    ∂_left, ∂_right = similar(ρ0), similar(ρ0)
+    function ∂ρt_func!(∂ρ, (pa, ctrl), t)
+        source = _ode_neg_im_comm!(source_left, source_right, dH[pa], ρt[t2Num(t)])
+        comm = _ode_neg_im_comm!(∂_left, ∂_right, H[t2Num(t)], ∂ρ)
+        return source + comm + (
             [
                 γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i]))
                 for i in eachindex(Γ)
             ] |> sum
         )
+    end
 
     ∂ρt_tp = []
     for pa = 1:param_num
@@ -800,15 +818,23 @@ function evolve(
     ctrl =
         [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |> Array for i = 1:ctrl_num]
     push!.(ctrl, [0.0 for i = 1:ctrl_num])
-    H(ctrl) = Htot(H0, Hc, ctrl)
+    H = Htot(H0, Hc, ctrl)
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func!(ρ, ctrl, t) = -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)])
+    ρ_left, ρ_right = similar(ρ0), similar(ρ0)
+    function ρt_func!(ρ, ctrl, t)
+        comm = _ode_neg_im_comm!(ρ_left, ρ_right, H[t2Num(t)], ρ)
+        return copy(comm)
+    end
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
     ρt = solve(prob_ρ, Tsit5(), saveat = dt; abstol=1e-8, reltol=1e-8).u
 
-    ∂ρt_func!(∂ρ, (pa, ctrl), t) =
-        -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -
-        im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)])
+    source_left, source_right = similar(ρ0), similar(ρ0)
+    ∂_left, ∂_right = similar(ρ0), similar(ρ0)
+    function ∂ρt_func!(∂ρ, (pa, ctrl), t)
+        source = _ode_neg_im_comm!(source_left, source_right, dH[pa], ρt[t2Num(t)])
+        comm = _ode_neg_im_comm!(∂_left, ∂_right, H[t2Num(t)], ∂ρ)
+        return source + comm
+    end
     ∂ρt_∂x = typeof(ρ0)[]
     for pa = 1:param_num
         prob_∂ρ = ODEProblem(∂ρt_func!, ρ0 |> zero, (tspan[1], tspan[end]), (pa, ctrl))
@@ -870,27 +896,34 @@ function evolve(
     ctrl =
         [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |> Array for i = 1:ctrl_num]
     push!.(ctrl, [0.0 for i = 1:ctrl_num])
-    H(ctrl) = Htot(H0, Hc, ctrl)
+    H = Htot(H0, Hc, ctrl)
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
 
-    ρt_func!(ρ, ctrl, t) =
-        -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + (
+    ρ_left, ρ_right = similar(ρ0), similar(ρ0)
+    function ρt_func!(ρ, ctrl, t)
+        comm = _ode_neg_im_comm!(ρ_left, ρ_right, H[t2Num(t)], ρ)
+        return comm + (
             [
                 γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i])) for
                 i in eachindex(Γ)
             ] |> sum
         )
+    end
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
     ρt = solve(prob_ρ, Tsit5(), saveat = dt; abstol = abstol, reltol = reltol).u
 
-    ∂ρt_func!(∂ρ, (pa, ctrl), t) =
-        -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -
-        im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + (
+    source_left, source_right = similar(ρ0), similar(ρ0)
+    ∂_left, ∂_right = similar(ρ0), similar(ρ0)
+    function ∂ρt_func!(∂ρ, (pa, ctrl), t)
+        source = _ode_neg_im_comm!(source_left, source_right, dH[pa], ρt[t2Num(t)])
+        comm = _ode_neg_im_comm!(∂_left, ∂_right, H[t2Num(t)], ∂ρ)
+        return source + comm + (
             [
                 γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i]))
                 for i in eachindex(Γ)
             ] |> sum
         )
+    end
 
     ∂ρt_∂x = typeof(ρ0)[]
     for pa = 1:param_num
@@ -953,26 +986,33 @@ function evolve(scheme::Scheme{Ket,LindbladDynamics{HT,Decay,Control,Ode,P},M,E}
     ctrl =
         [repeat(ctrl[i], 1, ctrl_interval) |> transpose |> vec |> Array for i = 1:ctrl_num]
     push!.(ctrl, [0.0 for i = 1:ctrl_num])
-    H(ctrl) = Htot(H0, Hc, ctrl)
+    H = Htot(H0, Hc, ctrl)
     t2Num(t) = Int(round((t - tspan[1]) / dt)) + 1
-    ρt_func!(ρ, ctrl, t) =
-        -im * (H(ctrl)[t2Num(t)] * ρ - ρ * H(ctrl)[t2Num(t)]) + (
+    ρ_left, ρ_right = similar(ρ0), similar(ρ0)
+    function ρt_func!(ρ, ctrl, t)
+        comm = _ode_neg_im_comm!(ρ_left, ρ_right, H[t2Num(t)], ρ)
+        return comm + (
             [
                 γ[i] * (Γ[i] * ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ρ + ρ * Γ[i]' * Γ[i])) for
                 i in eachindex(Γ)
             ] |> sum
         )
+    end
     prob_ρ = ODEProblem(ρt_func!, ρ0, (tspan[1], tspan[end]), ctrl)
     ρt = solve(prob_ρ, Tsit5(), saveat = dt; abstol=1e-8, reltol=1e-8).u
 
-    ∂ρt_func!(∂ρ, (pa, ctrl), t) =
-        -im * (dH[pa] * ρt[t2Num(t)] - ρt[t2Num(t)] * dH[pa]) -
-        im * (H(ctrl)[t2Num(t)] * ∂ρ - ∂ρ * H(ctrl)[t2Num(t)]) + (
+    source_left, source_right = similar(ρ0), similar(ρ0)
+    ∂_left, ∂_right = similar(ρ0), similar(ρ0)
+    function ∂ρt_func!(∂ρ, (pa, ctrl), t)
+        source = _ode_neg_im_comm!(source_left, source_right, dH[pa], ρt[t2Num(t)])
+        comm = _ode_neg_im_comm!(∂_left, ∂_right, H[t2Num(t)], ∂ρ)
+        return source + comm + (
             [
                 γ[i] * (Γ[i] * ∂ρ * Γ[i]' - 0.5 * (Γ[i]' * Γ[i] * ∂ρ + ∂ρ * Γ[i]' * Γ[i]))
                 for i in eachindex(Γ)
             ] |> sum
         )
+    end
 
     ∂ρt_∂x = typeof(ρ0)[]
     for pa = 1:param_num

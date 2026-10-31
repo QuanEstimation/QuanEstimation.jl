@@ -1,10 +1,20 @@
 using QuanEstimationBase
 using Test
+using Aqua
 using Trapz
 using LinearAlgebra
 using SparseArrays
 
+@testset verbose = true "Aqua" begin
+    # Julia 1.11 dependencies can leave a task behind during Aqua's
+    # precompile probe; keep the check on 1.12 and 1.13.
+    Aqua.test_all(QuanEstimationBase;
+        persistent_tasks = VERSION >= v"1.12")
+end
+
 include("utils.jl")
+include("test_precompile_workload.jl")
+include("test_numerical_backports.jl")
 
 @testset verbose = true "Operator Definitions" begin
     include("Common/operator_definitions.jl")

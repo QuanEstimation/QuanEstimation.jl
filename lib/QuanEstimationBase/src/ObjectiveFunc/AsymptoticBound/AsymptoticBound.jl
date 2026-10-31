@@ -1,45 +1,45 @@
 """
     AbstractLDtype
 
-Abstract supertype for logarithmic derivative type tags (`SLD`, `RLD`, `LLD`).
+Abstract supertype for logarithmic derivative type tags (`SLDType`, `RLDType`, `LLDType`).
 Used as a type parameter in [`QFIM_obj`](@ref) to dispatch to the correct
 QFIM computation.
 raw"""
 abstract type AbstractLDtype end
 
 raw"""
-    SLD <: AbstractLDtype
+    SLDType <: AbstractLDtype
 
 Tag type for the symmetric logarithmic derivative (SLD). The SLD operator
 ``L_a`` satisfies ``\frac{1}{2}(L_a\rho + \rho L_a) = \partial_a\rho``.
 raw"""
-abstract type SLD <: AbstractLDtype end
+abstract type SLDType <: AbstractLDtype end
 
 raw"""
-    RLD <: AbstractLDtype
+    RLDType <: AbstractLDtype
 
 Tag type for the right logarithmic derivative (RLD). The RLD operator
 ``\mathcal{R}_a`` satisfies ``\partial_a\rho = \rho\mathcal{R}_a``.
 raw"""
-abstract type RLD <: AbstractLDtype end
+abstract type RLDType <: AbstractLDtype end
 
 raw"""
-    LLD <: AbstractLDtype
+    LLDType <: AbstractLDtype
 
 Tag type for the left logarithmic derivative (LLD). The LLD operator
 ``\mathcal{L}_a`` satisfies ``\partial_a\rho = \mathcal{L}_a\rho``
 and ``\mathcal{L}_a = \mathcal{R}_a^\dagger``.
 raw"""
-abstract type LLD <: AbstractLDtype end
+abstract type LLDType <: AbstractLDtype end
 
 const PARA_TYPE_MAP = Dict{Symbol,Type{<:AbstractParaType}}(
     :single_para => single_para,
     :multi_para  => multi_para,
 )
 const LD_TYPE_MAP = Dict{Symbol,Type{<:AbstractLDtype}}(
-    :SLD => SLD,
-    :RLD => RLD,
-    :LLD => LLD,
+    :SLD => SLDType,
+    :RLD => RLDType,
+    :LLD => LLDType,
 )
 
 @doc raw"""
@@ -242,7 +242,7 @@ para_type(::HCRB_obj{multi_para}) = :multi_para
 Convert a [`CFIM_obj`](@ref) to a [`QFIM_obj`](@ref) (SLD-based) while
 preserving the weight matrix and epsilon.
 """
-QFIM_obj(opt::CFIM_obj{P}) where {P} = QFIM_obj{P,SLD}(opt.W, opt.eps)
+QFIM_obj(opt::CFIM_obj{P}) where {P} = QFIM_obj{P,SLDType}(opt.W, opt.eps)
 
 const obj_idx = Dict(:QFIM => QFIM_obj, :CFIM => CFIM_obj, :HCRB => HCRB_obj)
 
@@ -265,13 +265,13 @@ function set_M(obj::CFIM_obj{P}, M::AbstractVector) where {P}
 end
 
 raw"""
-    objective(obj::QFIM_obj{single_para,SLD}, scheme)
+    objective(obj::QFIM_obj{single_para,SLDType}, scheme)
 
 Evaluate the single-parameter SLD-based QFI for a given scheme.
 
 Returns ``(f, f)`` where ``f = \mathrm{Tr}(\rho L_x^2)`` is the QFI.
 raw"""
-function objective(obj::QFIM_obj{single_para,SLD}, scheme)
+function objective(obj::QFIM_obj{single_para,SLDType}, scheme)
     (; eps) = obj
     ρ, dρ = evolve(scheme)
     f = QFIM_SLD(ρ, dρ[1]; eps = eps)
@@ -279,11 +279,11 @@ function objective(obj::QFIM_obj{single_para,SLD}, scheme)
 end
 
 raw"""
-    objective(obj::QFIM_obj{multi_para,SLD}, scheme)
+    objective(obj::QFIM_obj{multi_para,SLDType}, scheme)
 
 Evaluate the multi-parameter SLD-based QFIM objective ``\mathrm{Tr}(W F^{-1})``.
 """
-function objective(obj::QFIM_obj{multi_para,SLD}, scheme)
+function objective(obj::QFIM_obj{multi_para,SLDType}, scheme)
     (; W, eps) = obj
     ρ, dρ = evolve(scheme)
     F = QFIM_SLD(ρ, dρ; eps = eps)
@@ -293,11 +293,11 @@ function objective(obj::QFIM_obj{multi_para,SLD}, scheme)
 end
 
 """
-    objective(obj::QFIM_obj{single_para,RLD}, scheme)
+    objective(obj::QFIM_obj{single_para,RLDType}, scheme)
 
 Evaluate the single-parameter RLD-based QFI.
 raw"""
-function objective(obj::QFIM_obj{single_para,RLD}, scheme)
+function objective(obj::QFIM_obj{single_para,RLDType}, scheme)
     (; eps) = obj
     ρ, dρ = evolve(scheme)
     f = QFIM_RLD(ρ, dρ[1]; eps = eps)
@@ -305,11 +305,11 @@ function objective(obj::QFIM_obj{single_para,RLD}, scheme)
 end
 
 raw"""
-    objective(obj::QFIM_obj{multi_para,RLD}, scheme)
+    objective(obj::QFIM_obj{multi_para,RLDType}, scheme)
 
 Evaluate the multi-parameter RLD-based QFIM objective ``\mathrm{Tr}(W F_{\mathrm{RLD}}^{-1})``.
 """
-function objective(obj::QFIM_obj{multi_para,RLD}, scheme)
+function objective(obj::QFIM_obj{multi_para,RLDType}, scheme)
     (; W, eps) = obj
     ρ, dρ = evolve(scheme)
     F = QFIM_RLD(ρ, dρ; eps = eps)
@@ -319,11 +319,11 @@ function objective(obj::QFIM_obj{multi_para,RLD}, scheme)
 end
 
 """
-    objective(obj::QFIM_obj{single_para,LLD}, scheme)
+    objective(obj::QFIM_obj{single_para,LLDType}, scheme)
 
 Evaluate the single-parameter LLD-based QFI.
 raw"""
-function objective(obj::QFIM_obj{single_para,LLD}, scheme)
+function objective(obj::QFIM_obj{single_para,LLDType}, scheme)
     (; eps) = obj
     ρ, dρ = evolve(scheme)
     f = QFIM_LLD(ρ, dρ[1]; eps = eps)
@@ -331,11 +331,11 @@ function objective(obj::QFIM_obj{single_para,LLD}, scheme)
 end
 
 raw"""
-    objective(obj::QFIM_obj{multi_para,LLD}, scheme)
+    objective(obj::QFIM_obj{multi_para,LLDType}, scheme)
 
 Evaluate the multi-parameter LLD-based QFIM objective ``\mathrm{Tr}(W F_{\mathrm{LLD}}^{-1})``.
 """
-function objective(obj::QFIM_obj{multi_para,LLD}, scheme)
+function objective(obj::QFIM_obj{multi_para,LLDType}, scheme)
     (; W, eps) = obj
     ρ, dρ = evolve(scheme)
     F = QFIM_LLD(ρ, dρ; eps = eps)

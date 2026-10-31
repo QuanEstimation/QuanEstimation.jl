@@ -142,6 +142,12 @@ const IO_final = Dict(
     (:HCRB, :multi_para) => "\e[2KIteration over, data saved.\nFinal value of HCRB is %f\n",
 )
 
+# Parse each dynamic format once at module load. Besides avoiding @eval during
+# incremental precompilation, this keeps format parsing out of every episode.
+const IO_ini_format = Dict(key => Printf.Format(value) for (key, value) in IO_ini)
+const IO_current_format = Dict(key => Printf.Format(value) for (key, value) in IO_current)
+const IO_final_format = Dict(key => Printf.Format(value) for (key, value) in IO_final)
+
 
 ## io initialization
 """
@@ -160,7 +166,8 @@ function Base.show(
     # println(IO_opt[opt])
     println(IO_para[para_type(obj)])
     println(IO_alg[alg_type(alg)])
-    @eval @printf $(IO_ini[opt_target(opt), obj_type(obj), para_type(obj)]) $(io_buffer...)
+    format = IO_ini_format[opt_target(opt), obj_type(obj), para_type(obj)]
+    Printf.format(stdout, format, io_buffer...)
     SaveCurrent(output)
 end
 
@@ -173,7 +180,8 @@ Print the current objective value during optimization (overwrites the current li
 """
 function Base.show(output::Output, obj::AbstractObj)
     (; io_buffer) = output
-    @eval @printf $(IO_current[obj_type(obj), para_type(obj)]) $(io_buffer...)
+    format = IO_current_format[obj_type(obj), para_type(obj)]
+    Printf.format(stdout, format, io_buffer...)
     SaveCurrent(output)
 end
 
@@ -186,6 +194,7 @@ Print the final objective value and save results.
 """
 function Base.show(obj::AbstractObj, output::AbstractOutput)
     (; io_buffer) = output
-    @eval @printf $(IO_final[obj_type(obj), para_type(obj)]) $(io_buffer...)
+    format = IO_final_format[obj_type(obj), para_type(obj)]
+    Printf.format(stdout, format, io_buffer...)
     SaveFile(output)
 end
