@@ -14,6 +14,8 @@ Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+# Direct dependency so LocalPreferences.toml can set LoadMKL_JLL for LinearSolve 3.28.
+LinearSolve = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"

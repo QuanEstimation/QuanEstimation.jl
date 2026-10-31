@@ -7,6 +7,8 @@ authors = ["QuanEstimation Group (Jing Liu et al.)"]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 Coverage = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+# Direct dependency so LocalPreferences.toml can set LoadMKL_JLL for LinearSolve 3.28.
+LinearSolve = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
 NVMagnetometer = "28fc4bcf-da03-4841-bbdb-88baaf311b30"
 PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
 QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"

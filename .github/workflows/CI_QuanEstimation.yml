@@ -37,7 +37,7 @@ jobs:
           - "1.12"
           - "1.13"
         os:
-          - ubuntu-latest
+          - ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -49,11 +49,9 @@ jobs:
           cache-name: cache-artifacts
         with:
           path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ matrix.version }}-${{ hashFiles('**/Project.toml') }}
           restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
+            ${{ runner.os }}-test-${{ env.cache-name }}-${{ matrix.version }}-
       - name: "Install Dependencies and Run Tests"
         run: |
           import Pkg
