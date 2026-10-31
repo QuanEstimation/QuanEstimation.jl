@@ -58,8 +58,11 @@ function annotations(x)
         v = getfield(x, f)
         doc = ""
         for mod in Base.loaded_modules_array()
-            dict = meta(mod)
-            if haskey(dict, binding)
+            # Read existing documentation only. Autoinitializing an empty doc
+            # store evaluates into every loaded module, which is illegal while
+            # another package is being incrementally precompiled.
+            dict = meta(mod; autoinit = false)
+            if dict !== nothing && haskey(dict, binding)
                 multidoc = dict[binding]
                 if haskey(multidoc.docs, Union{})
                     data_fields = multidoc.docs[Union{}].data

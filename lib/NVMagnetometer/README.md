@@ -3,7 +3,7 @@
 NVMagnetometer.jl is the NV center Magnetometer submodule of QuanEstimation.jl. 
 
 ## Installation
-Generally, this package does not need to be installed independently. It would be automatcally installed 
+Generally, this package does not need to be installed independently. It would be automatically installed 
 as long as QuanEstimation.jl is installed. However, if someone does need to install it independently, 
 just run the command in the julia REPL:  
 

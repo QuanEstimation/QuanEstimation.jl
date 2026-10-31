@@ -1555,10 +1555,13 @@ scheme, evolves the state, and evaluates the CFIM.
   with `QFIM`.
 - `exportLD::Bool=false`: Placeholder (ignored for CFIM).
 - `eps`: legacy keyword (deprecated); when `nothing`, the new relative precision policy is used.
+- `tol`, `input_error`, `guard`, `diagnostics`: relative precision policy and
+  diagnostic record, as in the matrix-level [`CFIM`](@ref).
 
 # Returns
 
-- `Matrix{Float64}` or `Vector{Matrix{Float64}}`: The CFIM. If `full_trajectory=true`,
+- `Matrix{Float64}` or `Vector{Matrix{Float64}}`: The CFIM, a 1×1 matrix for a
+  single parameter (`F[1,1]` is the scalar CFI). If `full_trajectory=true`,
   returns a vector of matrices, one per time step.
 
 # See Also
@@ -1745,10 +1748,10 @@ and evaluates the QFIM using the chosen logarithmic derivative type.
 
 # Returns
 
-- The QFI (single parameter) or QFIM (multiple parameters). If
-  `full_trajectory=true`, returns one result per time step. If `exportLD=true`,
-  returns `(F, LD)`; if `diagnostics=true`, returns `(F, diag)`; if both are
-  `true`, returns `(F, LD, diag)`.
+- `Matrix{Float64}` or `Vector{Matrix{Float64}}`: The QFIM; `full_trajectory=true`
+  returns one matrix per time step. If `exportLD=true`, returns `(F, LD)`; if
+  `diagnostics=true`, returns `(F, diag)`; if both are `true`, returns
+  `(F, LD, diag)`.
 
 # See Also
 

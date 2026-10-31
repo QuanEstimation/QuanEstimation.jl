@@ -1,0 +1,599 @@
+{
+  "label": "public05-julia1.13-precompiletools",
+  "channel": "1.13",
+  "julia_version": "1.13.1",
+  "source": "/home/user/QuanEstimation-Develop-Meta/public/QuanEstimation.jl",
+  "git_revision": "f9499154faa3c36ed59756b3b3ef5df42c959668",
+  "git_status": [
+    " M Project.toml",
+    " M lib/QuanEstimationBase/Project.toml",
+    " M lib/QuanEstimationBase/src/QuanEstimationBase.jl",
+    " M lib/QuanEstimationBase/src/Scheme/show.jl",
+    " M lib/QuanEstimationBase/src/io.jl",
+    " M lib/QuanEstimationBase/test/runtests.jl",
+    " M src/QuanEstimation.jl",
+    "?? benchmarks/",
+    "?? lib/QuanEstimationBase/src/precompile_workload.jl",
+    "?? lib/QuanEstimationBase/test/test_precompile_workload.jl",
+    "?? src/precompile_workload.jl"
+  ],
+  "source_fingerprint_sha256": "660b13d52fc713806ad0f1fba8a2244c3484e51861180b7d4a78c0bccd9634f7",
+  "started_utc": "2026-10-29T10:29:30.642755+00:00",
+  "platform": "Linux-7.2.7-arch1-1-x86_64-with-glibc2.44",
+  "python_platform": "x86_64",
+  "logical_cpu_count": 10,
+  "julia_num_threads": 1,
+  "openblas_num_threads": 1,
+  "pythoncall_exe": "/usr/sbin/python3",
+  "scenarios": {
+    "qfim": {
+      "process_wall_s": 7.253741570006241,
+      "metrics": {
+        "first": {
+          "scenario": "qfim",
+          "julia": "1.13.1",
+          "load_s": 5.860995782,
+          "time_s": 0.058282794,
+          "compile_s": 0.056875025,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 185136.0,
+          "checksum": 0.9999999999999996
+        },
+        "second": {
+          "scenario": "qfim",
+          "julia": "1.13.1",
+          "load_s": 5.860995782,
+          "time_s": 0.000366123,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 112736.0,
+          "checksum": 0.9999999999999996
+        },
+        "warm5": {
+          "scenario": "qfim",
+          "julia": "1.13.1",
+          "load_s": 5.860995782,
+          "time_s": 0.000127446,
+          "min_s": 0.000107009,
+          "max_s": 0.000368135,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 112736.0,
+          "checksum": 0.9999999999999996
+        }
+      }
+    },
+    "cfim": {
+      "process_wall_s": 6.91615540899511,
+      "metrics": {
+        "first": {
+          "scenario": "cfim",
+          "julia": "1.13.1",
+          "load_s": 5.54657625,
+          "time_s": 0.055664749,
+          "compile_s": 0.054584826,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 134120.0,
+          "checksum": 0.11539054839687227
+        },
+        "second": {
+          "scenario": "cfim",
+          "julia": "1.13.1",
+          "load_s": 5.54657625,
+          "time_s": 0.000322162,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 65880.0,
+          "checksum": 0.11539054839687227
+        },
+        "warm5": {
+          "scenario": "cfim",
+          "julia": "1.13.1",
+          "load_s": 5.54657625,
+          "time_s": 8.5944e-05,
+          "min_s": 7.0411e-05,
+          "max_s": 0.0002977,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 65880.0,
+          "checksum": 0.11539054839687227
+        }
+      }
+    },
+    "kraus": {
+      "process_wall_s": 7.080567726996378,
+      "metrics": {
+        "first": {
+          "scenario": "kraus",
+          "julia": "1.13.1",
+          "load_s": 5.719405636,
+          "time_s": 0.047331528,
+          "compile_s": 0.046357437,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 163760.0,
+          "checksum": 2.3951247165532847
+        },
+        "second": {
+          "scenario": "kraus",
+          "julia": "1.13.1",
+          "load_s": 5.719405636,
+          "time_s": 0.000329388,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 106272.0,
+          "checksum": 2.3951247165532847
+        },
+        "warm5": {
+          "scenario": "kraus",
+          "julia": "1.13.1",
+          "load_s": 5.719405636,
+          "time_s": 0.000114205,
+          "min_s": 8.8575e-05,
+          "max_s": 0.000295273,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 106272.0,
+          "checksum": 2.3951247165532847
+        }
+      }
+    },
+    "ode": {
+      "process_wall_s": 7.1376405479968525,
+      "metrics": {
+        "first": {
+          "scenario": "ode",
+          "julia": "1.13.1",
+          "load_s": 5.543756466,
+          "time_s": 0.083067104,
+          "compile_s": 0.073345223,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 5907160.0,
+          "checksum": 1.1094896576540947
+        },
+        "second": {
+          "scenario": "ode",
+          "julia": "1.13.1",
+          "load_s": 5.543756466,
+          "time_s": 0.00161992,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 4260568.0,
+          "checksum": 1.1094896576540947
+        },
+        "warm5": {
+          "scenario": "ode",
+          "julia": "1.13.1",
+          "load_s": 5.543756466,
+          "time_s": 0.001391283,
+          "min_s": 0.00133772,
+          "max_s": 0.001793223,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 4260568.0,
+          "checksum": 1.1094896576540947
+        }
+      }
+    },
+    "grape": {
+      "process_wall_s": 7.640098705000128,
+      "metrics": {
+        "first": {
+          "scenario": "grape",
+          "julia": "1.13.1",
+          "load_s": 5.739274083,
+          "time_s": 0.259673709,
+          "compile_s": 0.232355112,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 6960744.0,
+          "checksum": 0.017735407716909575
+        },
+        "second": {
+          "scenario": "grape",
+          "julia": "1.13.1",
+          "load_s": 5.739274083,
+          "time_s": 0.012589721,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 2706376.0,
+          "checksum": 0.017735407716909575
+        },
+        "warm5": {
+          "scenario": "grape",
+          "julia": "1.13.1",
+          "load_s": 5.739274083,
+          "time_s": 0.013223131,
+          "min_s": 0.012758503,
+          "max_s": 0.016513626,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 2706529.6,
+          "checksum": 0.017735407716909575
+        }
+      }
+    },
+    "autogrape": {
+      "process_wall_s": 7.699189902996295,
+      "metrics": {
+        "first": {
+          "scenario": "autogrape",
+          "julia": "1.13.1",
+          "load_s": 5.791836726,
+          "time_s": 0.225771374,
+          "compile_s": 0.199118317,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 7653168.0,
+          "checksum": 0.017738166472551626
+        },
+        "second": {
+          "scenario": "autogrape",
+          "julia": "1.13.1",
+          "load_s": 5.791836726,
+          "time_s": 0.015370662,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 3247840.0,
+          "checksum": 0.017738166472551626
+        },
+        "warm5": {
+          "scenario": "autogrape",
+          "julia": "1.13.1",
+          "load_s": 5.791836726,
+          "time_s": 0.015107618,
+          "min_s": 0.014994343,
+          "max_s": 0.015609597,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 3247993.6,
+          "checksum": 0.017738166472551626
+        }
+      }
+    },
+    "de": {
+      "process_wall_s": 8.217165893001948,
+      "metrics": {
+        "first": {
+          "scenario": "de",
+          "julia": "1.13.1",
+          "load_s": 6.27293038,
+          "time_s": 0.241000747,
+          "compile_s": 0.214870178,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 7664320.0,
+          "checksum": 0.01770032967211666
+        },
+        "second": {
+          "scenario": "de",
+          "julia": "1.13.1",
+          "load_s": 6.27293038,
+          "time_s": 0.012750121,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 3409296.0,
+          "checksum": 0.01770032967211666
+        },
+        "warm5": {
+          "scenario": "de",
+          "julia": "1.13.1",
+          "load_s": 6.27293038,
+          "time_s": 0.014201509,
+          "min_s": 0.012957975,
+          "max_s": 0.01538328,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 3409449.6,
+          "checksum": 0.01770032967211666
+        }
+      }
+    },
+    "pso": {
+      "process_wall_s": 7.402645566005958,
+      "metrics": {
+        "first": {
+          "scenario": "pso",
+          "julia": "1.13.1",
+          "load_s": 5.541945849,
+          "time_s": 0.247268804,
+          "compile_s": 0.225779548,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 7215440.0,
+          "checksum": 0.01770032967211666
+        },
+        "second": {
+          "scenario": "pso",
+          "julia": "1.13.1",
+          "load_s": 5.541945849,
+          "time_s": 0.014347855,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 2933376.0,
+          "checksum": 0.01770032967211666
+        },
+        "warm5": {
+          "scenario": "pso",
+          "julia": "1.13.1",
+          "load_s": 5.541945849,
+          "time_s": 0.013061497,
+          "min_s": 0.012754728,
+          "max_s": 0.013137741,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 2933529.6,
+          "checksum": 0.01770032967211666
+        }
+      }
+    },
+    "ode_opt": {
+      "process_wall_s": 7.821818994998466,
+      "metrics": {
+        "first": {
+          "scenario": "ode_opt",
+          "julia": "1.13.1",
+          "load_s": 5.566736306,
+          "time_s": 0.472714373,
+          "compile_s": 0.203459798,
+          "recompile_s": 0.0,
+          "gc_s": 0.204774286,
+          "bytes": 148751192.0,
+          "checksum": 0.018298458289554825
+        },
+        "second": {
+          "scenario": "ode_opt",
+          "julia": "1.13.1",
+          "load_s": 5.566736306,
+          "time_s": 0.073919036,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.023187305,
+          "bytes": 142957928.0,
+          "checksum": 0.018298458289554825
+        },
+        "warm5": {
+          "scenario": "ode_opt",
+          "julia": "1.13.1",
+          "load_s": 5.566736306,
+          "time_s": 0.063752474,
+          "min_s": 0.060111171,
+          "max_s": 0.078099594,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0172782398,
+          "bytes": 142958081.6,
+          "checksum": 0.018298458289554825
+        }
+      }
+    },
+    "waveform": {
+      "process_wall_s": 7.996330959998886,
+      "metrics": {
+        "first": {
+          "scenario": "waveform",
+          "julia": "1.13.1",
+          "load_s": 5.599055233,
+          "time_s": 0.493759994,
+          "compile_s": 0.20949325,
+          "recompile_s": 0.0,
+          "gc_s": 0.201513751,
+          "bytes": 216264968.0,
+          "checksum": 0.018294322586482295
+        },
+        "second": {
+          "scenario": "waveform",
+          "julia": "1.13.1",
+          "load_s": 5.599055233,
+          "time_s": 0.099341989,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.031465525,
+          "bytes": 210464904.0,
+          "checksum": 0.018294322586482295
+        },
+        "warm5": {
+          "scenario": "waveform",
+          "julia": "1.13.1",
+          "load_s": 5.599055233,
+          "time_s": 0.088011008,
+          "min_s": 0.083679879,
+          "max_s": 0.099860913,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0226714844,
+          "bytes": 210464865.6,
+          "checksum": 0.018294322586482295
+        }
+      }
+    },
+    "meas_opt": {
+      "process_wall_s": 41.884180591994664,
+      "metrics": {
+        "first": {
+          "scenario": "meas_opt",
+          "julia": "1.13.1",
+          "load_s": 5.600533168,
+          "time_s": 34.928576212,
+          "compile_s": 34.885392152,
+          "recompile_s": 0.183527627,
+          "gc_s": 1.150703916,
+          "bytes": 4525931832.0,
+          "checksum": 2.5942886201958877
+        },
+        "second": {
+          "scenario": "meas_opt",
+          "julia": "1.13.1",
+          "load_s": 5.600533168,
+          "time_s": 0.019794212,
+          "compile_s": 0.003138449,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 2215576.0,
+          "checksum": 2.5942886201958877
+        },
+        "warm5": {
+          "scenario": "meas_opt",
+          "julia": "1.13.1",
+          "load_s": 5.600533168,
+          "time_s": 0.015378577,
+          "min_s": 0.015039135,
+          "max_s": 0.016088419,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 2194104.0,
+          "checksum": 2.5942886201958877
+        }
+      }
+    },
+    "mzi": {
+      "process_wall_s": 9.363935189001495,
+      "metrics": {
+        "first": {
+          "scenario": "mzi",
+          "julia": "1.13.1",
+          "load_s": 5.555345381,
+          "time_s": 0.476434373,
+          "compile_s": 0.011216912,
+          "recompile_s": 0.0,
+          "gc_s": 0.227363066,
+          "bytes": 738225968.0,
+          "checksum": 9.08217987176239
+        },
+        "second": {
+          "scenario": "mzi",
+          "julia": "1.13.1",
+          "load_s": 5.555345381,
+          "time_s": 0.258155286,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.057888428,
+          "bytes": 738101408.0,
+          "checksum": 9.08217987176239
+        },
+        "warm5": {
+          "scenario": "mzi",
+          "julia": "1.13.1",
+          "load_s": 5.555345381,
+          "time_s": 0.263545304,
+          "min_s": 0.239260344,
+          "max_s": 0.42074712,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.080546249,
+          "bytes": 738101356.8,
+          "checksum": 9.08217987176239
+        }
+      }
+    },
+    "nhb": {
+      "process_wall_s": 7.388843088003341,
+      "metrics": {
+        "first": {
+          "scenario": "nhb",
+          "julia": "1.13.1",
+          "load_s": 5.584293203,
+          "time_s": 0.280055911,
+          "compile_s": 0.205538426,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 5886728.0,
+          "checksum": 0.9999688063371461
+        },
+        "second": {
+          "scenario": "nhb",
+          "julia": "1.13.1",
+          "load_s": 5.584293203,
+          "time_s": 0.009792717,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 627096.0,
+          "checksum": 0.9999688063371461
+        },
+        "warm5": {
+          "scenario": "nhb",
+          "julia": "1.13.1",
+          "load_s": 5.584293203,
+          "time_s": 0.010613722,
+          "min_s": 0.010343118,
+          "max_s": 0.011912591,
+          "compile_s": 0.0,
+          "recompile_s": 0.0,
+          "gc_s": 0.0,
+          "bytes": 627096.0,
+          "checksum": 0.9999688063371461
+        }
+      }
+    }
+  },
+  "resolved_manifest_sha256": "00909349628f2ef579ab54df90dd0ac91b611bb54ae2e4dad95b8c8d24021b93",
+  "cold_precompile_wall_s": 289.21568101400044,
+  "package_precompile_s": {
+    "QuanEstimationBase": 89.7,
+    "NVMagnetometer": 6.9,
+    "QuanEstimation": 7.4
+  },
+  "package_images": {
+    "QuanEstimationBase": {
+      "files": [
+        {
+          "path": "compiled/v1.13/QuanEstimationBase/yS1MO_4fa7e.ji",
+          "bytes": 563944
+        },
+        {
+          "path": "compiled/v1.13/QuanEstimationBase/yS1MO_4fa7e.so",
+          "bytes": 91741840
+        }
+      ],
+      "total_bytes": 92305784
+    },
+    "NVMagnetometer": {
+      "files": [
+        {
+          "path": "compiled/v1.13/NVMagnetometer/Uj3Qy_kAqNH.ji",
+          "bytes": 30326
+        },
+        {
+          "path": "compiled/v1.13/NVMagnetometer/Uj3Qy_kAqNH.so",
+          "bytes": 163632
+        }
+      ],
+      "total_bytes": 193958
+    },
+    "QuanEstimation": {
+      "files": [
+        {
+          "path": "compiled/v1.13/QuanEstimation/ZcR05_GRAjE.ji",
+          "bytes": 20609
+        },
+        {
+          "path": "compiled/v1.13/QuanEstimation/ZcR05_GRAjE.so",
+          "bytes": 83224
+        }
+      ],
+      "total_bytes": 103833
+    }
+  },
+  "finished_utc": "2026-10-29T10:39:42.860816+00:00"
+}

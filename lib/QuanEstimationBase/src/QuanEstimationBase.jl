@@ -73,7 +73,12 @@ using OrdinaryDiffEq
 const pkgpath = @__DIR__
 
 const GLOBAL_RNG = MersenneTwister(1234)
-const GLOBAL_EPS = 1e-8
+
+# Algorithmic constant used only for the Adam stability term and for
+# semidefinite / singular-matrix guards.  It is deliberately *not* a
+# precision threshold: all spectral, probability and singular-value
+# thresholds are relative and are defined in Common/Precision.jl.
+const _ALGO_EPS = 1e-8
 
 # PyExt function stubs — methods defined in ext/QuanEstimationBasePyExt.jl
 @doc raw"""
@@ -132,5 +137,8 @@ include("output.jl")
 include("Algorithm/Algorithm.jl")
 include("io.jl")
 include("Resource/Resource.jl")
+
+# Bake the canonical first-call paths into the 0.5 package image.
+include("precompile_workload.jl")
 
 end

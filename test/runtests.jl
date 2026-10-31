@@ -1,7 +1,19 @@
 using Test
+using Aqua
+using QuanEstimation
 
 # Main test suite for QuanEstimation
 @testset "QuanEstimation Tests" begin
+
+    @testset "Aqua" begin
+        # PythonCall is intentionally a hard dependency: it activates the
+        # QuanEstimationBasePyExt extension for the Python bridge.
+        # Julia 1.11 dependencies can leave a task behind during Aqua's
+        # precompile probe; keep the check on 1.12 and 1.13.
+        Aqua.test_all(QuanEstimation;
+            stale_deps = (ignore = [:PythonCall],),
+            persistent_tasks = VERSION >= v"1.12")
+    end
 
     # --- Include sub-package tests ---
     include("../lib/QuanEstimationBase/test/runtests.jl")

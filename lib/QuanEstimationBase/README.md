@@ -3,14 +3,14 @@
 QuanEstimationBase.jl is the base package for QuanEstimation.jl.
 
 ## Installation
-Generally, this package does not need to be installed independently. It would be automatcally installed 
+Generally, this package does not need to be installed independently. It would be automatically installed 
 as long as QuanEstimation.jl is installed. However, if someone does need to install it independently, 
 just run the command in the julia REPL:  
 
 ~~~
 julia > using Pkg 
 
-julia > Pkg.add("NVMagnetometer")
+julia > Pkg.add("QuanEstimationBase")
 ~~~
 
 ## Citation

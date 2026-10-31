@@ -102,6 +102,55 @@ function test_nonhermitian_input()
     @test L ≈ Lref
 end
 
+function test_low_temperature_thermometry()
+    ε, T = 1.0, 0.05
+    p(T) = 1 / (1 + exp(ε / T))
+    K(T) = [
+        sqrt(1 - p(T)) * ComplexF64[1 0; 0 0],
+        sqrt(1 - p(T)) * ComplexF64[0 1; 0 0],
+        sqrt(p(T)) * ComplexF64[0 0; 1 0],
+        sqrt(p(T)) * ComplexF64[0 0; 0 1],
+    ]
+    function dK(T)
+        q = p(T)
+        dq = q * (1 - q) * ε / T^2
+        d1 = -dq / (2 * sqrt(1 - q))
+        d2 = dq / (2 * sqrt(q))
+        return [
+            [d1 * ComplexF64[1 0; 0 0]],
+            [d1 * ComplexF64[0 1; 0 0]],
+            [d2 * ComplexF64[0 0; 1 0]],
+            [d2 * ComplexF64[0 0; 0 1]],
+        ]
+    end
+    M = [ComplexF64[1 0; 0 0], ComplexF64[0 0; 0 1]]
+
+    scheme = GeneralScheme(;
+        probe = ComplexF64[1.0, 0.0],
+        param = Kraus(K, dK, T),
+        measurement = M,
+    )
+    F_ana = p(T) * (1 - p(T)) * (ε / T^2)^2
+    F_Q = QFIM(scheme)[1, 1]
+    F_C = CFIM(scheme)[1, 1]
+    @test isapprox(F_Q, F_ana; rtol = 1e-14)
+    @test isapprox(F_C, F_ana; rtol = 1e-14)
+
+    rho = ComplexF64[1-p(T) 0; 0 p(T)]
+    dp = p(T) * (1 - p(T)) * ε / T^2
+    drho = ComplexF64[-dp 0; 0 dp]
+    @test isapprox(QFIM(rho, drho), F_ana; rtol = 1e-14)
+    @test isapprox(CFIM(rho, drho, M), F_ana; rtol = 1e-14)
+end
+
+function test_precision_spec_validation()
+    @test_throws ArgumentError PrecisionSpec(Float64; tol = 0)
+    @test_throws ArgumentError PrecisionSpec(Float64; tol = NaN)
+    @test_throws ArgumentError PrecisionSpec(Float64; input_error = -1)
+    @test_throws ArgumentError PrecisionSpec(Float64; guard = -1)
+    @test PrecisionSpec(Float64; guard = 0).guard == 0
+end
+
 function test_eps_deprecation_path()
     s, θ, φ = 0.7, 0.9, 0.4
     ρ, dρ = _bloch_qubit(s, θ, φ)
@@ -145,6 +194,12 @@ end
     end
     @testset "Non-Hermitian input" begin
         test_nonhermitian_input()
+    end
+    @testset "Low-temperature thermometry" begin
+        test_low_temperature_thermometry()
+    end
+    @testset "PrecisionSpec validation" begin
+        test_precision_spec_validation()
     end
     @testset "eps deprecation path" begin
         test_eps_deprecation_path()

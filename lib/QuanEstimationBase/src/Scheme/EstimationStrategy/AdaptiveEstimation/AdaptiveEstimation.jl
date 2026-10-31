@@ -44,7 +44,7 @@ function adapt_scheme!(
     W,
     eps,
 ) where {ST,PT,MT}
-    e = isnothing(eps) ? GLOBAL_EPS : eps
+    e = isnothing(eps) ? _ALGO_EPS : eps
     ρ_all, F_all = Matrix{ComplexF64}[], Float64[]
     for x in x_list
         adapt_param!(scheme, x)
