@@ -5,8 +5,6 @@ version = "0.3.0"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-# Direct dependency so LocalPreferences.toml can set LoadMKL_JLL for LinearSolve 3.28.
-LinearSolve = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
 QuanEstimationBase = "9769ca81-ed10-4016-bab9-e66dc61d4d60"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
@@ -17,8 +15,10 @@ QuanEstimationBase = "0.3"
 julia = "1.11"
 
 [extras]
+# Test-only dependency so LocalPreferences.toml can set LoadMKL_JLL.
+LinearSolve = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
 Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Suppressor", "Test"]
+test = ["LinearSolve", "Suppressor", "Test"]
