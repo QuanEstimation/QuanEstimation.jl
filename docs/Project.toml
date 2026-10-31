@@ -1,8 +1,6 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
-# Direct dependency so LocalPreferences.toml can set LoadMKL_JLL for LinearSolve 3.28.
-LinearSolve = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
 QuanEstimation = "088c8dff-a786-4a66-974c-03d3f6773f87"
 
 [compat]
